@@ -68,31 +68,8 @@ function resolveWindowsPaths() {
  * Resolves After Effects paths on macOS
  */
 function resolveMacOSPaths() {
-  // On macOS, scripts are installed in user's Documents folder
-  const homeDir = os.homedir();
-
-  // Try to find any After Effects version in the Documents folder
-  const documentsPath = path.join(homeDir, 'Documents', 'Adobe');
-
-  if (fs.existsSync(documentsPath)) {
-    const aeDirs = fs.readdirSync(documentsPath).filter(dir => dir.startsWith('After Effects'));
-
-    if (aeDirs.length > 0) {
-      // Sort to get the latest version
-      aeDirs.sort().reverse();
-      const latestAE = aeDirs[0];
-      const version = latestAE.replace('After Effects ', '');
-
-      const scriptsFolder = path.join(documentsPath, latestAE, 'Scripts');
-      const scriptUIFolder = path.join(scriptsFolder, 'ScriptUI Panels');
-
-      return {
-        appPath: `/Applications/Adobe After Effects ${version}`,
-        scriptsFolder: scriptsFolder,
-        scriptUIFolder: scriptUIFolder
-      };
-    }
-  }
+  // On macOS, scripts should be installed in the application's Scripts folder
+  // not the user's Documents folder for better reliability
 
   // Try standard application locations
   const possibleAppPaths = [
@@ -100,20 +77,24 @@ function resolveMacOSPaths() {
     '/Applications/Adobe After Effects 2024',
     '/Applications/Adobe After Effects 2023',
     '/Applications/Adobe After Effects 2022',
-    '/Applications/Adobe After Effects 2021'
+    '/Applications/Adobe After Effects 2021',
+    '/Applications/Adobe After Effects 2020'
   ];
 
   for (const appPath of possibleAppPaths) {
-    if (fs.existsSync(`${appPath}.app`) || fs.existsSync(`${appPath}/Adobe After Effects.app`)) {
-      const version = appPath.split(' ').pop();
-      const scriptsFolder = path.join(homeDir, 'Documents', 'Adobe', `After Effects ${version}`, 'Scripts');
+    // Check if the app directory exists (not the .app bundle)
+    if (fs.existsSync(appPath)) {
+      // Check for Scripts folder in the application directory
+      const scriptsFolder = path.join(appPath, 'Scripts');
       const scriptUIFolder = path.join(scriptsFolder, 'ScriptUI Panels');
 
-      return {
-        appPath: appPath,
-        scriptsFolder: scriptsFolder,
-        scriptUIFolder: scriptUIFolder
-      };
+      if (fs.existsSync(scriptsFolder)) {
+        return {
+          appPath: appPath,
+          scriptsFolder: scriptsFolder,
+          scriptUIFolder: scriptUIFolder
+        };
+      }
     }
   }
 
@@ -149,9 +130,22 @@ function copyFileWithPermissions(source, destination) {
         return true;
       }
     } else if (platform === 'darwin') {
-      // On macOS, the user's Documents folder usually doesn't need special permissions
-      fs.copyFileSync(source, destination);
-      return true;
+      // On macOS, the application Scripts folder needs admin permissions
+      try {
+        // Try using osascript to prompt for admin privileges
+        const appleScript = `do shell script "cp '${source}' '${destination}'" with administrator privileges`;
+        execSync(`osascript -e "${appleScript}"`);
+        return true;
+      } catch (error) {
+        // Fallback to regular copy (will likely fail but worth trying)
+        console.log('Admin privileges required. You may need to run with sudo or use Finder.');
+        try {
+          fs.copyFileSync(source, destination);
+          return true;
+        } catch (copyError) {
+          return false;
+        }
+      }
     }
   } catch (error) {
     console.error(`Error copying file: ${error.message}`);

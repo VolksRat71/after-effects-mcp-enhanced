@@ -90,8 +90,9 @@
    **Platform-specific notes:**
    - **Windows**: This will copy scripts to `C:\Program Files\Adobe\Adobe After Effects [VERSION]\Support Files\Scripts\ScriptUI Panels\`
      - You may need to run as administrator
-   - **macOS**: This will copy scripts to `~/Documents/Adobe/After Effects [VERSION]/Scripts/ScriptUI Panels/`
-     - Make sure After Effects has been run at least once to create the Scripts folder
+   - **macOS**: This will copy scripts to `/Applications/Adobe After Effects [VERSION]/Scripts/ScriptUI Panels/`
+     - You will be prompted for your administrator password
+     - If the installer fails, you can run `sudo npm run install-bridge`
 
    The installer will automatically detect your After Effects installation location.
 
