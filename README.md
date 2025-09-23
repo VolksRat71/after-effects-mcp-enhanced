@@ -3,7 +3,7 @@
 ![Node.js](https://img.shields.io/badge/node-%3E=14.x-brightgreen.svg)
 ![Build](https://img.shields.io/badge/build-passing-success)
 ![License](https://img.shields.io/github/license/Dakkshin/after-effects-mcp)
-![Platform](https://img.shields.io/badge/platform-after%20effects-blue)
+![Platform](https://img.shields.io/badge/platform-Windows%20%7C%20macOS-blue)
 
 ✨ A Model Context Protocol (MCP) server for Adobe After Effects that enables AI assistants and other applications to control After Effects through a standardized protocol.
 
@@ -52,9 +52,11 @@
 ## ⚙️ Setup Instructions
 
 ### 🛠 Prerequisites
-- Adobe After Effects (2022 or later)
+- Adobe After Effects (2021 or later)
 - Node.js (v14 or later)
 - npm or yarn package manager
+- **Windows**: Administrator privileges may be required for installation
+- **macOS**: After Effects must have been run at least once to create the Scripts folder
 
 ### 📥 Installation
 
@@ -84,18 +86,38 @@
    # or
    yarn install-bridge
    ```
-   This will copy the necessary scripts to your After Effects installation.
+
+   **Platform-specific notes:**
+   - **Windows**: This will copy scripts to `C:\Program Files\Adobe\Adobe After Effects [VERSION]\Support Files\Scripts\ScriptUI Panels\`
+     - You may need to run as administrator
+   - **macOS**: This will copy scripts to `~/Documents/Adobe/After Effects [VERSION]/Scripts/ScriptUI Panels/`
+     - Make sure After Effects has been run at least once to create the Scripts folder
+
+   The installer will automatically detect your After Effects installation location.
 
 ### 🔧 Update MCP Config
 
-Go to your client (eg. Claude or Cursor ) and update your config file
+Go to your client (eg. Claude or Cursor) and update your config file:
 
+**Windows:**
 ```json
 {
   "mcpServers": {
     "AfterEffectsMCP": {
       "command": "node",
-      "args": ["C:\\Users\\Dakkshin\\after-effects-mcp\\build\\index.js"]
+      "args": ["C:\\path\\to\\after-effects-mcp\\build\\index.js"]
+    }
+  }
+}
+```
+
+**macOS:**
+```json
+{
+  "mcpServers": {
+    "AfterEffectsMCP": {
+      "command": "node",
+      "args": ["/path/to/after-effects-mcp/build/index.js"]
     }
   }
 }
@@ -110,12 +132,19 @@ Go to your client (eg. Claude or Cursor ) and update your config file
    yarn start
    ```
 
-2. **Open After Effects**
+2. **Configure After Effects**
+   - Open After Effects
+   - **Windows**: Go to Edit > Preferences > Scripting & Expressions
+   - **macOS**: Go to After Effects > Settings > Scripting & Expressions
+   - Enable "Allow Scripts to Write Files and Access Network"
+   - Restart After Effects
 
 3. **Open the MCP Bridge Auto panel**
    - In After Effects, go to Window > mcp-bridge-auto.jsx
    - The panel will automatically check for commands every few seconds
    - Make sure the "Auto-run commands" checkbox is enabled
+
+   **macOS Note**: If you encounter permission errors, you may need to grant After Effects full disk access in System Settings > Privacy & Security > Full Disk Access
 
 ## 🚀 Usage Guide
 
@@ -183,6 +212,23 @@ You can animate layers with:
 | \`get-help\`           | Help for available commands            |
 | \`setLayerKeyframe\`   | Add keyframe to layer property         |
 | \`setLayerExpression\` | Add/remove expressions from properties |
+
+## 🔍 Troubleshooting
+
+### Installation Issues
+
+**"After Effects not found" error:**
+- **Windows**: Set the `ADOBE_AFTER_EFFECTS_PATH` environment variable to your After Effects installation directory
+- **macOS**: Ensure After Effects has been run at least once to create the Scripts folder in Documents
+
+**Permission denied errors:**
+- **Windows**: Run the installation command as administrator
+- **macOS**: Check that you have write permissions to `~/Documents/Adobe/`
+
+**Scripts not appearing in Window menu:**
+- Restart After Effects after installation
+- Verify the script was copied to the correct location
+- Check that "Allow Scripts to Write Files and Access Network" is enabled
 
 ## 👨‍💻 For Developers
 

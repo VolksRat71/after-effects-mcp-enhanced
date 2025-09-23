@@ -3,84 +3,234 @@
 import { execSync } from 'child_process';
 import * as fs from 'fs';
 import * as path from 'path';
+import * as os from 'os';
 import { fileURLToPath } from 'url';
 
 // ES Modules replacement for __dirname
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
-// Possible After Effects installation paths (common locations)
-const possiblePaths = [
-  'C:\\Program Files\\Adobe\\Adobe After Effects 2025',
-  'C:\\Program Files\\Adobe\\Adobe After Effects 2024',
-  'C:\\Program Files\\Adobe\\Adobe After Effects 2023',
-  'C:\\Program Files\\Adobe\\Adobe After Effects 2022',
-  'C:\\Program Files\\Adobe\\Adobe After Effects 2021'
-];
+/**
+ * Resolves After Effects installation paths based on the operating system
+ */
+function resolveAfterEffectsPaths() {
+  const platform = process.platform;
 
-// Find valid After Effects installation
-let afterEffectsPath = null;
-for (const testPath of possiblePaths) {
-  if (fs.existsSync(testPath)) {
-    afterEffectsPath = testPath;
-    break;
+  if (platform === 'win32') {
+    return resolveWindowsPaths();
+  } else if (platform === 'darwin') {
+    return resolveMacOSPaths();
+  } else {
+    throw new Error(`Unsupported platform: ${platform}. Only Windows and macOS are supported.`);
   }
 }
 
-if (!afterEffectsPath) {
-  console.error('Error: Could not find After Effects installation.');
-  console.error('Please manually copy the bridge script to your After Effects ScriptUI Panels folder.');
-  console.error('Source: build/scripts/mcp-bridge-auto.jsx');
-  console.error('Target: C:\\Program Files\\Adobe\\Adobe After Effects [VERSION]\\Support Files\\Scripts\\ScriptUI Panels\\');
-  process.exit(1);
+/**
+ * Resolves After Effects paths on Windows
+ */
+function resolveWindowsPaths() {
+  const possiblePaths = [
+    'C:\\Program Files\\Adobe\\Adobe After Effects 2025',
+    'C:\\Program Files\\Adobe\\Adobe After Effects 2024',
+    'C:\\Program Files\\Adobe\\Adobe After Effects 2023',
+    'C:\\Program Files\\Adobe\\Adobe After Effects 2022',
+    'C:\\Program Files\\Adobe\\Adobe After Effects 2021',
+    'C:\\Program Files\\Adobe\\Adobe After Effects 2020',
+    'C:\\Program Files (x86)\\Adobe\\Adobe After Effects CS6',
+    'C:\\Program Files (x86)\\Adobe\\Adobe After Effects CC'
+  ];
+
+  for (const aePath of possiblePaths) {
+    const exePath = path.join(aePath, 'Support Files', 'AfterFX.exe');
+    if (fs.existsSync(exePath)) {
+      return {
+        appPath: aePath,
+        scriptsFolder: path.join(aePath, 'Support Files', 'Scripts'),
+        scriptUIFolder: path.join(aePath, 'Support Files', 'Scripts', 'ScriptUI Panels')
+      };
+    }
+  }
+
+  // Check environment variable
+  const adobePath = process.env.ADOBE_AFTER_EFFECTS_PATH;
+  if (adobePath && fs.existsSync(path.join(adobePath, 'Support Files', 'AfterFX.exe'))) {
+    return {
+      appPath: adobePath,
+      scriptsFolder: path.join(adobePath, 'Support Files', 'Scripts'),
+      scriptUIFolder: path.join(adobePath, 'Support Files', 'Scripts', 'ScriptUI Panels')
+    };
+  }
+
+  return null;
 }
 
-// Define source and destination paths
-const sourceScript = path.join(__dirname, 'build', 'scripts', 'mcp-bridge-auto.jsx');
-const destinationFolder = path.join(afterEffectsPath, 'Support Files', 'Scripts', 'ScriptUI Panels');
-const destinationScript = path.join(destinationFolder, 'mcp-bridge-auto.jsx');
+/**
+ * Resolves After Effects paths on macOS
+ */
+function resolveMacOSPaths() {
+  // On macOS, scripts are installed in user's Documents folder
+  const homeDir = os.homedir();
 
-// Ensure source script exists
-if (!fs.existsSync(sourceScript)) {
-  console.error(`Error: Source script not found at ${sourceScript}`);
-  console.error('Please run "npm run build" first to generate the script.');
-  process.exit(1);
+  // Try to find any After Effects version in the Documents folder
+  const documentsPath = path.join(homeDir, 'Documents', 'Adobe');
+
+  if (fs.existsSync(documentsPath)) {
+    const aeDirs = fs.readdirSync(documentsPath).filter(dir => dir.startsWith('After Effects'));
+
+    if (aeDirs.length > 0) {
+      // Sort to get the latest version
+      aeDirs.sort().reverse();
+      const latestAE = aeDirs[0];
+      const version = latestAE.replace('After Effects ', '');
+
+      const scriptsFolder = path.join(documentsPath, latestAE, 'Scripts');
+      const scriptUIFolder = path.join(scriptsFolder, 'ScriptUI Panels');
+
+      return {
+        appPath: `/Applications/Adobe After Effects ${version}`,
+        scriptsFolder: scriptsFolder,
+        scriptUIFolder: scriptUIFolder
+      };
+    }
+  }
+
+  // Try standard application locations
+  const possibleAppPaths = [
+    '/Applications/Adobe After Effects 2025',
+    '/Applications/Adobe After Effects 2024',
+    '/Applications/Adobe After Effects 2023',
+    '/Applications/Adobe After Effects 2022',
+    '/Applications/Adobe After Effects 2021'
+  ];
+
+  for (const appPath of possibleAppPaths) {
+    if (fs.existsSync(`${appPath}.app`) || fs.existsSync(`${appPath}/Adobe After Effects.app`)) {
+      const version = appPath.split(' ').pop();
+      const scriptsFolder = path.join(homeDir, 'Documents', 'Adobe', `After Effects ${version}`, 'Scripts');
+      const scriptUIFolder = path.join(scriptsFolder, 'ScriptUI Panels');
+
+      return {
+        appPath: appPath,
+        scriptsFolder: scriptsFolder,
+        scriptUIFolder: scriptUIFolder
+      };
+    }
+  }
+
+  return null;
 }
 
-// Create destination folder if it doesn't exist
-if (!fs.existsSync(destinationFolder)) {
+/**
+ * Copies file with appropriate permissions
+ */
+function copyFileWithPermissions(source, destination) {
+  const platform = process.platform;
+
   try {
-    fs.mkdirSync(destinationFolder, { recursive: true });
+    // Create directory if it doesn't exist
+    const destDir = path.dirname(destination);
+    if (!fs.existsSync(destDir)) {
+      fs.mkdirSync(destDir, { recursive: true });
+    }
+
+    if (platform === 'win32') {
+      // On Windows, try PowerShell with elevated privileges
+      const command = `
+        Start-Process PowerShell -Verb RunAs -ArgumentList "-Command Copy-Item -Path '${source.replace(/\\/g, '\\\\')}' -Destination '${destination.replace(/\\/g, '\\\\')}' -Force"
+      `;
+
+      try {
+        execSync(`powershell -Command "${command}"`, { stdio: 'inherit' });
+        return true;
+      } catch (error) {
+        // Fallback to regular copy
+        console.log('Admin elevation cancelled or failed, trying regular copy...');
+        fs.copyFileSync(source, destination);
+        return true;
+      }
+    } else if (platform === 'darwin') {
+      // On macOS, the user's Documents folder usually doesn't need special permissions
+      fs.copyFileSync(source, destination);
+      return true;
+    }
   } catch (error) {
-    console.error(`Error creating destination folder: ${error.message}`);
-    console.error('You may need administrative privileges to install the script.');
+    console.error(`Error copying file: ${error.message}`);
+    return false;
+  }
+}
+
+// Main installation logic
+async function main() {
+  console.log('=== After Effects MCP Bridge Installer ===\n');
+  console.log(`Platform: ${process.platform === 'darwin' ? 'macOS' : 'Windows'}\n`);
+
+  // Define source script path
+  const sourceScript = path.join(__dirname, 'build', 'scripts', 'mcp-bridge-auto.jsx');
+
+  // Ensure source script exists
+  if (!fs.existsSync(sourceScript)) {
+    console.error(`Error: Source script not found at ${sourceScript}`);
+    console.error('Please run "npm run build" first to generate the script.');
+    process.exit(1);
+  }
+
+  // Find After Effects installation
+  const aePaths = resolveAfterEffectsPaths();
+
+  if (!aePaths) {
+    console.error('Error: Could not find After Effects installation.');
+    console.error('\nPlease ensure After Effects is installed, or set the ADOBE_AFTER_EFFECTS_PATH environment variable.');
+
+    if (process.platform === 'darwin') {
+      console.error('\nOn macOS, make sure you have run After Effects at least once to create the Scripts folder.');
+      console.error('Expected location: ~/Documents/Adobe/After Effects [VERSION]/Scripts/');
+    } else {
+      console.error('\nExpected locations:');
+      console.error('  C:\\Program Files\\Adobe\\Adobe After Effects [VERSION]\\');
+    }
+    process.exit(1);
+  }
+
+  console.log(`Found After Effects at: ${aePaths.appPath}`);
+  console.log(`Scripts folder: ${aePaths.scriptsFolder}`);
+  console.log(`ScriptUI Panels folder: ${aePaths.scriptUIFolder}\n`);
+
+  // Define destination path
+  const destinationScript = path.join(aePaths.scriptUIFolder, 'mcp-bridge-auto.jsx');
+
+  // Copy the script
+  console.log(`Installing bridge script to ${destinationScript}...`);
+
+  if (copyFileWithPermissions(sourceScript, destinationScript)) {
+    console.log('\n✅ Bridge script installed successfully!\n');
+    console.log('Important next steps:');
+    console.log('1. Open After Effects');
+    console.log('2. Go to Edit > Preferences > Scripting & Expressions (Windows) or');
+    console.log('   After Effects > Settings > Scripting & Expressions (macOS)');
+    console.log('3. Enable "Allow Scripts to Write Files and Access Network"');
+    console.log('4. Restart After Effects');
+    console.log('5. Open the bridge panel: Window > mcp-bridge-auto.jsx');
+
+    if (process.platform === 'darwin') {
+      console.log('\nNote: On macOS, if you get permission errors when the script runs,');
+      console.log('you may need to grant After Effects full disk access in System Settings.');
+    }
+  } else {
+    console.error('\n❌ Installation failed.');
+    console.error('\nPlease try manual installation:');
+    console.error(`1. Copy: ${sourceScript}`);
+    console.error(`2. To: ${destinationScript}`);
+
+    if (process.platform === 'win32') {
+      console.error('3. You may need to run as administrator or use File Explorer with admin rights');
+    } else {
+      console.error('3. Make sure the Scripts folder exists and you have write permissions');
+    }
     process.exit(1);
   }
 }
 
-// Copy the script with elevated privileges (for Windows)
-try {
-  console.log(`Installing bridge script to ${destinationScript}...`);
-  
-  // Try to use PowerShell with elevated privileges on Windows
-  const command = `
-    Start-Process PowerShell -Verb RunAs -ArgumentList "-Command Copy-Item -Path '${sourceScript.replace(/\\/g, '\\\\')}' -Destination '${destinationScript.replace(/\\/g, '\\\\')}' -Force"
-  `;
-  
-  execSync(`powershell -Command "${command}"`, { stdio: 'inherit' });
-  
-  console.log('Bridge script installed successfully!');
-  console.log('\nImportant next steps:');
-  console.log('1. Open After Effects');
-  console.log('2. Go to Edit > Preferences > Scripting & Expressions');
-  console.log('3. Enable "Allow Scripts to Write Files and Access Network"');
-  console.log('4. Restart After Effects');
-  console.log('5. Open the bridge panel: Window > mcp-bridge-auto.jsx');
-} catch (error) {
-  console.error(`Error installing script: ${error.message}`);
-  console.error('\nPlease try manual installation:');
-  console.error(`1. Copy: ${sourceScript}`);
-  console.error(`2. To: ${destinationScript}`);
-  console.error('3. You may need to run as administrator or use File Explorer with admin rights');
+main().catch(error => {
+  console.error('Fatal error:', error);
   process.exit(1);
-} 
+});

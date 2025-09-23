@@ -5,6 +5,7 @@ import * as fs from "fs";
 import * as path from "path";
 import { z } from "zod";
 import { fileURLToPath } from 'url';
+import { resolveAfterEffectsPaths, getTempFilePath, validateAfterEffectsInstallation } from './utils/resolvePaths.js';
 
 // Create an MCP server
 const server = new McpServer({
@@ -32,13 +33,14 @@ function runExtendScript(scriptPath: string, args: Record<string, any> = {}): st
     const argsPath = path.join(TEMP_DIR, "args.json");
     fs.writeFileSync(argsPath, JSON.stringify(args));
 
-    // Find After Effects executable location - modify as needed for your installation
-    // This is a common default location, adjust as necessary
-    const aePath = "C:\\Program Files\\Adobe\\Adobe After Effects 2025\\Support Files\\AfterFX.exe";
-    
+    // Find After Effects executable location using cross-platform resolution
+    const aePaths = resolveAfterEffectsPaths();
+    const aePath = aePaths.executable;
+
     // Verify After Effects executable exists
-    if (!fs.existsSync(aePath)) {
-      return `Error: After Effects executable not found at "${aePath}". Please check your installation.`;
+    if (!aePath || !fs.existsSync(aePath)) {
+      const validation = validateAfterEffectsInstallation();
+      return `Error: ${validation.message}`;
     }
 
     // Verify script file exists
@@ -82,7 +84,7 @@ alert("Script execution completed");
 // Helper function to read results from After Effects temp file
 function readResultsFromTempFile(): string {
   try {
-    const tempFilePath = path.join(process.env.TEMP || process.env.TMP || '', 'ae_mcp_result.json');
+    const tempFilePath = getTempFilePath('ae_mcp_result.json');
     
     // Add debugging info
     console.error(`Checking for results at: ${tempFilePath}`);
@@ -121,7 +123,7 @@ function readResultsFromTempFile(): string {
 // Helper function to write command to file
 function writeCommandFile(command: string, args: Record<string, any> = {}): void {
   try {
-    const commandFile = path.join(process.env.TEMP || process.env.TMP || '', 'ae_command.json');
+    const commandFile = getTempFilePath('ae_command.json');
     const commandData = {
       command,
       args,
@@ -138,7 +140,7 @@ function writeCommandFile(command: string, args: Record<string, any> = {}): void
 // Helper function to clear the results file to avoid stale cache
 function clearResultsFile(): void {
   try {
-    const resultFile = path.join(process.env.TEMP || process.env.TMP || '', 'ae_mcp_result.json');
+    const resultFile = getTempFilePath('ae_mcp_result.json');
     
     // Write a placeholder message to indicate the file is being reset
     const resetData = {
@@ -541,7 +543,7 @@ server.tool(
     try {
       // Generate a unique timestamp
       const timestamp = new Date().getTime();
-      const tempFile = path.join(process.env.TEMP || process.env.TMP || '', `ae_test_${timestamp}.jsx`);
+      const tempFile = getTempFilePath(`ae_test_${timestamp}.jsx`);
       
       // Create a direct test script that doesn't rely on command files
       let scriptContent = "";
@@ -559,7 +561,7 @@ server.tool(
             prop.setValueAtTime(time, value);
             
             // Write direct result
-            var resultFile = new File("${path.join(process.env.TEMP || process.env.TMP || '', 'ae_test_result.txt').replace(/\\/g, '\\\\')}");
+            var resultFile = new File("${getTempFilePath('ae_test_result.txt').replace(/\\/g, '\\\\')}");
             resultFile.open("w");
             resultFile.write("SUCCESS: Added keyframe at time " + time + " with value " + value);
             resultFile.close();
@@ -567,7 +569,7 @@ server.tool(
             // Visual feedback
             alert("Test successful: Added opacity keyframe at " + time + "s with value " + value + "%");
           } catch (e) {
-            var errorFile = new File("${path.join(process.env.TEMP || process.env.TMP || '', 'ae_test_error.txt').replace(/\\/g, '\\\\')}");
+            var errorFile = new File("${getTempFilePath('ae_test_error.txt').replace(/\\/g, '\\\\')}");
             errorFile.open("w");
             errorFile.write("ERROR: " + e.toString());
             errorFile.close();
@@ -588,7 +590,7 @@ server.tool(
             prop.expression = expression;
             
             // Write direct result
-            var resultFile = new File("${path.join(process.env.TEMP || process.env.TMP || '', 'ae_test_result.txt').replace(/\\/g, '\\\\')}");
+            var resultFile = new File("${getTempFilePath('ae_test_result.txt').replace(/\\/g, '\\\\')}");
             resultFile.open("w");
             resultFile.write("SUCCESS: Added expression: " + expression);
             resultFile.close();
@@ -596,7 +598,7 @@ server.tool(
             // Visual feedback
             alert("Test successful: Added position expression: " + expression);
           } catch (e) {
-            var errorFile = new File("${path.join(process.env.TEMP || process.env.TMP || '', 'ae_test_error.txt').replace(/\\/g, '\\\\')}");
+            var errorFile = new File("${getTempFilePath('ae_test_error.txt').replace(/\\/g, '\\\\')}");
             errorFile.open("w");
             errorFile.write("ERROR: " + e.toString());
             errorFile.close();
