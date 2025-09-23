@@ -1,6 +1,52 @@
 // mcp-bridge-auto.jsx
 // Auto-running MCP Bridge panel for After Effects
 
+// JSON Polyfill for After Effects (which doesn't have JSON built-in)
+if (typeof JSON === 'undefined') {
+    JSON = {};
+
+    JSON.parse = function(str) {
+        try {
+            return eval('(' + str + ')');
+        } catch (e) {
+            throw new Error('Invalid JSON: ' + e.message);
+        }
+    };
+
+    JSON.stringify = function(obj, replacer, space) {
+        var type = typeof obj;
+        if (type === 'undefined' || type === 'function') {
+            return undefined;
+        }
+        if (type === 'number' || type === 'boolean' || obj === null) {
+            return String(obj);
+        }
+        if (type === 'string') {
+            return '"' + obj.replace(/[\\"]/g, '\\$&').replace(/\n/g, '\\n').replace(/\r/g, '\\r').replace(/\t/g, '\\t') + '"';
+        }
+        if (obj instanceof Array) {
+            var arr = [];
+            for (var i = 0; i < obj.length; i++) {
+                arr.push(JSON.stringify(obj[i], replacer, space));
+            }
+            return '[' + arr.join(',') + ']';
+        }
+        if (type === 'object') {
+            var pairs = [];
+            for (var key in obj) {
+                if (obj.hasOwnProperty(key)) {
+                    var val = JSON.stringify(obj[key], replacer, space);
+                    if (val !== undefined) {
+                        pairs.push('"' + key + '":' + val);
+                    }
+                }
+            }
+            return '{' + pairs.join(',') + '}';
+        }
+        return undefined;
+    };
+}
+
 // Remove #include directives as we define functions below
 /*
 #include "createComposition.jsx"
@@ -833,16 +879,18 @@ autoRunCheckbox.value = true;
 var checkInterval = 2000;
 var isChecking = false;
 
-// Command file path
+// Command file path - using fixed project directory
 function getCommandFilePath() {
-    var tempFolder = Folder.temp;
-    return tempFolder.fsName + "/ae_command.json";
+    // Use a fixed directory to avoid permission issues
+    var projectPath = "/Users/nathanielryan/Desktop/projects/after-effects-mcp/temp-bridge/ae_command.json";
+    return projectPath;
 }
 
-// Result file path
+// Result file path - using fixed project directory
 function getResultFilePath() {
-    var tempFolder = Folder.temp;
-    return tempFolder.fsName + "/ae_mcp_result.json";
+    // Use a fixed directory to avoid permission issues
+    var projectPath = "/Users/nathanielryan/Desktop/projects/after-effects-mcp/temp-bridge/ae_mcp_result.json";
+    return projectPath;
 }
 
 // Functions for each script type
@@ -1145,27 +1193,35 @@ function logToPanel(message) {
 // Check for new commands
 function checkForCommands() {
     if (!autoRunCheckbox.value || isChecking) return;
-    
+
     isChecking = true;
-    
+
     try {
-        var commandFile = new File(getCommandFilePath());
+        var commandPath = getCommandFilePath();
+        logToPanel("Checking for commands at: " + commandPath);
+
+        var commandFile = new File(commandPath);
         if (commandFile.exists) {
+            logToPanel("Command file found!");
             commandFile.open("r");
             var content = commandFile.read();
             commandFile.close();
-            
+
             if (content) {
+                logToPanel("Command content: " + content.substring(0, 100) + "...");
                 try {
                     var commandData = JSON.parse(content);
-                    
+
                     // Only execute pending commands
                     if (commandData.status === "pending") {
+                        logToPanel("Executing command: " + commandData.command);
                         // Update status to running
                         updateCommandStatus("running");
-                        
+
                         // Execute the command
                         executeCommand(commandData.command, commandData.args || {});
+                    } else {
+                        logToPanel("Command status is: " + commandData.status + " (skipping)");
                     }
                 } catch (parseError) {
                     logToPanel("Error parsing command file: " + parseError.toString());
@@ -1187,7 +1243,7 @@ function startCommandChecker() {
 // Add manual check button
 var checkButton = panel.add("button", undefined, "Check for Commands Now");
 checkButton.onClick = function() {
-    logToPanel("Manually checking for commands");
+    logToPanel("Manually checking for commands at: " + getCommandFilePath());
     checkForCommands();
 };
 

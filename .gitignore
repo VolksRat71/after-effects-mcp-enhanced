@@ -52,6 +52,7 @@ logs/
 /temp
 *.temp.*
 **/temp/
+/temp-bridge
 
 # Test files
 manual_animation_test.jsx
@@ -61,4 +62,4 @@ logs
 *.log
 npm-debug.log*
 yarn-debug.log*
-yarn-error.log* 
+yarn-error.log*

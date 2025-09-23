@@ -196,10 +196,26 @@ function extractVersionFromMacApp(appPath: string): string {
 }
 
 /**
- * Gets the system temp directory in a cross-platform way
+ * Gets the project's temp-bridge directory for communication with After Effects
+ * Using a fixed location avoids permission issues with system temp directories
  */
 export function getTempDir(): string {
-  return os.tmpdir();
+  // Use a fixed directory in the user's projects folder
+  // This avoids permission issues and makes debugging easier
+  const projectTempDir = '/Users/nathanielryan/Desktop/projects/after-effects-mcp/temp-bridge';
+
+  // Create the directory if it doesn't exist
+  if (!fs.existsSync(projectTempDir)) {
+    try {
+      fs.mkdirSync(projectTempDir, { recursive: true });
+    } catch (e) {
+      console.error('Could not create temp-bridge directory:', e);
+      // Fallback to system temp if creation fails
+      return os.tmpdir();
+    }
+  }
+
+  return projectTempDir;
 }
 
 /**
