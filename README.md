@@ -1,17 +1,28 @@
-# 🎬 After Effects MCP Server
+# 🎬 After Effects MCP Server - Enhanced Edition
 
 ![Node.js](https://img.shields.io/badge/node-%3E=14.x-brightgreen.svg)
 ![Build](https://img.shields.io/badge/build-passing-success)
-![License](https://img.shields.io/github/license/Dakkshin/after-effects-mcp)
+![License](https://img.shields.io/badge/license-MIT-blue)
 ![Platform](https://img.shields.io/badge/platform-Windows%20%7C%20macOS-blue)
 ![Version](https://img.shields.io/badge/version-1.0.0-blue)
 ![After Effects](https://img.shields.io/badge/After%20Effects-2021%2B-purple)
 
-✨ A Model Context Protocol (MCP) server for Adobe After Effects that enables AI assistants and other applications to control After Effects through a standardized protocol.
+✨ An enhanced Model Context Protocol (MCP) server for Adobe After Effects with improved cross-platform support, asset management, animation tools, and automatic housekeeping.
 
-<a href="https://glama.ai/mcp/servers/@Dakkshin/after-effects-mcp">
-  <img width="380" height="200" src="https://glama.ai/mcp/servers/@Dakkshin/after-effects-mcp/badge" alt="mcp-after-effects MCP server" />
-</a>
+> 🔗 **Based on:** [after-effects-mcp](https://github.com/Dakkshin/after-effects-mcp) by Dakkshin
+> This project extends the original with significant improvements to tools, structure, cross-platform compatibility, and reliability.
+
+## 🚀 What's New in This Enhanced Edition
+
+### Major Improvements Over Original
+- **✅ Fixed Critical Bugs** - Resolved ExtendScript filter() errors and composition index issues
+- **🖥️ True Cross-Platform Support** - Dynamic path resolution for Windows and macOS
+- **📦 Asset Management Suite** - Import, replace, and manage footage with 4 new tools
+- **🎬 Animation Templates** - 12 pre-built animations (bounce, slide, fade, zoom, etc.)
+- **🧹 Automatic Housekeeping** - Self-cleaning temp files to prevent accumulation
+- **📊 Command History** - Track, query, and replay all operations
+- **🛠️ Improved Architecture** - Better build structure with `build/temp` organization
+- **📝 Comprehensive Documentation** - Detailed guides for all 20+ tools
 
 ## 🎯 Key Features
 
@@ -79,8 +90,8 @@
 
 1. **Clone the repository**
    ```bash
-   git clone https://github.com/Dakkshin/after-effects-mcp.git
-   cd after-effects-mcp
+   git clone https://github.com/[your-username]/after-effects-mcp-enhanced.git
+   cd after-effects-mcp-enhanced
    ```
 
 2. **Install dependencies**
@@ -370,12 +381,21 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 
 ## 🙏 Acknowledgments
 
+- Original project by [Dakkshin](https://github.com/Dakkshin/after-effects-mcp)
 - Built for the [Model Context Protocol](https://www.anthropic.com/news/model-context-protocol) ecosystem
 - Tested with Claude Desktop and Cursor
 - Thanks to the After Effects scripting community
 
----
+## 📬 Contact & Support
 
-**Need help?** Open an issue on [GitHub](https://github.com/Dakkshin/after-effects-mcp/issues)
+**Found a bug or have a feature request?**
+- Open an issue on [GitHub Issues](https://github.com/[your-username]/after-effects-mcp-enhanced/issues)
+- Check the [troubleshooting guide](#-troubleshooting) first
+
+**Want to contribute?**
+- Fork the repository and submit a pull request
+- See [Contributing](#contributing) for guidelines
+
+---
 
 **Ready to animate?** Start creating with AI-powered After Effects automation! 🎬✨

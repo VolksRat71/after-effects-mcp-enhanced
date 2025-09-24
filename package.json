@@ -1,7 +1,14 @@
 {
-  "name": "after-effects-mcp",
+  "name": "after-effects-mcp-enhanced",
   "version": "1.0.0",
-  "description": "MCP server for Adobe After Effects",
+  "description": "Enhanced MCP server for Adobe After Effects with cross-platform support and extended tools",
+  "author": "Your Name",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/[your-username]/after-effects-mcp-enhanced.git"
+  },
+  "keywords": ["after-effects", "mcp", "model-context-protocol", "animation", "adobe", "automation"],
+  "license": "MIT",
   "main": "build/index.js",
   "type": "module",
   "scripts": {
