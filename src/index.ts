@@ -25,6 +25,56 @@ const TEMP_DIR = path.join(__dirname, "temp");
 // Initialize history manager
 const historyManager = new HistoryManager();
 
+// Cleanup functions for temporary files
+function cleanupOldJSXFiles(): void {
+  try {
+    const tempDir = TEMP_DIR; // Use the same TEMP_DIR constant defined above
+    if (!fs.existsSync(tempDir)) return;
+
+    const files = fs.readdirSync(tempDir);
+    const oneHourAgo = Date.now() - 3600000; // 1 hour in milliseconds
+    let cleanedCount = 0;
+
+    files.forEach(file => {
+      if (file.endsWith('.jsx')) {
+        const filePath = path.join(tempDir, file);
+        try {
+          const stats = fs.statSync(filePath);
+          if (stats.mtimeMs < oneHourAgo) {
+            fs.unlinkSync(filePath);
+            cleanedCount++;
+            console.error(`Cleaned old JSX file: ${file}`);
+          }
+        } catch (e) {
+          // File might be locked or already deleted
+          console.error(`Could not clean ${file}:`, e);
+        }
+      }
+    });
+
+    if (cleanedCount > 0) {
+      console.error(`Cleaned ${cleanedCount} old JSX files from previous sessions`);
+    }
+  } catch (error) {
+    console.error('Error during cleanup:', error);
+  }
+}
+
+function scheduleFileCleanup(filePath: string, delayMs: number = 300000): void {
+  // Schedule cleanup after 5 minutes (default)
+  setTimeout(() => {
+    try {
+      if (fs.existsSync(filePath)) {
+        fs.unlinkSync(filePath);
+        console.error(`Cleaned up temp file: ${path.basename(filePath)}`);
+      }
+    } catch (e) {
+      // File might be in use or already deleted
+      console.error(`Could not clean up ${path.basename(filePath)}:`, e);
+    }
+  }, delayMs);
+}
+
 // Helper function to run After Effects scripts
 function runExtendScript(scriptPath: string, args: Record<string, any> = {}): string {
   try {
@@ -1000,6 +1050,9 @@ server.tool(
 
       fs.writeFileSync(tempScriptPath, wrappedScript);
 
+      // Schedule cleanup of temp file
+      scheduleFileCleanup(tempScriptPath);
+
       // Clear any stale result data
       clearResultsFile();
 
@@ -1303,6 +1356,9 @@ server.tool(
 
       fs.writeFileSync(tempScriptPath, scriptContent, 'utf-8');
 
+      // Schedule cleanup of temp file
+      scheduleFileCleanup(tempScriptPath);
+
       // Clear any stale results
       clearResultsFile();
 
@@ -1434,6 +1490,10 @@ server.tool(
       const tempScriptPath = path.join(TEMP_DIR, tempScriptName);
 
       fs.writeFileSync(tempScriptPath, scriptContent, 'utf-8');
+
+      // Schedule cleanup of temp file
+      scheduleFileCleanup(tempScriptPath);
+
       clearResultsFile();
       writeCommandFile("customScript", { scriptPath: tempScriptPath });
 
@@ -1580,6 +1640,10 @@ server.tool(
       const tempScriptPath = path.join(TEMP_DIR, tempScriptName);
 
       fs.writeFileSync(tempScriptPath, scriptContent, 'utf-8');
+
+      // Schedule cleanup of temp file
+      scheduleFileCleanup(tempScriptPath);
+
       clearResultsFile();
       writeCommandFile("customScript", { scriptPath: tempScriptPath });
 
@@ -1718,6 +1782,10 @@ server.tool(
       const tempScriptPath = path.join(TEMP_DIR, tempScriptName);
 
       fs.writeFileSync(tempScriptPath, scriptContent, 'utf-8');
+
+      // Schedule cleanup of temp file
+      scheduleFileCleanup(tempScriptPath);
+
       clearResultsFile();
       writeCommandFile("customScript", { scriptPath: tempScriptPath });
 
@@ -1881,6 +1949,10 @@ server.tool(
       const tempScriptPath = path.join(TEMP_DIR, tempScriptName);
 
       fs.writeFileSync(tempScriptPath, scriptContent, 'utf-8');
+
+      // Schedule cleanup of temp file
+      scheduleFileCleanup(tempScriptPath);
+
       clearResultsFile();
       writeCommandFile("customScript", { scriptPath: tempScriptPath });
 
@@ -2109,6 +2181,10 @@ server.tool(
       const tempScriptPath = path.join(TEMP_DIR, tempScriptName);
 
       fs.writeFileSync(tempScriptPath, scriptContent, 'utf-8');
+
+      // Schedule cleanup of temp file
+      scheduleFileCleanup(tempScriptPath);
+
       clearResultsFile();
       writeCommandFile("customScript", { scriptPath: tempScriptPath });
 
@@ -2147,6 +2223,9 @@ async function main() {
   console.error("After Effects MCP Server starting...");
   console.error(`Scripts directory: ${SCRIPTS_DIR}`);
   console.error(`Temp directory: ${TEMP_DIR}`);
+
+  // Clean up old JSX files on startup
+  cleanupOldJSXFiles();
 
   const transport = new StdioServerTransport();
   await server.connect(transport);
