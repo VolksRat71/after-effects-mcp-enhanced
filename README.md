@@ -23,13 +23,15 @@
 - **🖥️ Cross-platform** - Works on both Windows and macOS
 
 ## Table of Contents
-- [Features](#features)
-- [Setup Instructions](#setup-instructions)
-- [Available Tools](#available-tools)
-- [Usage Examples](#usage-examples)
-- [Troubleshooting](#troubleshooting)
-- [For Developers](#for-developers)
-- [Recent Improvements](#recent-improvements)
+- [Key Features](#-key-features)
+- [Features](#-features)
+- [Setup Instructions](#️-setup-instructions)
+- [Available Tools](#-available-tools)
+- [Usage Examples](#-usage-examples)
+- [Troubleshooting](#-troubleshooting)
+- [For Developers](#-for-developers)
+- [Recent Improvements](#-recent-improvements)
+- [License](#-license)
 
 ## 📦 Features
 
