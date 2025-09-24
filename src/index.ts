@@ -1466,12 +1466,688 @@ server.tool(
   }
 );
 
+// Tool for importing assets from disk
+server.tool(
+  "import-assets",
+  "Import image or video files from disk into the After Effects project",
+  {
+    files: z.array(z.string()).describe("Array of absolute file paths to import"),
+    addToComp: z.boolean().optional().describe("Whether to add imported items to a composition"),
+    compIndex: z.number().optional().describe("1-based index of the composition to add items to"),
+    position: z.array(z.number()).length(2).optional().describe("Position [x, y] for the layers in the composition"),
+    scale: z.array(z.number()).length(2).optional().describe("Scale [x, y] percentage for the layers")
+  },
+  async ({ files, addToComp, compIndex, position, scale }) => {
+    const commandId = historyManager.startCommand('import-assets', { files, addToComp, compIndex, position, scale });
+
+    try {
+      // Create the import script
+      const scriptContent = `(function() {
+  try {
+    var importedItems = [];
+    var files = ${JSON.stringify(files)};
+    var addToComp = ${addToComp || false};
+    var compIndex = ${compIndex || 1};
+    var position = ${position ? JSON.stringify(position) : '[960, 540]'};
+    var scale = ${scale ? JSON.stringify(scale) : '[100, 100]'};
+
+    // Import each file
+    for (var i = 0; i < files.length; i++) {
+      var file = new File(files[i]);
+
+      if (!file.exists) {
+        importedItems.push({
+          path: files[i],
+          success: false,
+          error: "File does not exist"
+        });
+        continue;
+      }
+
+      try {
+        var importOptions = new ImportOptions(file);
+        var importedItem = app.project.importFile(importOptions);
+
+        importedItems.push({
+          path: files[i],
+          success: true,
+          name: importedItem.name,
+          id: importedItem.id,
+          type: importedItem.typeName
+        });
+
+        // Add to composition if requested
+        if (addToComp && importedItem instanceof FootageItem) {
+          var comp = null;
+          var compCount = 0;
+
+          // Find the target composition by index
+          for (var j = 1; j <= app.project.numItems; j++) {
+            if (app.project.item(j) instanceof CompItem) {
+              compCount++;
+              if (compCount === compIndex) {
+                comp = app.project.item(j);
+                break;
+              }
+            }
+          }
+
+          if (comp) {
+            var layer = comp.layers.add(importedItem);
+            layer.position.setValue(position);
+            layer.scale.setValue(scale);
+
+            importedItems[importedItems.length - 1].addedToComp = comp.name;
+            importedItems[importedItems.length - 1].layerIndex = layer.index;
+          }
+        }
+      } catch (importError) {
+        importedItems.push({
+          path: files[i],
+          success: false,
+          error: importError.toString()
+        });
+      }
+    }
+
+    // Count successes and failures (ExtendScript doesn't have filter)
+    var successCount = 0;
+    var failCount = 0;
+    for (var k = 0; k < importedItems.length; k++) {
+      if (importedItems[k].success) {
+        successCount++;
+      } else {
+        failCount++;
+      }
+    }
+
+    return JSON.stringify({
+      success: true,
+      imported: importedItems,
+      totalImported: successCount,
+      totalFailed: failCount
+    });
+
+  } catch (error) {
+    return JSON.stringify({
+      success: false,
+      error: error.toString()
+    });
+  }
+})();`;
+
+      const tempScriptName = `import_assets_${Date.now()}.jsx`;
+      const tempScriptPath = path.join(TEMP_DIR, tempScriptName);
+
+      fs.writeFileSync(tempScriptPath, scriptContent, 'utf-8');
+      clearResultsFile();
+      writeCommandFile("customScript", { scriptPath: tempScriptPath });
+
+      historyManager.completeCommand(commandId, 'success', { filesImported: files.length });
+
+      return {
+        content: [
+          {
+            type: "text",
+            text: `Command to import ${files.length} file(s) has been queued.\n` +
+                  `Use the "get-results" tool after a few seconds to check for results.`
+          }
+        ]
+      };
+    } catch (error) {
+      const errorMsg = `Error preparing import: ${String(error)}`;
+      historyManager.completeCommand(commandId, 'error', undefined, errorMsg);
+
+      return {
+        content: [
+          {
+            type: "text",
+            text: errorMsg
+          }
+        ],
+        isError: true
+      };
+    }
+  }
+);
+
+// Tool for replacing footage in existing layers
+server.tool(
+  "replace-footage",
+  "Replace the source footage of an existing layer with a new file",
+  {
+    compIndex: z.number().describe("1-based index of the composition"),
+    layerIndex: z.number().optional().describe("1-based index of the layer to replace footage for"),
+    layerName: z.string().optional().describe("Name of the layer to replace footage for"),
+    newFootagePath: z.string().describe("Absolute path to the new footage file")
+  },
+  async ({ compIndex, layerIndex, layerName, newFootagePath }) => {
+    const commandId = historyManager.startCommand('replace-footage', { compIndex, layerIndex, layerName, newFootagePath });
+
+    try {
+      const scriptContent = `(function() {
+  try {
+    var compIndex = ${compIndex};
+    var layerIndex = ${layerIndex || 'null'};
+    var layerName = ${layerName ? JSON.stringify(layerName) : 'null'};
+    var newFootagePath = ${JSON.stringify(newFootagePath)};
+
+    // Find the composition
+    var comp = null;
+    var compCount = 0;
+    for (var i = 1; i <= app.project.numItems; i++) {
+      if (app.project.item(i) instanceof CompItem) {
+        compCount++;
+        if (compCount === compIndex) {
+          comp = app.project.item(i);
+          break;
+        }
+      }
+    }
+
+    if (!comp) {
+      return JSON.stringify({
+        success: false,
+        error: "Composition not found at index " + compIndex
+      });
+    }
+
+    // Find the layer
+    var layer = null;
+    if (layerIndex) {
+      layer = comp.layer(layerIndex);
+    } else if (layerName) {
+      for (var j = 1; j <= comp.numLayers; j++) {
+        if (comp.layer(j).name === layerName) {
+          layer = comp.layer(j);
+          break;
+        }
+      }
+    }
+
+    if (!layer) {
+      return JSON.stringify({
+        success: false,
+        error: "Layer not found"
+      });
+    }
+
+    if (!(layer instanceof AVLayer) || !layer.source) {
+      return JSON.stringify({
+        success: false,
+        error: "Layer does not have replaceable source footage"
+      });
+    }
+
+    // Import the new footage
+    var file = new File(newFootagePath);
+    if (!file.exists) {
+      return JSON.stringify({
+        success: false,
+        error: "New footage file does not exist: " + newFootagePath
+      });
+    }
+
+    var importOptions = new ImportOptions(file);
+    var newFootage = app.project.importFile(importOptions);
+
+    // Store old source info
+    var oldSource = layer.source;
+    var oldSourceName = oldSource.name;
+
+    // Replace the source
+    layer.replaceSource(newFootage, false);
+
+    return JSON.stringify({
+      success: true,
+      message: "Footage replaced successfully",
+      layer: layer.name,
+      oldSource: oldSourceName,
+      newSource: newFootage.name
+    });
+
+  } catch (error) {
+    return JSON.stringify({
+      success: false,
+      error: error.toString()
+    });
+  }
+})();`;
+
+      const tempScriptName = `replace_footage_${Date.now()}.jsx`;
+      const tempScriptPath = path.join(TEMP_DIR, tempScriptName);
+
+      fs.writeFileSync(tempScriptPath, scriptContent, 'utf-8');
+      clearResultsFile();
+      writeCommandFile("customScript", { scriptPath: tempScriptPath });
+
+      historyManager.completeCommand(commandId, 'success');
+
+      return {
+        content: [
+          {
+            type: "text",
+            text: `Command to replace footage has been queued.\n` +
+                  `Use the "get-results" tool after a few seconds to check for results.`
+          }
+        ]
+      };
+    } catch (error) {
+      const errorMsg = `Error preparing replace footage: ${String(error)}`;
+      historyManager.completeCommand(commandId, 'error', undefined, errorMsg);
+
+      return {
+        content: [
+          {
+            type: "text",
+            text: errorMsg
+          }
+        ],
+        isError: true
+      };
+    }
+  }
+);
+
+// Tool for getting layer properties with keyframe information
+server.tool(
+  "get-layer-properties",
+  "Get detailed information about a layer's properties including keyframe data",
+  {
+    compIndex: z.number().describe("1-based index of the composition"),
+    layerIndex: z.number().describe("1-based index of the layer"),
+    includeKeyframes: z.boolean().optional().describe("Include keyframe times and values")
+  },
+  async ({ compIndex, layerIndex, includeKeyframes = true }) => {
+    const commandId = historyManager.startCommand('get-layer-properties', { compIndex, layerIndex, includeKeyframes });
+
+    try {
+      const scriptContent = `(function() {
+  try {
+    var compIndex = ${compIndex};
+    var layerIndex = ${layerIndex};
+    var includeKeyframes = ${includeKeyframes};
+
+    // Find the composition
+    var comp = null;
+    var compCount = 0;
+    for (var i = 1; i <= app.project.numItems; i++) {
+      if (app.project.item(i) instanceof CompItem) {
+        compCount++;
+        if (compCount === compIndex) {
+          comp = app.project.item(i);
+          break;
+        }
+      }
+    }
+
+    if (!comp) {
+      return JSON.stringify({
+        success: false,
+        error: "Composition not found at index " + compIndex
+      });
+    }
+
+    var layer = comp.layer(layerIndex);
+    if (!layer) {
+      return JSON.stringify({
+        success: false,
+        error: "Layer not found at index " + layerIndex
+      });
+    }
+
+    // Get transform properties
+    var transform = layer.property("Transform");
+    var properties = {};
+
+    // Helper function to get property info
+    function getPropertyInfo(prop, propName) {
+      var info = {
+        value: prop.value,
+        canSetExpression: prop.canSetExpression,
+        expression: prop.expression || "",
+        expressionEnabled: prop.expressionEnabled,
+        numKeys: prop.numKeys
+      };
+
+      if (includeKeyframes && prop.numKeys > 0) {
+        info.keyframes = [];
+        for (var k = 1; k <= prop.numKeys; k++) {
+          info.keyframes.push({
+            time: prop.keyTime(k),
+            value: prop.keyValue(k)
+          });
+        }
+      }
+
+      return info;
+    }
+
+    // Get all transform properties
+    properties.position = getPropertyInfo(transform.property("Position"), "Position");
+    properties.scale = getPropertyInfo(transform.property("Scale"), "Scale");
+    properties.rotation = getPropertyInfo(transform.property("Rotation"), "Rotation");
+    properties.opacity = getPropertyInfo(transform.property("Opacity"), "Opacity");
+    properties.anchorPoint = getPropertyInfo(transform.property("Anchor Point"), "Anchor Point");
+
+    // Get layer info
+    var layerInfo = {
+      name: layer.name,
+      index: layer.index,
+      inPoint: layer.inPoint,
+      outPoint: layer.outPoint,
+      startTime: layer.startTime,
+      duration: layer.duration,
+      enabled: layer.enabled,
+      solo: layer.solo,
+      shy: layer.shy,
+      locked: layer.locked,
+      hasVideo: layer.hasVideo,
+      active: layer.active,
+      nullLayer: layer.nullLayer,
+      parent: layer.parent ? layer.parent.name : null
+    };
+
+    // Check for effects
+    var effects = [];
+    if (layer.property("Effects") && layer.property("Effects").numProperties > 0) {
+      var effectsGroup = layer.property("Effects");
+      for (var e = 1; e <= effectsGroup.numProperties; e++) {
+        var effect = effectsGroup.property(e);
+        effects.push({
+          name: effect.name,
+          enabled: effect.enabled,
+          index: e
+        });
+      }
+    }
+
+    return JSON.stringify({
+      success: true,
+      layer: layerInfo,
+      properties: properties,
+      effects: effects
+    });
+
+  } catch (error) {
+    return JSON.stringify({
+      success: false,
+      error: error.toString()
+    });
+  }
+})();`;
+
+      const tempScriptName = `get_layer_props_${Date.now()}.jsx`;
+      const tempScriptPath = path.join(TEMP_DIR, tempScriptName);
+
+      fs.writeFileSync(tempScriptPath, scriptContent, 'utf-8');
+      clearResultsFile();
+      writeCommandFile("customScript", { scriptPath: tempScriptPath });
+
+      historyManager.completeCommand(commandId, 'success');
+
+      return {
+        content: [
+          {
+            type: "text",
+            text: `Command to get layer properties has been queued.\n` +
+                  `Use the "get-results" tool after a few seconds to check for results.`
+          }
+        ]
+      };
+    } catch (error) {
+      const errorMsg = `Error preparing get layer properties: ${String(error)}`;
+      historyManager.completeCommand(commandId, 'error', undefined, errorMsg);
+
+      return {
+        content: [
+          {
+            type: "text",
+            text: errorMsg
+          }
+        ],
+        isError: true
+      };
+    }
+  }
+);
+
+// Tool for applying animation templates
+server.tool(
+  "apply-animation-template",
+  "Apply a predefined animation template to a layer",
+  {
+    template: z.enum(["fade-in", "fade-out", "slide-left", "slide-right", "slide-up", "slide-down", "bounce", "spin", "zoom-in", "zoom-out", "shake", "slide-and-fall"]).describe("Name of the animation template"),
+    compIndex: z.number().describe("1-based index of the composition"),
+    layerIndex: z.number().describe("1-based index of the layer"),
+    duration: z.number().optional().describe("Duration of the animation in seconds (default: 1)"),
+    startTime: z.number().optional().describe("Start time for the animation (default: current time indicator)")
+  },
+  async ({ template, compIndex, layerIndex, duration = 1, startTime }) => {
+    const commandId = historyManager.startCommand('apply-animation-template', { template, compIndex, layerIndex, duration, startTime });
+
+    try {
+      const scriptContent = `(function() {
+  try {
+    var template = ${JSON.stringify(template)};
+    var compIndex = ${compIndex};
+    var layerIndex = ${layerIndex};
+    var duration = ${duration};
+    var startTime = ${startTime !== undefined ? startTime : 'comp.time'};
+
+    // Find composition
+    var comp = null;
+    var compCount = 0;
+    for (var i = 1; i <= app.project.numItems; i++) {
+      if (app.project.item(i) instanceof CompItem) {
+        compCount++;
+        if (compCount === compIndex) {
+          comp = app.project.item(i);
+          break;
+        }
+      }
+    }
+
+    if (!comp) {
+      return JSON.stringify({
+        success: false,
+        error: "Composition not found"
+      });
+    }
+
+    var layer = comp.layer(layerIndex);
+    if (!layer) {
+      return JSON.stringify({
+        success: false,
+        error: "Layer not found"
+      });
+    }
+
+    if (startTime === 'comp.time') {
+      startTime = comp.time;
+    }
+
+    var endTime = startTime + duration;
+    var transform = layer.property("Transform");
+
+    // Helper to safely set keyframes
+    function setKeyframe(prop, time, value) {
+      if (prop.numKeys > 0 || prop.isTimeVarying) {
+        prop.setValueAtTime(time, value);
+      } else {
+        // First keyframe - set value at current time, then at target time
+        prop.setValueAtTime(startTime, prop.value);
+        prop.setValueAtTime(time, value);
+      }
+    }
+
+    // Apply template
+    switch(template) {
+      case "fade-in":
+        var opacity = transform.property("Opacity");
+        setKeyframe(opacity, startTime, 0);
+        setKeyframe(opacity, endTime, 100);
+        break;
+
+      case "fade-out":
+        var opacity = transform.property("Opacity");
+        setKeyframe(opacity, startTime, 100);
+        setKeyframe(opacity, endTime, 0);
+        break;
+
+      case "slide-left":
+        var position = transform.property("Position");
+        var currentPos = position.value;
+        setKeyframe(position, startTime, [comp.width + 200, currentPos[1]]);
+        setKeyframe(position, endTime, currentPos);
+        break;
+
+      case "slide-right":
+        var position = transform.property("Position");
+        var currentPos = position.value;
+        setKeyframe(position, startTime, [-200, currentPos[1]]);
+        setKeyframe(position, endTime, currentPos);
+        break;
+
+      case "slide-up":
+        var position = transform.property("Position");
+        var currentPos = position.value;
+        setKeyframe(position, startTime, [currentPos[0], comp.height + 200]);
+        setKeyframe(position, endTime, currentPos);
+        break;
+
+      case "slide-down":
+        var position = transform.property("Position");
+        var currentPos = position.value;
+        setKeyframe(position, startTime, [currentPos[0], -200]);
+        setKeyframe(position, endTime, currentPos);
+        break;
+
+      case "bounce":
+        var position = transform.property("Position");
+        var currentPos = position.value;
+        var bounceHeight = 100;
+        setKeyframe(position, startTime, currentPos);
+        setKeyframe(position, startTime + duration * 0.25, [currentPos[0], currentPos[1] - bounceHeight]);
+        setKeyframe(position, startTime + duration * 0.5, currentPos);
+        setKeyframe(position, startTime + duration * 0.65, [currentPos[0], currentPos[1] - bounceHeight * 0.5]);
+        setKeyframe(position, startTime + duration * 0.8, currentPos);
+        setKeyframe(position, startTime + duration * 0.9, [currentPos[0], currentPos[1] - bounceHeight * 0.25]);
+        setKeyframe(position, endTime, currentPos);
+        break;
+
+      case "spin":
+        var rotation = transform.property("Rotation");
+        setKeyframe(rotation, startTime, 0);
+        setKeyframe(rotation, endTime, 360);
+        break;
+
+      case "zoom-in":
+        var scale = transform.property("Scale");
+        setKeyframe(scale, startTime, [0, 0]);
+        setKeyframe(scale, endTime, [100, 100]);
+        break;
+
+      case "zoom-out":
+        var scale = transform.property("Scale");
+        setKeyframe(scale, startTime, [100, 100]);
+        setKeyframe(scale, endTime, [0, 0]);
+        break;
+
+      case "shake":
+        var position = transform.property("Position");
+        position.expression = "wiggle(10, 25)";
+        break;
+
+      case "slide-and-fall":
+        var position = transform.property("Position");
+        var rotation = transform.property("Rotation");
+        var scale = transform.property("Scale");
+        var currentPos = position.value;
+
+        // Slide in from right
+        setKeyframe(position, startTime, [comp.width + 200, currentPos[1] - 100]);
+        setKeyframe(position, startTime + duration * 0.3, [currentPos[0], currentPos[1]]);
+
+        // Hold
+        setKeyframe(position, startTime + duration * 0.7, [currentPos[0], currentPos[1]]);
+
+        // Fall down with rotation
+        setKeyframe(position, endTime, [currentPos[0] + 50, comp.height + 200]);
+        setKeyframe(rotation, startTime + duration * 0.7, 0);
+        setKeyframe(rotation, endTime, -15);
+
+        // Scale down as it falls
+        setKeyframe(scale, startTime + duration * 0.7, [100, 100]);
+        setKeyframe(scale, endTime, [80, 80]);
+        break;
+
+      default:
+        return JSON.stringify({
+          success: false,
+          error: "Unknown template: " + template
+        });
+    }
+
+    return JSON.stringify({
+      success: true,
+      message: "Animation template '" + template + "' applied successfully",
+      layer: layer.name,
+      startTime: startTime,
+      endTime: endTime
+    });
+
+  } catch (error) {
+    return JSON.stringify({
+      success: false,
+      error: error.toString()
+    });
+  }
+})();`;
+
+      const tempScriptName = `animation_template_${Date.now()}.jsx`;
+      const tempScriptPath = path.join(TEMP_DIR, tempScriptName);
+
+      fs.writeFileSync(tempScriptPath, scriptContent, 'utf-8');
+      clearResultsFile();
+      writeCommandFile("customScript", { scriptPath: tempScriptPath });
+
+      historyManager.completeCommand(commandId, 'success', { template });
+
+      return {
+        content: [
+          {
+            type: "text",
+            text: `Command to apply "${template}" animation template has been queued.\n` +
+                  `Layer: ${layerIndex} in composition ${compIndex}\n` +
+                  `Duration: ${duration} seconds\n` +
+                  `Use the "get-results" tool after a few seconds to check for results.`
+          }
+        ]
+      };
+    } catch (error) {
+      const errorMsg = `Error preparing animation template: ${String(error)}`;
+      historyManager.completeCommand(commandId, 'error', undefined, errorMsg);
+
+      return {
+        content: [
+          {
+            type: "text",
+            text: errorMsg
+          }
+        ],
+        isError: true
+      };
+    }
+  }
+);
+
 // Start the MCP server
 async function main() {
   console.error("After Effects MCP Server starting...");
   console.error(`Scripts directory: ${SCRIPTS_DIR}`);
   console.error(`Temp directory: ${TEMP_DIR}`);
-  
+
   const transport = new StdioServerTransport();
   await server.connect(transport);
   console.error("After Effects MCP Server running...");

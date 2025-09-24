@@ -2,6 +2,37 @@
 
 Based on real-world usage creating the Falling Impulse Lottie animation, here are the key improvements needed for the After Effects MCP server.
 
+## 🚨 CURRENT STATUS (2025-09-24 11:15 AM)
+
+### Just Implemented (Need Testing After MCP Restart):
+
+1. **✅ Asset Import Tool** (`import-assets`)
+   - Import images/videos from disk paths
+   - Auto-add to composition with position/scale options
+   - Status: BUILT, NEEDS TESTING
+
+2. **✅ Replace Footage Tool** (`replace-footage`)
+   - Replace layer source footage with new files
+   - Find layer by index or name
+   - Status: BUILT, NEEDS TESTING
+
+3. **✅ Layer Property Inspector** (`get-layer-properties`)
+   - Get all transform properties with current values
+   - Include keyframe times and values
+   - List applied effects
+   - Status: BUILT, NEEDS TESTING
+
+4. **✅ Animation Templates** (`apply-animation-template`)
+   - 12 pre-built animations: fade-in, fade-out, slide-left, slide-right, slide-up, slide-down, bounce, spin, zoom-in, zoom-out, shake, slide-and-fall
+   - Customizable duration and start time
+   - Status: BUILT, NEEDS TESTING
+
+### Next Steps After Restart:
+1. Stop Claude Code
+2. Restart MCP server
+3. Start Claude Code again
+4. Test all 4 new tools with the MCP-Testing.aep project
+
 ## 🔴 Critical Fixes
 
 ### 1. Composition Index Lookup Issue ✅ COMPLETED
@@ -396,3 +427,61 @@ mcp__after-effects-mcp__run-custom-script({
 ```
 
 *Based on: MCP-Testing.aep with multiple test compositions and footage items*
+
+## 📋 TESTING CHECKLIST AFTER RESTART
+
+### Test 1: Asset Import
+```javascript
+mcp__after-effects-mcp__import-assets({
+  files: ["/path/to/test/image.png"],
+  addToComp: true,
+  compIndex: 3, // MCP Feature Test
+  position: [960, 540],
+  scale: [75, 75]
+})
+```
+
+### Test 2: Replace Footage
+```javascript
+mcp__after-effects-mcp__replace-footage({
+  compIndex: 2, // MCP Test Comp
+  layerName: "kerv_logo.png",
+  newFootagePath: "/path/to/different/image.png"
+})
+```
+
+### Test 3: Get Layer Properties
+```javascript
+mcp__after-effects-mcp__get-layer-properties({
+  compIndex: 3,
+  layerIndex: 1,
+  includeKeyframes: true
+})
+```
+
+### Test 4: Animation Templates
+```javascript
+// Test different templates
+mcp__after-effects-mcp__apply-animation-template({
+  template: "bounce",
+  compIndex: 3,
+  layerIndex: 2,
+  duration: 1.5,
+  startTime: 0
+})
+
+mcp__after-effects-mcp__apply-animation-template({
+  template: "slide-and-fall",
+  compIndex: 3,
+  layerIndex: 3,
+  duration: 2
+})
+```
+
+### Current Project State:
+- **Project**: MCP-Testing.aep
+- **Compositions**:
+  1. FallingImpulseLottie
+  2. MCP Test Comp (has kerv_logo, blue, backpack images)
+  3. MCP Feature Test (has 4 animated solids)
+- **Available Footage**: backpack-red-back.png, backpack-red-front.png, blue.png, green.png, img_0.png, kerv_logo.png, magenta.png, orange.png, scrolling.png
