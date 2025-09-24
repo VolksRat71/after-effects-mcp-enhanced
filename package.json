@@ -5,8 +5,9 @@
   "main": "build/index.js",
   "type": "module",
   "scripts": {
-    "build": "tsc && npm run copy-scripts",
+    "build": "tsc && npm run copy-scripts && npm run create-temp",
     "copy-scripts": "node -e \"const fs = require('fs'); fs.cpSync('./src/scripts', './build/scripts', {recursive: true, force: true});\"",
+    "create-temp": "node -e \"const fs = require('fs'); fs.mkdirSync('./build/temp', {recursive: true});\"",
     "start": "node build/index.js",
     "install-bridge": "node install-bridge.js",
     "postinstall": "npm run build"

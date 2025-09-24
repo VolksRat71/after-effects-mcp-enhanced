@@ -899,18 +899,33 @@ autoRunCheckbox.value = true;
 var checkInterval = 2000;
 var isChecking = false;
 
-// Command file path - using fixed project directory
-function getCommandFilePath() {
-    // Use a fixed directory to avoid permission issues
-    var projectPath = "/Users/nathanielryan/Desktop/projects/after-effects-mcp/temp-bridge/ae_command.json";
-    return projectPath;
+// Get the MCP project directory based on the operating system
+function getMCPDirectory() {
+    // Detect operating system
+    var isWindows = $.os.indexOf("Windows") !== -1;
+
+    if (isWindows) {
+        // On Windows, use a standard location in the user's home directory
+        var userFolder = Folder.userData.parent.parent;  // Gets to user home
+        return userFolder.fsName + "\\after-effects-mcp\\build\\temp";
+    } else {
+        // On macOS/Unix
+        return "/Users/" + $.getenv("USER") + "/Desktop/projects/after-effects-mcp/build/temp";
+    }
 }
 
-// Result file path - using fixed project directory
+// Command file path - using cross-platform directory
+function getCommandFilePath() {
+    var mcpDir = getMCPDirectory();
+    var separator = $.os.indexOf("Windows") !== -1 ? "\\" : "/";
+    return mcpDir + separator + "ae_command.json";
+}
+
+// Result file path - using cross-platform directory
 function getResultFilePath() {
-    // Use a fixed directory to avoid permission issues
-    var projectPath = "/Users/nathanielryan/Desktop/projects/after-effects-mcp/temp-bridge/ae_mcp_result.json";
-    return projectPath;
+    var mcpDir = getMCPDirectory();
+    var separator = $.os.indexOf("Windows") !== -1 ? "\\" : "/";
+    return mcpDir + separator + "ae_mcp_result.json";
 }
 
 // Function to execute custom ExtendScript

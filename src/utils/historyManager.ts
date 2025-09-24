@@ -27,16 +27,16 @@ export class HistoryManager {
   private sessionStartTime: string;
 
   constructor(historyPath?: string) {
-    // Use provided path or default to temp-bridge directory
+    // Use provided path or default to build/temp directory
     const baseDir = path.dirname(path.dirname(path.dirname(import.meta.url.replace('file://', ''))));
-    const tempBridgeDir = path.join(baseDir, 'temp-bridge');
+    const tempDir = path.join(baseDir, 'build', 'temp');
 
-    // Ensure temp-bridge directory exists
-    if (!fs.existsSync(tempBridgeDir)) {
-      fs.mkdirSync(tempBridgeDir, { recursive: true });
+    // Ensure build/temp directory exists
+    if (!fs.existsSync(tempDir)) {
+      fs.mkdirSync(tempDir, { recursive: true });
     }
 
-    this.historyFilePath = historyPath || path.join(tempBridgeDir, 'ae_command_history.json');
+    this.historyFilePath = historyPath || path.join(tempDir, 'ae_command_history.json');
 
     this.sessionStartTime = new Date().toISOString();
     this.loadHistory();

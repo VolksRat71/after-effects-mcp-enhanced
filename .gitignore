@@ -45,14 +45,15 @@ logs/
 *.aep Auto-Save
 *auto-save*
 
-# Build output
-/build
+# Build output (except build/temp which is used for MCP communication)
+/build/*
+!/build/temp/
+/build/temp/*
 
 # Temporary files
 /temp
 *.temp.*
 **/temp/
-/temp-bridge
 
 # Test files
 manual_animation_test.jsx

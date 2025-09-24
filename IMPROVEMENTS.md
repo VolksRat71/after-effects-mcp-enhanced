@@ -9,9 +9,9 @@ Based on real-world usage creating the Falling Impulse Lottie animation, here ar
 1. **✅ Asset Import Tool** (`import-assets`)
    - Import images/videos from disk paths
    - Auto-add to composition with position/scale options
-   - Status: WORKING (minor filter error in response, but functionality works)
+   - Status: FULLY WORKING - filter issue completely resolved
    - Fixed filter() issue in src/index.ts lines 1556-1568
-   - **IMPORTANT**: Restart Claude Code to load the fix
+   - **VERIFIED**: Successfully imported 3 JPG files without any errors (2025-09-24 11:38 AM)
 
 2. **✅ Replace Footage Tool** (`replace-footage`)
    - Replace layer source footage with new files
@@ -262,7 +262,7 @@ With these improvements, the entire process could be automated through MCP comma
 ### 10. Command History Tracking ✅ COMPLETED
 Implemented persistent command history to track all operations:
 
-**File:** `temp-bridge/ae_command_history.json`
+**File:** `build/temp/ae_command_history.json`
 
 ```javascript
 // Structure for command history
