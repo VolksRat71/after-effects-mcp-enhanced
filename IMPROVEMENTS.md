@@ -387,18 +387,19 @@ after-effects-mcp/
 
 ---
 
-*Last Updated: 2025-09-24*
-*Status: Major improvements completed and tested - All critical fixes verified working*
+*Last Updated: 2025-09-24 12:09 PM*
+*Status: Major improvements completed and tested - All critical fixes verified working + housekeeping system implemented*
 
 ## ✅ Completed and Tested Features
 
 ### Successfully Implemented:
 1. **Composition Index Fix** - `getCompositionByIndex()` function properly finds compositions by position
 2. **Custom Script Runner** - Can execute ExtendScript files directly via MCP
-3. **Command History Tracking** - Logs all commands to `temp-bridge/ae_command_history.json`
+3. **Command History Tracking** - Logs all commands to `build/temp/ae_command_history.json`
 4. **macOS Installation** - Uses osascript for native password prompts (sudo-prompt as backup)
 5. **Bulk Keyframe Operations** - `set-multiple-keyframes` tool working perfectly
 6. **Animation Copy** - `copy-animation` tool successfully copies with time offsets
+7. **Automatic Housekeeping** - Cleans up temporary JSX files to prevent accumulation
 
 ### Test Results (2025-09-24):
 - ✅ Composition indexing works correctly (tested with 3 compositions)
@@ -436,6 +437,40 @@ mcp__after-effects-mcp__run-custom-script({
 ```
 
 *Based on: MCP-Testing.aep with multiple test compositions and footage items*
+
+## 🧹 Automatic Housekeeping System (2025-09-24 12:09 PM)
+
+### Problem Solved:
+- Temporary JSX script files were accumulating in `build/temp` directory
+- 20+ files would build up in just one session
+- No automatic cleanup mechanism existed
+
+### Implementation:
+Added two-tier cleanup system in `src/index.ts`:
+
+1. **Startup Cleanup (`cleanupOldJSXFiles`)**:
+   - Runs automatically when MCP server starts
+   - Deletes JSX files older than 1 hour
+   - Preserves recent files from current/recent sessions
+   - Logs cleanup activity to console
+
+2. **Runtime Cleanup (`scheduleFileCleanup`)**:
+   - Schedules deletion 5 minutes after each script execution
+   - Uses individual `setTimeout` for each file
+   - Handles locked/missing files gracefully
+
+### Test Results:
+- ✅ Successfully cleaned 9 old files on startup (23 → 14 files)
+- ✅ Preserved files from last hour of activity
+- ✅ Command history JSON preserved permanently
+- ✅ No impact on script execution performance
+
+### Files Affected by Cleanup:
+- **Cleaned**: `*.jsx` files older than 1 hour (on startup) or 5 minutes (runtime)
+- **Preserved**:
+  - `ae_command_history.json` (permanent)
+  - Communication JSONs while in use
+  - Recent JSX files for debugging
 
 ## 📋 TESTING CHECKLIST AFTER RESTART
 

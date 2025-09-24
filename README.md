@@ -4,6 +4,8 @@
 ![Build](https://img.shields.io/badge/build-passing-success)
 ![License](https://img.shields.io/github/license/Dakkshin/after-effects-mcp)
 ![Platform](https://img.shields.io/badge/platform-Windows%20%7C%20macOS-blue)
+![Version](https://img.shields.io/badge/version-1.0.0-blue)
+![After Effects](https://img.shields.io/badge/After%20Effects-2021%2B-purple)
 
 ✨ A Model Context Protocol (MCP) server for Adobe After Effects that enables AI assistants and other applications to control After Effects through a standardized protocol.
 
@@ -11,52 +13,65 @@
   <img width="380" height="200" src="https://glama.ai/mcp/servers/@Dakkshin/after-effects-mcp/badge" alt="mcp-after-effects MCP server" />
 </a>
 
+## 🎯 Key Features
+
+- **🎨 Full Creative Control** - Create compositions, layers, and animations programmatically
+- **🔄 Real-time Communication** - Bidirectional communication between MCP and After Effects
+- **🎬 Animation Tools** - Keyframes, expressions, and animation templates
+- **📦 Asset Management** - Import and replace footage dynamically
+- **🧹 Automatic Housekeeping** - Self-cleaning temporary files
+- **🖥️ Cross-platform** - Works on both Windows and macOS
+
 ## Table of Contents
 - [Features](#features)
-  - [Core Composition Features](#core-composition-features)
-  - [Layer Management](#layer-management)
-  - [Animation Capabilities](#animation-capabilities)
 - [Setup Instructions](#setup-instructions)
-  - [Prerequisites](#prerequisites)
-  - [Installation](#installation)
-  - [Update MCP Config](#Update-MCP-Config)
-  - [Running the Server](#running-the-server)
-- [Usage Guide](#usage-guide)
-  - [Creating Compositions](#creating-compositions)
-  - [Working with Layers](#working-with-layers)
-  - [Animation](#animation)
-- [Available MCP Tools](#available-mcp-tools)
+- [Available Tools](#available-tools)
+- [Usage Examples](#usage-examples)
+- [Troubleshooting](#troubleshooting)
 - [For Developers](#for-developers)
-  - [Project Structure](#project-structure)
-  - [Building the Project](#building-the-project)
-  - [Contributing](#contributing)
-- [License](#license)
+- [Recent Improvements](#recent-improvements)
 
 ## 📦 Features
 
 ### 🎥 Core Composition Features
 - **Create compositions** with custom settings (size, frame rate, duration, background color)
-- **List all compositions** in a project
-- **Get project information** such as frame rate, dimensions, and duration
+- **List all compositions** in a project with details
+- **Get project information** including frame rate, dimensions, and duration
+- **Get composition by index** - Properly finds compositions by position
 
 ### 🧱 Layer Management
 - **Create text layers** with customizable properties (font, size, color, position)
 - **Create shape layers** (rectangle, ellipse, polygon, star) with colors and strokes
 - **Create solid/adjustment layers** for backgrounds and effects
 - **Modify layer properties** like position, scale, rotation, opacity, and timing
+- **Get layer properties** with keyframe data and applied effects
 
 ### 🌀 Animation Capabilities
-- **Set keyframes** for layer properties (Position, Scale, Rotation, Opacity, etc.)
+- **Set keyframes** for any layer property (Position, Scale, Rotation, Opacity, etc.)
+- **Bulk keyframe operations** - Set multiple keyframes at once
+- **Copy animations** between layers with time offsets
 - **Apply expressions** to layer properties for dynamic animations
+- **Animation templates** - 12 pre-built animations (bounce, slide, fade, etc.)
+
+### 📂 Asset Management
+- **Import assets** - Import images/videos from disk paths
+- **Replace footage** - Swap layer source files dynamically
+- **Auto-add to composition** with position and scale options
+
+### 🛠️ Advanced Features
+- **Custom script execution** - Run ExtendScript code directly
+- **Command history tracking** - Logs all operations for debugging/replay
+- **Effect templates** - Pre-configured effects (blur, glow, cinematic look)
+- **Automatic temp file cleanup** - Prevents JSX file accumulation
 
 ## ⚙️ Setup Instructions
 
 ### 🛠 Prerequisites
-- Adobe After Effects (2021 or later)
+- Adobe After Effects (2021 or later, tested with 2025)
 - Node.js (v14 or later)
 - npm or yarn package manager
-- **Windows**: Administrator privileges may be required for installation
-- **macOS**: After Effects must have been run at least once to create the Scripts folder
+- **Windows**: Administrator privileges for installation
+- **macOS**: After Effects must have been run at least once
 
 ### 📥 Installation
 
@@ -69,42 +84,31 @@
 2. **Install dependencies**
    ```bash
    npm install
-   # or
-   yarn install
    ```
 
 3. **Build the project**
    ```bash
    npm run build
-   # or
-   yarn build
    ```
 
-4. **Install the After Effects panel**
+4. **Install the After Effects bridge panel**
    ```bash
    npm run install-bridge
-   # or
-   yarn install-bridge
    ```
 
    **Platform-specific notes:**
-   - **Windows**: This will copy scripts to `C:\Program Files\Adobe\Adobe After Effects [VERSION]\Support Files\Scripts\ScriptUI Panels\`
-     - You may need to run as administrator
-   - **macOS**: This will copy scripts to `/Applications/Adobe After Effects [VERSION]/Scripts/ScriptUI Panels/`
-     - You will be prompted for your administrator password
-     - If the installer fails, you can run `sudo npm run install-bridge`
+   - **Windows**: Automatically installs to After Effects Scripts folder
+   - **macOS**: Uses native password prompt for administrator access
 
-   The installer will automatically detect your After Effects installation location.
+### 🔧 Configure Your MCP Client
 
-### 🔧 Update MCP Config
-
-Go to your client (eg. Claude or Cursor) and update your config file:
+Add to your MCP client configuration (e.g., Claude Desktop, Cursor):
 
 **Windows:**
 ```json
 {
   "mcpServers": {
-    "AfterEffectsMCP": {
+    "after-effects-mcp": {
       "command": "node",
       "args": ["C:\\path\\to\\after-effects-mcp\\build\\index.js"]
     }
@@ -116,7 +120,7 @@ Go to your client (eg. Claude or Cursor) and update your config file:
 ```json
 {
   "mcpServers": {
-    "AfterEffectsMCP": {
+    "after-effects-mcp": {
       "command": "node",
       "args": ["/path/to/after-effects-mcp/build/index.js"]
     }
@@ -126,131 +130,250 @@ Go to your client (eg. Claude or Cursor) and update your config file:
 
 ### ▶️ Running the Server
 
-1. **Start the MCP server**
-   ```bash
-   npm start
-   # or
-   yarn start
-   ```
-
-2. **Configure After Effects**
+1. **Configure After Effects**
    - Open After Effects
-   - **Windows**: Go to Edit > Preferences > Scripting & Expressions
-   - **macOS**: Go to After Effects > Settings > Scripting & Expressions
+   - **Windows**: Edit > Preferences > Scripting & Expressions
+   - **macOS**: After Effects > Settings > Scripting & Expressions
    - Enable "Allow Scripts to Write Files and Access Network"
    - Restart After Effects
 
-3. **Open the MCP Bridge Auto panel**
-   - In After Effects, go to Window > mcp-bridge-auto.jsx
-   - The panel will automatically check for commands every few seconds
-   - Make sure the "Auto-run commands" checkbox is enabled
+2. **Open the MCP Bridge Panel**
+   - In After Effects: Window > mcp-bridge-auto.jsx
+   - Ensure "Auto-run commands" is checked
+   - The panel will poll for commands every 2 seconds
 
-   **macOS Note**: If you encounter permission errors, you may need to grant After Effects full disk access in System Settings > Privacy & Security > Full Disk Access
+3. **Start using MCP commands**
+   - The server is now ready to receive commands from your MCP client
 
-## 🚀 Usage Guide
+## 🛠 Available Tools
 
-Once you have the server running and the MCP Bridge panel open in After Effects, you can control After Effects through the MCP protocol. This allows AI assistants or custom applications to send commands to After Effects.
+### Composition Management
+| Tool | Description |
+|------|-------------|
+| `create-composition` | Create a new composition with custom settings |
+| `list-compositions` | List all compositions in the project |
+| `get-project-info` | Get project information |
 
-### 📘 Creating Compositions
+### Layer Creation & Management
+| Tool | Description |
+|------|-------------|
+| `create-text-layer` | Create a new text layer |
+| `create-shape-layer` | Create shape layers (rectangle, ellipse, etc.) |
+| `create-solid-layer` | Create solid or adjustment layers |
+| `set-layer-properties` | Modify layer properties |
+| `get-layer-properties` | Get layer info including keyframes |
 
-You can create new compositions with custom settings:
-- Name
-- Width and height (in pixels)
-- Frame rate
-- Duration
-- Background color
+### Animation Tools
+| Tool | Description |
+|------|-------------|
+| `setLayerKeyframe` | Set a keyframe for a layer property |
+| `set-multiple-keyframes` | Set multiple keyframes at once |
+| `copy-animation` | Copy all keyframes between layers |
+| `setLayerExpression` | Apply expressions to properties |
+| `apply-animation-template` | Apply pre-built animations |
 
-Example MCP tool usage (for developers):
+### Asset Management
+| Tool | Description |
+|------|-------------|
+| `import-assets` | Import images/videos from disk |
+| `replace-footage` | Replace layer source footage |
+
+### Effects
+| Tool | Description |
+|------|-------------|
+| `apply-effect` | Apply an effect to a layer |
+| `apply-effect-template` | Apply pre-configured effect templates |
+
+### Utility
+| Tool | Description |
+|------|-------------|
+| `run-custom-script` | Execute custom ExtendScript code |
+| `get-command-history` | Query command history |
+| `export-history-as-script` | Export history as ExtendScript |
+| `get-help` | Get detailed help information |
+| `get-results` | Retrieve results from After Effects |
+
+## 💡 Usage Examples
+
+### Creating a Composition
 ```javascript
-mcp_aftereffects_create_composition({
-  name: "My Composition", 
-  width: 1920, 
-  height: 1080, 
+// Create a 1080p composition
+mcp__after-effects-mcp__create-composition({
+  name: "My Animation",
+  width: 1920,
+  height: 1080,
   frameRate: 30,
-  duration: 10
-});
+  duration: 10,
+  backgroundColor: { r: 0, g: 0, b: 0 }
+})
 ```
 
-### ✍️ Working with Layers
+### Importing and Animating Assets
+```javascript
+// Import images
+mcp__after-effects-mcp__import-assets({
+  files: ["/path/to/image1.jpg", "/path/to/image2.jpg"],
+  addToComp: true,
+  compIndex: 1,
+  position: [960, 540],
+  scale: [50, 50]
+})
 
-You can create and modify different types of layers:
+// Apply bounce animation
+mcp__after-effects-mcp__apply-animation-template({
+  template: "bounce",
+  compIndex: 1,
+  layerIndex: 1,
+  duration: 1.5
+})
+```
 
-**Text layers:**
-- Set text content, font, size, and color
-- Position text anywhere in the composition
-- Adjust timing and opacity
+### Setting Keyframes
+```javascript
+// Animate position over time
+mcp__after-effects-mcp__setLayerKeyframe({
+  compIndex: 1,
+  layerIndex: 1,
+  propertyName: "Position",
+  timeInSeconds: 0,
+  value: [100, 540]
+})
 
-**Shape layers:**
-- Create rectangles, ellipses, polygons, and stars
-- Set fill and stroke colors
-- Customize size and position
+mcp__after-effects-mcp__setLayerKeyframe({
+  compIndex: 1,
+  layerIndex: 1,
+  propertyName: "Position",
+  timeInSeconds: 2,
+  value: [1820, 540]
+})
+```
 
-**Solid layers:**
-- Create background colors
-- Make adjustment layers for effects
-
-### 🕹 Animation
-
-You can animate layers with:
-
-**Keyframes:**
-- Set property values at specific times
-- Create motion, scaling, rotation, and opacity changes
-- Control the timing of animations
-
-**Expressions:**
-- Apply JavaScript expressions to properties
-- Create dynamic, procedural animations
-- Connect property values to each other
-
-## 🛠 Available MCP Tools
-
-| Command              | Description                            |
-|----------------------|----------------------------------------|
-| \`create-composition\` | Create a new comp                      |
-| \`run-script\`         | Run a JS script inside AE              |
-| \`get-results\`        | Get script results                     |
-| \`get-help\`           | Help for available commands            |
-| \`setLayerKeyframe\`   | Add keyframe to layer property         |
-| \`setLayerExpression\` | Add/remove expressions from properties |
+### Animation Templates Available
+- `fade-in` / `fade-out` - Opacity animations
+- `slide-left` / `slide-right` / `slide-up` / `slide-down` - Position animations
+- `bounce` - Bouncing motion with scale
+- `spin` - 360-degree rotation
+- `zoom-in` / `zoom-out` - Scale animations
+- `shake` - Random position shake
+- `slide-and-fall` - Slide in and fall with rotation
 
 ## 🔍 Troubleshooting
 
-### Installation Issues
+### Common Issues
 
-**"After Effects not found" error:**
-- **Windows**: Set the `ADOBE_AFTER_EFFECTS_PATH` environment variable to your After Effects installation directory
-- **macOS**: Ensure After Effects has been run at least once to create the Scripts folder in Documents
+**"Composition not found at index X"**
+- The composition index fix has been implemented. Use 1-based indexing.
 
-**Permission denied errors:**
-- **Windows**: Run the installation command as administrator
-- **macOS**: Check that you have write permissions to `~/Documents/Adobe/`
+**"File does not exist" when importing**
+- Ensure the file path is absolute, not relative
+- Check file extensions match exactly (`.jpg` vs `.jpeg`)
 
-**Scripts not appearing in Window menu:**
+**Permission denied errors**
+- **Windows**: Run installation as administrator
+- **macOS**: Grant After Effects full disk access in System Settings
+
+**Scripts not appearing in Window menu**
 - Restart After Effects after installation
-- Verify the script was copied to the correct location
-- Check that "Allow Scripts to Write Files and Access Network" is enabled
+- Verify script installation in Scripts/ScriptUI Panels folder
+
+**MCP not communicating with After Effects**
+- Check "Auto-run commands" is enabled in the panel
+- Ensure "Allow Scripts to Write Files" is enabled in preferences
+- Verify the MCP server is running (check with `/mcp` in your client)
+
+### File Locations
+
+**Communication files:**
+- Commands: `build/temp/ae_command.json`
+- Results: `build/temp/ae_mcp_result.json`
+- History: `build/temp/ae_command_history.json`
+
+**Scripts:**
+- Bridge panel: `[After Effects]/Scripts/ScriptUI Panels/mcp-bridge-auto.jsx`
+- Temp scripts: `build/temp/*.jsx` (auto-cleaned)
 
 ## 👨‍💻 For Developers
 
 ### 🧩 Project Structure
 
-- `src/index.ts`: MCP server implementation
-- `src/scripts/mcp-bridge-auto.jsx`: Main After Effects panel script
-- `install-bridge.js`: Script to install the panel in After Effects
+```
+after-effects-mcp/
+├── src/
+│   ├── index.ts                 # MCP server implementation
+│   ├── scripts/
+│   │   └── mcp-bridge-auto.jsx  # After Effects panel
+│   └── utils/
+│       ├── resolvePaths.ts      # Cross-platform path resolution
+│       └── historyManager.ts    # Command history tracking
+├── build/                       # Compiled output
+│   └── temp/                    # Communication files
+├── install-bridge.js            # Installation script
+└── package.json
+```
 
-### 📦 Building the Project
+### 📦 Building from Source
 
 ```bash
+# Install dependencies
+npm install
+
+# Build TypeScript
 npm run build
-# or
-yarn build
+
+# Install bridge to After Effects
+npm run install-bridge
+
+# Start the server
+npm start
 ```
+
+### 🧹 Housekeeping System
+
+The server implements automatic cleanup:
+- **On startup**: Deletes JSX files older than 1 hour
+- **During runtime**: Schedules deletion 5 minutes after creation
+- **Preserves**: Command history and active communication files
 
 ### 🤝 Contributing
 
-Contributions are welcome! Please feel free to submit a Pull Request.
+Contributions are welcome! This project follows a feature-branch workflow:
 
-## License
+1. Fork the repository
+2. Create a feature branch (`git checkout -b feature/amazing-feature`)
+3. Commit your changes (`git commit -m 'feat: add amazing feature'`)
+4. Push to the branch (`git push origin feature/amazing-feature`)
+5. Open a Pull Request
 
-This project is licensed under the MIT License - see the LICENSE file for details.
+## 📈 Recent Improvements
+
+### Version 1.0.0 (2025-09-24)
+- ✅ **Fixed composition index lookup** - Properly finds compositions by position
+- ✅ **Cross-platform support** - Works on Windows and macOS
+- ✅ **Asset import/replace** - Full asset management capabilities
+- ✅ **Animation templates** - 12 pre-built animations
+- ✅ **Bulk operations** - Set multiple keyframes, copy animations
+- ✅ **Automatic housekeeping** - Cleans temporary files
+- ✅ **Command history** - Track and replay operations
+- ✅ **Custom script execution** - Run ExtendScript directly
+- ✅ **Fixed ExtendScript filter() issue** - No more array errors
+
+### Tested With
+- Adobe After Effects 2025
+- macOS Sonoma / Windows 11
+- Node.js v18+
+
+## 📄 License
+
+This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
+
+## 🙏 Acknowledgments
+
+- Built for the [Model Context Protocol](https://www.anthropic.com/news/model-context-protocol) ecosystem
+- Tested with Claude Desktop and Cursor
+- Thanks to the After Effects scripting community
+
+---
+
+**Need help?** Open an issue on [GitHub](https://github.com/Dakkshin/after-effects-mcp/issues)
+
+**Ready to animate?** Start creating with AI-powered After Effects automation! 🎬✨
