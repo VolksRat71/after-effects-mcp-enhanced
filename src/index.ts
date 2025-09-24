@@ -1158,6 +1158,314 @@ server.tool(
   }
 );
 
+// Add tool for copying animation from one layer to others
+server.tool(
+  "copy-animation",
+  "Copy all keyframes from a source layer to target layers with optional time offset",
+  {
+    compIndex: z.number().describe("Index of the composition (1-based)"),
+    sourceLayerIndex: z.number().describe("Index of the source layer to copy from"),
+    targetLayerIndices: z.array(z.number()).describe("Array of target layer indices to copy to"),
+    properties: z.array(z.string()).optional().describe("Properties to copy (default: all animated properties)"),
+    timeOffset: z.number().optional().describe("Time offset in seconds for each successive layer")
+  },
+  async ({ compIndex, sourceLayerIndex, targetLayerIndices, properties, timeOffset = 0 }) => {
+    const commandId = historyManager.startCommand('copy-animation', {
+      compIndex, sourceLayerIndex, targetLayerIndices, properties, timeOffset
+    });
+
+    try {
+      // Create script to copy animation
+      const scriptContent = `
+(function() {
+  try {
+    // Get composition by index using our helper function
+    var comp = getCompositionByIndex(${compIndex});
+    if (!comp) {
+      return JSON.stringify({error: "Composition not found at index ${compIndex}"});
+    }
+
+    var sourceLayer = comp.layer(${sourceLayerIndex});
+    if (!sourceLayer) {
+      return JSON.stringify({error: "Source layer not found at index ${sourceLayerIndex}"});
+    }
+
+    var propertiesToCopy = ${properties ? JSON.stringify(properties) : 'null'};
+    var timeOffset = ${timeOffset};
+    var targetIndices = ${JSON.stringify(targetLayerIndices)};
+
+    var results = [];
+    var copiedProps = [];
+
+    // Helper function to copy all keyframes from a property
+    function copyPropertyKeyframes(sourceProp, targetProp, offset) {
+      if (sourceProp.numKeys > 0) {
+        // Clear existing keyframes on target
+        while (targetProp.numKeys > 0) {
+          targetProp.removeKey(1);
+        }
+
+        // Copy all keyframes with offset
+        for (var k = 1; k <= sourceProp.numKeys; k++) {
+          var time = sourceProp.keyTime(k);
+          var value = sourceProp.keyValue(k);
+
+          targetProp.setValueAtTime(time + offset, value);
+
+          // Copy interpolation if possible
+          try {
+            var inInterp = sourceProp.keyInInterpolationType(k);
+            var outInterp = sourceProp.keyOutInterpolationType(k);
+            targetProp.setInterpolationTypeAtKey(targetProp.numKeys, inInterp, outInterp);
+          } catch (e) {
+            // Some properties don't support interpolation settings
+          }
+        }
+        return true;
+      }
+      return false;
+    }
+
+    // Copy to each target layer
+    for (var i = 0; i < targetIndices.length; i++) {
+      var targetLayer = comp.layer(targetIndices[i]);
+      if (!targetLayer) {
+        results.push({
+          layerIndex: targetIndices[i],
+          error: "Layer not found"
+        });
+        continue;
+      }
+
+      var offset = timeOffset * i;
+      var copiedForLayer = [];
+
+      // If specific properties requested, copy only those
+      if (propertiesToCopy && propertiesToCopy.length > 0) {
+        for (var p = 0; p < propertiesToCopy.length; p++) {
+          var propName = propertiesToCopy[p];
+          try {
+            var sourceProp = sourceLayer.property("Transform").property(propName);
+            var targetProp = targetLayer.property("Transform").property(propName);
+
+            if (sourceProp && targetProp && copyPropertyKeyframes(sourceProp, targetProp, offset)) {
+              copiedForLayer.push(propName);
+            }
+          } catch (e) {
+            // Property might not exist or not be in Transform group
+          }
+        }
+      } else {
+        // Copy all animated transform properties
+        var transformProps = ["Position", "Scale", "Rotation", "Opacity", "Anchor Point"];
+        for (var t = 0; t < transformProps.length; t++) {
+          try {
+            var sourceProp = sourceLayer.property("Transform").property(transformProps[t]);
+            var targetProp = targetLayer.property("Transform").property(transformProps[t]);
+
+            if (sourceProp && targetProp && sourceProp.numKeys > 0) {
+              if (copyPropertyKeyframes(sourceProp, targetProp, offset)) {
+                copiedForLayer.push(transformProps[t]);
+              }
+            }
+          } catch (e) {
+            // Property might not exist
+          }
+        }
+      }
+
+      results.push({
+        layerIndex: targetIndices[i],
+        layerName: targetLayer.name,
+        copiedProperties: copiedForLayer,
+        timeOffset: offset,
+        success: copiedForLayer.length > 0
+      });
+    }
+
+    return JSON.stringify({
+      success: true,
+      sourceLayer: sourceLayer.name,
+      results: results
+    });
+
+  } catch (error) {
+    return JSON.stringify({
+      error: error.toString(),
+      line: error.line
+    });
+  }
+})();`;
+
+      // Save script to temp file
+      const tempScriptName = `copy_animation_${Date.now()}.jsx`;
+      const tempScriptPath = path.join(TEMP_DIR, tempScriptName);
+
+      fs.writeFileSync(tempScriptPath, scriptContent, 'utf-8');
+
+      // Clear any stale results
+      clearResultsFile();
+
+      // Write command for After Effects
+      writeCommandFile("customScript", { scriptPath: tempScriptPath });
+
+      historyManager.completeCommand(commandId, 'success', { scriptPath: tempScriptPath });
+
+      return {
+        content: [
+          {
+            type: "text",
+            text: `Command to copy animation queued.\n` +
+                  `Source layer: ${sourceLayerIndex}\n` +
+                  `Target layers: ${targetLayerIndices.join(', ')}\n` +
+                  `Time offset: ${timeOffset}s\n` +
+                  `Use the "get-results" tool after a few seconds to check for results.`
+          }
+        ]
+      };
+    } catch (error) {
+      const errorMsg = `Error preparing copy animation: ${String(error)}`;
+      historyManager.completeCommand(commandId, 'error', undefined, errorMsg);
+
+      return {
+        content: [
+          {
+            type: "text",
+            text: errorMsg
+          }
+        ],
+        isError: true
+      };
+    }
+  }
+);
+
+// Add tool for setting multiple keyframes at once
+server.tool(
+  "set-multiple-keyframes",
+  "Set multiple keyframes for different properties at once on a layer",
+  {
+    compIndex: z.number().describe("Index of the composition (1-based)"),
+    layerIndex: z.number().describe("Index of the layer (1-based)"),
+    keyframes: z.array(z.object({
+      property: z.string().describe("Property name (e.g., 'Position', 'Scale')"),
+      time: z.number().describe("Time in seconds"),
+      value: z.any().describe("Value for the keyframe")
+    })).describe("Array of keyframe data")
+  },
+  async ({ compIndex, layerIndex, keyframes }) => {
+    const commandId = historyManager.startCommand('set-multiple-keyframes', {
+      compIndex, layerIndex, keyframeCount: keyframes.length
+    });
+
+    try {
+      // Build script to set multiple keyframes
+      const keyframeData = JSON.stringify(keyframes);
+      const scriptContent = `
+(function() {
+  try {
+    var comp = getCompositionByIndex(${compIndex});
+    if (!comp) {
+      return JSON.stringify({error: "Composition not found at index ${compIndex}"});
+    }
+
+    var layer = comp.layer(${layerIndex});
+    if (!layer) {
+      return JSON.stringify({error: "Layer not found at index ${layerIndex}"});
+    }
+
+    var keyframes = ${keyframeData};
+    var results = [];
+
+    for (var i = 0; i < keyframes.length; i++) {
+      var kf = keyframes[i];
+      try {
+        var prop = layer.property("Transform").property(kf.property);
+        if (!prop) {
+          // Try other property groups
+          if (layer.property("Effects") && layer.property("Effects").property(kf.property)) {
+            prop = layer.property("Effects").property(kf.property);
+          } else if (layer.property("Text") && layer.property("Text").property(kf.property)) {
+            prop = layer.property("Text").property(kf.property);
+          }
+        }
+
+        if (prop && prop.canVaryOverTime) {
+          prop.setValueAtTime(kf.time, kf.value);
+          results.push({
+            property: kf.property,
+            time: kf.time,
+            success: true
+          });
+        } else {
+          results.push({
+            property: kf.property,
+            time: kf.time,
+            success: false,
+            error: "Property not found or cannot be keyframed"
+          });
+        }
+      } catch (e) {
+        results.push({
+          property: kf.property,
+          time: kf.time,
+          success: false,
+          error: e.toString()
+        });
+      }
+    }
+
+    return JSON.stringify({
+      success: true,
+      layer: layer.name,
+      results: results
+    });
+
+  } catch (error) {
+    return JSON.stringify({
+      error: error.toString(),
+      line: error.line
+    });
+  }
+})();`;
+
+      // Save and execute
+      const tempScriptName = `multi_keyframes_${Date.now()}.jsx`;
+      const tempScriptPath = path.join(TEMP_DIR, tempScriptName);
+
+      fs.writeFileSync(tempScriptPath, scriptContent, 'utf-8');
+      clearResultsFile();
+      writeCommandFile("customScript", { scriptPath: tempScriptPath });
+
+      historyManager.completeCommand(commandId, 'success', { keyframesSet: keyframes.length });
+
+      return {
+        content: [
+          {
+            type: "text",
+            text: `Command to set ${keyframes.length} keyframes queued.\n` +
+                  `Layer: ${layerIndex} in composition ${compIndex}\n` +
+                  `Use the "get-results" tool to check for results.`
+          }
+        ]
+      };
+    } catch (error) {
+      const errorMsg = `Error setting multiple keyframes: ${String(error)}`;
+      historyManager.completeCommand(commandId, 'error', undefined, errorMsg);
+
+      return {
+        content: [
+          {
+            type: "text",
+            text: errorMsg
+          }
+        ],
+        isError: true
+      };
+    }
+  }
+);
+
 // Start the MCP server
 async function main() {
   console.error("After Effects MCP Server starting...");
