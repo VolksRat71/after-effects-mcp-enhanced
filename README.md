@@ -90,7 +90,7 @@
 
 1. **Clone the repository**
    ```bash
-   git clone https://github.com/[your-username]/after-effects-mcp-enhanced.git
+   git clone https://github.com/VolksRat71/after-effects-mcp-enhanced.git
    cd after-effects-mcp-enhanced
    ```
 
@@ -389,7 +389,7 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 ## 📬 Contact & Support
 
 **Found a bug or have a feature request?**
-- Open an issue on [GitHub Issues](https://github.com/[your-username]/after-effects-mcp-enhanced/issues)
+- Open an issue on [GitHub Issues](https://github.com/VolksRat71/after-effects-mcp-enhanced/issues)
 - Check the [troubleshooting guide](#-troubleshooting) first
 
 **Want to contribute?**
