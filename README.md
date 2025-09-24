@@ -10,12 +10,11 @@
 ✨ An enhanced Model Context Protocol (MCP) server for Adobe After Effects with improved cross-platform support, asset management, animation tools, and automatic housekeeping.
 
 > 🔗 **Based on:** [after-effects-mcp](https://github.com/Dakkshin/after-effects-mcp) by Dakkshin
-> This project extends the original with significant improvements to tools, structure, cross-platform compatibility, and reliability.
+> This project extends the original with improvements to tools, structure, cross-platform compatibility, and reliability.
 
 ## 🚀 What's New in This Enhanced Edition
 
 ### Major Improvements Over Original
-- **✅ Fixed Critical Bugs** - Resolved ExtendScript filter() errors and composition index issues
 - **🖥️ True Cross-Platform Support** - Dynamic path resolution for Windows and macOS
 - **📦 Asset Management Suite** - Import, replace, and manage footage with 4 new tools
 - **🎬 Animation Templates** - 12 pre-built animations (bounce, slide, fade, zoom, etc.)
