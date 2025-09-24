@@ -4,7 +4,7 @@ Based on real-world usage creating the Falling Impulse Lottie animation, here ar
 
 ## 🔴 Critical Fixes
 
-### 1. Composition Index Lookup Issue
+### 1. Composition Index Lookup Issue ✅ COMPLETED
 **Problem:** The MCP can't find compositions by index. It expects index 1, 2, 3... but After Effects compositions have project item IDs like 39.
 
 **Current Error:**
@@ -12,16 +12,17 @@ Based on real-world usage creating the Falling Impulse Lottie animation, here ar
 "Composition not found at index 1"
 ```
 
-**Solution:**
-- Fix composition lookup to use position among compositions, not project item ID
-- Update `getCompositionByIndex()` to filter and count only CompItem objects
+**Solution:** ✅ IMPLEMENTED
+- Fixed composition lookup to use position among compositions, not project item ID
+- Added `getCompositionByIndex()` helper function to filter and count only CompItem objects
+- Updated setLayerKeyframe and setLayerExpression to use the new helper
 
-**Code Location:** Look for composition lookup logic in the bridge scripts
+**Code Location:** `src/scripts/mcp-bridge-auto.jsx` lines 390-420
 
 ## 🚀 New Features to Add
 
-### 2. Custom Script Runner Tool
-Add ability to run custom ExtendScript code directly without writing to disk:
+### 2. Custom Script Runner Tool ✅ COMPLETED
+Added ability to run custom ExtendScript code directly without writing to disk:
 
 ```javascript
 mcp__after-effects-mcp__runCustomScript({
@@ -157,7 +158,7 @@ mcp__after-effects-mcp__getLayerProperties({
 ## 📋 Implementation Priority
 
 1. **High Priority** (Blocking issues)
-   - Fix composition index lookup
+   - ✅ Fix composition index lookup - COMPLETED
    - Handle setValue vs setValueAtTime automatically
 
 2. **Medium Priority** (Major improvements)
@@ -201,10 +202,10 @@ With these improvements, the entire process could be automated through MCP comma
 
 ## 📜 Command History System
 
-### 10. Command History Tracking
-Implement a persistent command history to track all operations:
+### 10. Command History Tracking ✅ COMPLETED
+Implemented persistent command history to track all operations:
 
-**File:** `ae_command_history.json`
+**File:** `temp-bridge/ae_command_history.json`
 
 ```javascript
 // Structure for command history
@@ -259,17 +260,17 @@ mcp__after-effects-mcp__getCommandHistory({
 
 ## 🔧 Installation Improvements
 
-### 11. Cross-Platform Installation System
+### 11. Cross-Platform Installation System ✅ PARTIALLY COMPLETED
 
 **Problem:**
 - macOS requires `sudo` for installing panels to After Effects
 - Windows and macOS have different installation paths and methods
 - No unified installation process between platforms
 
-**Current Issues:**
-- macOS: Manual sudo required for `/Applications/Adobe After Effects 2025/Scripts/ScriptUI Panels/`
-- Windows: Different path structure
-- No password forwarding mechanism for sudo on macOS
+**Current Issues:** ✅ FIXED
+- macOS: ~~Manual sudo required~~ Now uses osascript for native password prompt
+- Windows: Different path structure (still handled)
+- ~~No password forwarding mechanism~~ Implemented osascript approach for macOS
 
 **Proposed Solution:**
 
@@ -330,4 +331,5 @@ after-effects-mcp/
 ---
 
 *Last Updated: 2025-09-24*
+*Status: Major improvements completed - Composition index fix, Custom script runner, Command history tracking, macOS installation improvements*
 *Based on: Falling Impulse Lottie Animation Project*

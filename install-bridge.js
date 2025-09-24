@@ -5,6 +5,7 @@ import * as fs from 'fs';
 import * as path from 'path';
 import * as os from 'os';
 import { fileURLToPath } from 'url';
+import sudo from 'sudo-prompt';
 
 // ES Modules replacement for __dirname
 const __filename = fileURLToPath(import.meta.url);
@@ -104,7 +105,7 @@ function resolveMacOSPaths() {
 /**
  * Copies file with appropriate permissions
  */
-function copyFileWithPermissions(source, destination) {
+async function copyFileWithPermissions(source, destination) {
   const platform = process.platform;
 
   try {
@@ -131,21 +132,48 @@ function copyFileWithPermissions(source, destination) {
       }
     } else if (platform === 'darwin') {
       // On macOS, the application Scripts folder needs admin permissions
-      try {
-        // Try using osascript to prompt for admin privileges
-        const appleScript = `do shell script "cp '${source}' '${destination}'" with administrator privileges`;
-        execSync(`osascript -e "${appleScript}"`);
-        return true;
-      } catch (error) {
-        // Fallback to regular copy (will likely fail but worth trying)
-        console.log('Admin privileges required. You may need to run with sudo or use Finder.');
-        try {
-          fs.copyFileSync(source, destination);
-          return true;
-        } catch (copyError) {
-          return false;
-        }
-      }
+      console.log('\n🔐 macOS requires administrator privileges to install to After Effects.');
+      console.log('   A native password prompt will appear...\n');
+
+      return new Promise((resolve) => {
+        const destDir = path.dirname(destination);
+
+        // Create command to make directory and copy file
+        const command = `mkdir -p "${destDir}" && cp -f "${source}" "${destination}" && chmod 644 "${destination}"`;
+
+        const options = {
+          name: 'After Effects MCP Bridge Installer',
+          // icns parameter is optional, will use default if not found
+        };
+
+        sudo.exec(command, options, (error, stdout, stderr) => {
+          if (error) {
+            if (error.message.includes('User did not grant permission') || error.message.includes('cancelled')) {
+              console.log('\n❌ Installation cancelled by user.');
+              console.log('\nTo install manually or retry:');
+              console.log(`  sudo npm run install-bridge`);
+              console.log('\nOr manually copy the file:');
+              console.log(`  sudo cp "${source}" "${destination}"`);
+              resolve(false);
+            } else {
+              console.error('\n❌ Installation failed:', error.message);
+              console.log('\nAlternative installation methods:');
+              console.log('1. Run with sudo:');
+              console.log(`   sudo npm run install-bridge`);
+              console.log('\n2. Manual copy with sudo:');
+              console.log(`   sudo cp "${source}" "${destination}"`);
+              console.log('\n3. Use Finder:');
+              console.log('   - Navigate to the source file');
+              console.log('   - Copy it manually to the After Effects Scripts folder');
+              resolve(false);
+            }
+          } else {
+            console.log('✅ Administrator access granted and file copied successfully.');
+            if (stdout) console.log('Output:', stdout);
+            resolve(true);
+          }
+        });
+      });
     }
   } catch (error) {
     console.error(`Error copying file: ${error.message}`);
@@ -195,7 +223,9 @@ async function main() {
   // Copy the script
   console.log(`Installing bridge script to ${destinationScript}...`);
 
-  if (copyFileWithPermissions(sourceScript, destinationScript)) {
+  const success = await copyFileWithPermissions(sourceScript, destinationScript);
+
+  if (success) {
     console.log('\n✅ Bridge script installed successfully!\n');
     console.log('Important next steps:');
     console.log('1. Open After Effects');

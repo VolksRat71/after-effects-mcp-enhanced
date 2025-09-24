@@ -387,6 +387,26 @@ function setLayerProperties(args) {
 }
 
 /**
+ * Gets a composition by its index among all compositions in the project.
+ * @param {number} compIndex - The index of the composition (1-based).
+ * @returns {CompItem|null} The composition at the given index, or null if not found.
+ */
+function getCompositionByIndex(compIndex) {
+    var comps = [];
+    for (var i = 1; i <= app.project.numItems; i++) {
+        if (app.project.items[i] instanceof CompItem) {
+            comps.push(app.project.items[i]);
+        }
+    }
+
+    // compIndex is 1-based, array is 0-based
+    if (compIndex > 0 && compIndex <= comps.length) {
+        return comps[compIndex - 1];
+    }
+    return null;
+}
+
+/**
  * Sets a keyframe for a specific property on a layer.
  * @param {number} compIndex - The index of the composition (1-based).
  * @param {number} layerIndex - The index of the layer within the composition (1-based).
@@ -397,9 +417,9 @@ function setLayerProperties(args) {
  */
 function setLayerKeyframe(compIndex, layerIndex, propertyName, timeInSeconds, value) {
     try {
-        // Adjust indices to be 0-based for ExtendScript arrays
-        var comp = app.project.items[compIndex];
-        if (!comp || !(comp instanceof CompItem)) {
+        // Get composition by its index among all compositions
+        var comp = getCompositionByIndex(compIndex);
+        if (!comp) {
             return JSON.stringify({ success: false, message: "Composition not found at index " + compIndex });
         }
         var layer = comp.layers[layerIndex];
@@ -457,9 +477,9 @@ function setLayerKeyframe(compIndex, layerIndex, propertyName, timeInSeconds, va
  */
 function setLayerExpression(compIndex, layerIndex, propertyName, expressionString) {
     try {
-         // Adjust indices to be 0-based for ExtendScript arrays
-        var comp = app.project.items[compIndex];
-         if (!comp || !(comp instanceof CompItem)) {
+         // Get composition by its index among all compositions
+        var comp = getCompositionByIndex(compIndex);
+         if (!comp) {
             return JSON.stringify({ success: false, message: "Composition not found at index " + compIndex });
         }
         var layer = comp.layers[layerIndex];
