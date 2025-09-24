@@ -199,15 +199,135 @@ This animation required:
 
 With these improvements, the entire process could be automated through MCP commands.
 
+## 📜 Command History System
+
+### 10. Command History Tracking
+Implement a persistent command history to track all operations:
+
+**File:** `ae_command_history.json`
+
+```javascript
+// Structure for command history
+{
+  "commands": [
+    {
+      "id": "cmd_1234567890",
+      "timestamp": "2025-09-23T10:30:00.000Z",
+      "tool": "setLayerKeyframe",
+      "parameters": {
+        "compIndex": 1,
+        "layerIndex": 7,
+        "propertyName": "Position",
+        "timeInSeconds": 0,
+        "value": [1920, 20, 0]
+      },
+      "result": "success",
+      "error": null,
+      "duration": 125 // ms
+    }
+  ],
+  "session": {
+    "startTime": "2025-09-23T10:00:00.000Z",
+    "projectName": "FallingImpulseLottie",
+    "commandCount": 147
+  }
+}
+```
+
+**New Tool:** Query command history
+
+```javascript
+mcp__after-effects-mcp__getCommandHistory({
+  filter: {
+    tool: "setLayerKeyframe", // optional
+    timeRange: {
+      from: "2025-09-23T10:00:00.000Z",
+      to: "2025-09-23T11:00:00.000Z"
+    },
+    result: "error" // or "success"
+  },
+  limit: 50
+})
+```
+
+**Benefits:**
+- Debug what commands were sent
+- Replay command sequences
+- Generate scripts from history
+- Track performance and errors
+- Undo/redo functionality
+
+## 🔧 Installation Improvements
+
+### 11. Cross-Platform Installation System
+
+**Problem:**
+- macOS requires `sudo` for installing panels to After Effects
+- Windows and macOS have different installation paths and methods
+- No unified installation process between platforms
+
+**Current Issues:**
+- macOS: Manual sudo required for `/Applications/Adobe After Effects 2025/Scripts/ScriptUI Panels/`
+- Windows: Different path structure
+- No password forwarding mechanism for sudo on macOS
+
+**Proposed Solution:**
+
+```javascript
+// Unified installation script
+npm run install-bridge
+
+// Platform detection and appropriate installation
+if (process.platform === 'darwin') {
+  // macOS installation
+  // Option 1: Use sudo-prompt package for GUI password prompt
+  // Option 2: Create installer app with proper permissions
+  // Option 3: Use osascript for native macOS authorization
+} else if (process.platform === 'win32') {
+  // Windows installation with admin privileges if needed
+}
+```
+
+**Installation Structure Standardization:**
+```
+after-effects-mcp/
+├── bridge/
+│   ├── mcp-bridge-auto.jsx      # Main bridge panel (same for both platforms)
+│   ├── mcp-bridge-lib.jsx       # Shared library functions
+│   └── platform/
+│       ├── mac/
+│       │   └── install.js       # macOS-specific installer
+│       └── windows/
+│           └── install.js       # Windows-specific installer
+├── scripts/                      # ExtendScript files
+├── src/                         # Node.js MCP server
+└── install.js                   # Unified installer entry point
+```
+
+**Key Requirements:**
+- Single `npm run install-bridge` command for both platforms
+- Automatic platform detection
+- Proper permission handling (sudo on macOS, UAC on Windows)
+- Bridge files in consistent relative locations
+- Shared ExtendScript code between platforms
+- Clear error messages for installation issues
+
+**Password Handling Options for macOS:**
+1. **sudo-prompt npm package:** Shows native password dialog
+2. **osascript approach:** Uses AppleScript for authorization
+3. **Installation helper app:** Separate app with proper entitlements
+4. **User instructions:** Clear guide for manual installation fallback
+
 ## 💡 Future Considerations
 
 - **Lottie Export Integration:** Add Bodymovin export commands
 - **Preview Generation:** Create preview renders
 - **Project Templates:** Save and load entire project setups
-- **Undo/Redo Support:** Track operations for reversal
+- **Undo/Redo Support:** Track operations for reversal (using command history)
 - **Real-time Sync:** Watch for changes and update automatically
+- **Multi-version Support:** Handle different After Effects versions gracefully
 
 ---
 
-*Last Updated: 2025-09-23*
+*Last Updated: 2025-09-24*
 *Based on: Falling Impulse Lottie Animation Project*

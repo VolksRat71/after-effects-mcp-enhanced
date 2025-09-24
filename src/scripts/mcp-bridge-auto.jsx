@@ -893,6 +893,81 @@ function getResultFilePath() {
     return projectPath;
 }
 
+// Function to execute custom ExtendScript
+function executeCustomScript(args) {
+    try {
+        if (!args.scriptPath) {
+            return JSON.stringify({
+                error: "No script path provided",
+                success: false
+            });
+        }
+
+        var scriptFile = new File(args.scriptPath);
+
+        if (!scriptFile.exists) {
+            return JSON.stringify({
+                error: "Script file not found: " + args.scriptPath,
+                success: false
+            });
+        }
+
+        // Read the script content
+        scriptFile.open("r");
+        var scriptContent = scriptFile.read();
+        scriptFile.close();
+
+        // Execute the script and capture the result
+        var result;
+        try {
+            // Use eval to execute the script content
+            // The script should be wrapped in a function that returns a result
+            result = eval(scriptContent);
+
+            // Convert result to JSON if it's not already a string
+            if (typeof result === "object") {
+                return JSON.stringify({
+                    success: true,
+                    result: result,
+                    message: "Custom script executed successfully"
+                });
+            } else if (typeof result === "string") {
+                // Try to parse it as JSON to check if it's already formatted
+                try {
+                    JSON.parse(result);
+                    return result; // Already valid JSON
+                } catch (e) {
+                    // Not JSON, wrap it
+                    return JSON.stringify({
+                        success: true,
+                        result: result,
+                        message: "Custom script executed successfully"
+                    });
+                }
+            } else {
+                return JSON.stringify({
+                    success: true,
+                    result: String(result),
+                    message: "Custom script executed successfully"
+                });
+            }
+        } catch (execError) {
+            return JSON.stringify({
+                success: false,
+                error: execError.toString(),
+                line: execError.line || "unknown",
+                message: "Error executing custom script"
+            });
+        }
+    } catch (error) {
+        return JSON.stringify({
+            success: false,
+            error: error.toString(),
+            message: "Error in executeCustomScript"
+        });
+    }
+}
+
 // Functions for each script type
 function getProjectInfo() {
     var project = app.project;
@@ -1072,6 +1147,11 @@ function executeCommand(command, args) {
                 logToPanel("Calling applyEffectTemplate function...");
                 result = applyEffectTemplate(args);
                 logToPanel("Returned from applyEffectTemplate.");
+                break;
+            case "customScript":
+                logToPanel("Executing custom script from: " + (args.scriptPath || "unknown"));
+                result = executeCustomScript(args);
+                logToPanel("Custom script execution complete.");
                 break;
             default:
                 result = JSON.stringify({ error: "Unknown command: " + command });

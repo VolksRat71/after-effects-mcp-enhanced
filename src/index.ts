@@ -6,6 +6,7 @@ import * as path from "path";
 import { z } from "zod";
 import { fileURLToPath } from 'url';
 import { resolveAfterEffectsPaths, getTempFilePath, validateAfterEffectsInstallation } from './utils/resolvePaths.js';
+import { HistoryManager } from './utils/historyManager.js';
 
 // Create an MCP server
 const server = new McpServer({
@@ -20,6 +21,9 @@ const __dirname = path.dirname(__filename);
 // Define paths
 const SCRIPTS_DIR = path.join(__dirname, "scripts");
 const TEMP_DIR = path.join(__dirname, "temp");
+
+// Initialize history manager
+const historyManager = new HistoryManager();
 
 // Helper function to run After Effects scripts
 function runExtendScript(scriptPath: string, args: Record<string, any> = {}): string {
@@ -184,11 +188,14 @@ server.tool(
     parameters: z.record(z.any()).optional().describe("Optional parameters for the script")
   },
   async ({ script, parameters = {} }) => {
+    // Start tracking this command
+    const commandId = historyManager.startCommand('run-script', { script, parameters });
+
     // Validate that script is safe (only allow predefined scripts)
     const allowedScripts = [
-      "listCompositions", 
-      "getProjectInfo", 
-      "getLayerInfo", 
+      "listCompositions",
+      "getProjectInfo",
+      "getLayerInfo",
       "createComposition",
       "createTextLayer",
       "createShapeLayer",
@@ -201,13 +208,15 @@ server.tool(
       "test-animation",
       "bridgeTestEffects"
     ];
-    
+
     if (!allowedScripts.includes(script)) {
+      const errorMsg = `Error: Script "${script}" is not allowed. Allowed scripts are: ${allowedScripts.join(", ")}`;
+      historyManager.completeCommand(commandId, 'error', undefined, errorMsg);
       return {
         content: [
           {
             type: "text",
-            text: `Error: Script "${script}" is not allowed. Allowed scripts are: ${allowedScripts.join(", ")}`
+            text: errorMsg
           }
         ],
         isError: true
@@ -217,10 +226,13 @@ server.tool(
     try {
       // Clear any stale result data
       clearResultsFile();
-      
+
       // Write command to file for After Effects to pick up
       writeCommandFile(script, parameters);
-      
+
+      // Mark as successful (actual execution happens in After Effects)
+      historyManager.completeCommand(commandId, 'success', { queued: true });
+
       return {
         content: [
           {
@@ -947,6 +959,197 @@ server.tool(
           {
             type: "text",
             text: `Error queuing bridge test command: ${String(error)}`
+          }
+        ],
+        isError: true
+      };
+    }
+  }
+);
+
+// Add tool for running custom scripts
+server.tool(
+  "run-custom-script",
+  "Run custom ExtendScript code in After Effects (use with caution)",
+  {
+    script: z.string().describe("ExtendScript code to execute"),
+    description: z.string().optional().describe("Description of what this script does")
+  },
+  async ({ script, description }) => {
+    // Start tracking this command
+    const commandId = historyManager.startCommand('run-custom-script', {
+      script: script.substring(0, 200) + (script.length > 200 ? '...' : ''), // Truncate for history
+      description
+    });
+
+    try {
+      // Create a temporary script file
+      const tempScriptName = `custom_${Date.now()}.jsx`;
+      const tempScriptPath = path.join(TEMP_DIR, tempScriptName);
+
+      // Wrap the script with error handling
+      const wrappedScript = `
+(function() {
+  try {
+    ${script}
+  } catch (error) {
+    return { error: error.toString(), line: error.line };
+  }
+})();
+`;
+
+      fs.writeFileSync(tempScriptPath, wrappedScript);
+
+      // Clear any stale result data
+      clearResultsFile();
+
+      // Write command to file for After Effects to pick up
+      writeCommandFile("customScript", { scriptPath: tempScriptPath });
+
+      historyManager.completeCommand(commandId, 'success', {
+        scriptPath: tempScriptPath,
+        description
+      });
+
+      return {
+        content: [
+          {
+            type: "text",
+            text: `Custom script has been queued for execution.\n` +
+                  (description ? `Description: ${description}\n` : '') +
+                  `Script saved to: ${tempScriptPath}\n` +
+                  `Use the "get-results" tool after a few seconds to check for results.`
+          }
+        ]
+      };
+    } catch (error) {
+      const errorMsg = `Error preparing custom script: ${String(error)}`;
+      historyManager.completeCommand(commandId, 'error', undefined, errorMsg);
+
+      return {
+        content: [
+          {
+            type: "text",
+            text: errorMsg
+          }
+        ],
+        isError: true
+      };
+    }
+  }
+);
+
+// Add tool to query command history
+server.tool(
+  "get-command-history",
+  "Query the command history of After Effects operations",
+  {
+    filter: z.object({
+      tool: z.string().optional().describe("Filter by specific tool name"),
+      timeRange: z.object({
+        from: z.string().describe("ISO 8601 date string for start time"),
+        to: z.string().describe("ISO 8601 date string for end time")
+      }).optional().describe("Filter by time range"),
+      result: z.enum(['success', 'error', 'pending']).optional().describe("Filter by result status"),
+      limit: z.number().optional().describe("Limit number of results returned")
+    }).optional().describe("Optional filters for querying history"),
+    includeStats: z.boolean().optional().describe("Include statistics summary")
+  },
+  async ({ filter, includeStats }) => {
+    try {
+      const history = historyManager.queryHistory(filter);
+      const stats = includeStats ? historyManager.getStatistics() : null;
+
+      let responseText = `Found ${history.length} command(s) in history.\n\n`;
+
+      if (stats) {
+        responseText += `📊 Statistics:\n`;
+        responseText += `  Total Commands: ${stats.totalCommands}\n`;
+        responseText += `  Success: ${stats.successCount}\n`;
+        responseText += `  Errors: ${stats.errorCount}\n`;
+        responseText += `  Pending: ${stats.pendingCount}\n`;
+        responseText += `  Avg Duration: ${Math.round(stats.averageDuration)}ms\n\n`;
+
+        if (stats.mostUsedTools.length > 0) {
+          responseText += `  Most Used Tools:\n`;
+          stats.mostUsedTools.slice(0, 5).forEach(tool => {
+            responseText += `    - ${tool.tool}: ${tool.count} times\n`;
+          });
+          responseText += '\n';
+        }
+      }
+
+      responseText += `Recent Commands:\n`;
+      responseText += `${'='.repeat(80)}\n`;
+
+      // Show most recent commands first
+      const recentCommands = history.slice(-20).reverse();
+
+      for (const cmd of recentCommands) {
+        const timestamp = new Date(cmd.timestamp).toLocaleString();
+        responseText += `\n[${timestamp}] ${cmd.tool}\n`;
+        responseText += `  ID: ${cmd.id}\n`;
+        responseText += `  Status: ${cmd.result}${cmd.duration ? ` (${cmd.duration}ms)` : ''}\n`;
+
+        if (cmd.parameters && Object.keys(cmd.parameters).length > 0) {
+          responseText += `  Parameters: ${JSON.stringify(cmd.parameters, null, 2).split('\n').join('\n  ')}\n`;
+        }
+
+        if (cmd.error) {
+          responseText += `  Error: ${cmd.error}\n`;
+        }
+      }
+
+      return {
+        content: [
+          {
+            type: "text",
+            text: responseText
+          }
+        ]
+      };
+    } catch (error) {
+      return {
+        content: [
+          {
+            type: "text",
+            text: `Error querying command history: ${String(error)}`
+          }
+        ],
+        isError: true
+      };
+    }
+  }
+);
+
+// Add tool to export command history as script
+server.tool(
+  "export-history-as-script",
+  "Export command history as an ExtendScript file",
+  {},
+  async () => {
+    try {
+      const script = historyManager.exportAsScript();
+      const scriptPath = path.join(TEMP_DIR, `history_export_${Date.now()}.jsx`);
+
+      fs.writeFileSync(scriptPath, script);
+
+      return {
+        content: [
+          {
+            type: "text",
+            text: `Command history exported as ExtendScript to:\n${scriptPath}\n\n` +
+                  `Preview (first 50 lines):\n${'='.repeat(80)}\n` +
+                  script.split('\n').slice(0, 50).join('\n')
+          }
+        ]
+      };
+    } catch (error) {
+      return {
+        content: [
+          {
+            type: "text",
+            text: `Error exporting history: ${String(error)}`
           }
         ],
         isError: true
