@@ -181,6 +181,7 @@ export class FileManager {
       console.log(colors.green(`[MCP FILEMANAGER] Created temp directory: ${this.tempDir}`));
     }
   }
+
 }
 
 // Export a singleton instance
