@@ -8,6 +8,8 @@ import { getTempFilePath } from './utils/resolvePaths.js';
 import { HistoryManager } from './utils/historyManager.js';
 import { initFileManager, getFileManager } from './services/fileManager.js';
 import { initScriptExecutor, getScriptExecutor } from './services/scriptExecutor.js';
+import { registerAllTools } from './tools/index.js';
+import { ToolContext } from './tools/types.js';
 
 // Create an MCP server
 const server = new McpServer({
@@ -37,6 +39,18 @@ function runExtendScript(scriptPath: string, args: Record<string, any> = {}): st
   return scriptExecutor.runExtendScript(scriptPath, args);
 }
 
+// Create tool context for all tools to use
+const toolContext: ToolContext = {
+  fileManager,
+  scriptExecutor,
+  historyManager,
+  tempDir: TEMP_DIR,
+  scriptsDir: SCRIPTS_DIR
+};
+
+// Register all tools with the server
+registerAllTools(server, toolContext);
+
 
 // Add a resource to expose project compositions
 server.resource(
@@ -54,114 +68,6 @@ server.resource(
         text: result
       }]
     };
-  }
-);
-
-// Add a tool for running read-only scripts
-server.tool(
-  "run-script",
-  "Run a read-only script in After Effects",
-  {
-    script: z.string().describe("Name of the predefined script to run"),
-    parameters: z.record(z.any()).optional().describe("Optional parameters for the script")
-  },
-  async ({ script, parameters = {} }) => {
-    // Start tracking this command
-    const commandId = historyManager.startCommand('run-script', { script, parameters });
-
-    // Validate that script is safe (only allow predefined scripts)
-    const allowedScripts = [
-      "listCompositions",
-      "getProjectInfo",
-      "getLayerInfo",
-      "createComposition",
-      "createTextLayer",
-      "createShapeLayer",
-      "createSolidLayer",
-      "setLayerProperties",
-      "setLayerKeyframe",
-      "setLayerExpression",
-      "applyEffect",
-      "applyEffectTemplate",
-      "test-animation",
-      "bridgeTestEffects"
-    ];
-
-    if (!allowedScripts.includes(script)) {
-      const errorMsg = `Error: Script "${script}" is not allowed. Allowed scripts are: ${allowedScripts.join(", ")}`;
-      historyManager.completeCommand(commandId, 'error', undefined, errorMsg);
-      return {
-        content: [
-          {
-            type: "text",
-            text: errorMsg
-          }
-        ],
-        isError: true
-      };
-    }
-
-    try {
-      // Clear any stale result data
-      fileManager.clearResultsFile();
-
-      // Write command to file for After Effects to pick up
-      fileManager.writeCommandFile(script, parameters);
-
-      // Mark as successful (actual execution happens in After Effects)
-      historyManager.completeCommand(commandId, 'success', { queued: true });
-
-      return {
-        content: [
-          {
-            type: "text",
-            text: `Command to run "${script}" has been queued.\n` +
-                  `Please ensure the "MCP Bridge Auto" panel is open in After Effects.\n` +
-                  `Use the "get-results" tool after a few seconds to check for results.`
-          }
-        ]
-      };
-    } catch (error) {
-      return {
-        content: [
-          {
-            type: "text",
-            text: `Error queuing command: ${String(error)}`
-          }
-        ],
-        isError: true
-      };
-    }
-  }
-);
-
-// Add a tool to get the results from the last script execution
-server.tool(
-  "get-results",
-  "Get results from the last script executed in After Effects",
-  {},
-  async () => {
-    try {
-      const result = fileManager.readResultsFromTempFile();
-      return {
-        content: [
-          {
-            type: "text",
-            text: result
-          }
-        ]
-      };
-    } catch (error) {
-      return {
-        content: [
-          {
-            type: "text",
-            text: `Error getting results: ${String(error)}`
-          }
-        ],
-        isError: true
-      };
-    }
   }
 );
 
@@ -217,72 +123,6 @@ server.prompt(
   }
 );
 
-// Add a tool to provide help and instructions
-server.tool(
-  "get-help",
-  "Get help on using the After Effects MCP integration",
-  {},
-  async () => {
-    return {
-      content: [
-        {
-          type: "text",
-          text: `# After Effects MCP Integration Help
-
-To use this integration with After Effects, follow these steps:
-
-1. **Install the scripts in After Effects**
-   - Run \`node install-script.js\` with administrator privileges
-   - This copies the necessary scripts to your After Effects installation
-
-2. **Open After Effects**
-   - Launch Adobe After Effects 
-   - Open a project that you want to work with
-
-3. **Open the MCP Bridge Auto panel**
-   - In After Effects, go to Window > mcp-bridge-auto.jsx
-   - The panel will automatically check for commands every few seconds
-
-4. **Run scripts through MCP**
-   - Use the \`run-script\` tool to queue a command
-   - The Auto panel will detect and run the command automatically
-   - Results will be saved to a temp file
-
-5. **Get results through MCP**
-   - After a command is executed, use the \`get-results\` tool
-   - This will retrieve the results from After Effects
-
-Available scripts:
-- getProjectInfo: Information about the current project
-- listCompositions: List all compositions in the project
-- getLayerInfo: Information about layers in the active composition
-- createComposition: Create a new composition
-- createTextLayer: Create a new text layer
-- createShapeLayer: Create a new shape layer
-- createSolidLayer: Create a new solid layer
-- setLayerProperties: Set properties for a layer
-- setLayerKeyframe: Set a keyframe for a layer property
-- setLayerExpression: Set an expression for a layer property
-- applyEffect: Apply an effect to a layer
-- applyEffectTemplate: Apply a predefined effect template to a layer
-
-Effect Templates:
-- gaussian-blur: Simple Gaussian blur effect
-- directional-blur: Motion blur in a specific direction
-- color-balance: Adjust hue, lightness, and saturation
-- brightness-contrast: Basic brightness and contrast adjustment
-- curves: Advanced color adjustment using curves
-- glow: Add a glow effect to elements
-- drop-shadow: Add a customizable drop shadow
-- cinematic-look: Combination of effects for a cinematic appearance
-- text-pop: Effects to make text stand out (glow and shadow)
-
-Note: The auto-running panel can be left open in After Effects to continuously listen for commands from external applications.`
-        }
-      ]
-    };
-  }
-);
 
 // Add a tool specifically for creating compositions
 server.tool(
