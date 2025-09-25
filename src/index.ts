@@ -1037,11 +1037,13 @@ server.tool(
       const tempScriptName = `custom_${Date.now()}.jsx`;
       const tempScriptPath = path.join(TEMP_DIR, tempScriptName);
 
-      // Wrap the script with error handling
+      // Wrap the script with error handling and capture return value
       const wrappedScript = `
 (function() {
   try {
-    ${script}
+    return (function() {
+      ${script}
+    })();
   } catch (error) {
     return { error: error.toString(), line: error.line };
   }
