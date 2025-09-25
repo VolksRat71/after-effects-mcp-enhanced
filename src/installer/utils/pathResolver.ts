@@ -1,6 +1,7 @@
 // After Effects path resolution utilities
 import * as fs from "fs";
 import * as path from "path";
+import colors from "colors";
 
 export interface AfterEffectsPaths {
   appPath: string;
@@ -20,7 +21,7 @@ export class PathResolver {
     } else if (platform === "darwin") {
       return this.resolveMacOS();
     } else {
-      throw new Error(`Unsupported platform: ${platform}. Only Windows and macOS are supported.`);
+      throw new Error(colors.red(`[MCP INSTALLER] Unsupported platform: ${platform}. Only Windows and macOS are supported.`));
     }
   }
 

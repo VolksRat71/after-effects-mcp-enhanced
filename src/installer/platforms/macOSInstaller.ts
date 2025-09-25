@@ -33,7 +33,7 @@ export class MacOSInstaller {
    * Shows post-installation instructions for macOS
    */
   private static showPostInstallInstructions(): void {
-    console.log(colors.green("\n✅ Bridge script installed successfully!\n"));
+    console.log(colors.green("[MCP INSTALLER] ✅ Bridge script installed successfully!\n"));
     console.log(colors.yellow("Important next steps:"));
     console.log(colors.yellow("1. Open After Effects"));
     console.log(colors.yellow("2. Go to After Effects > Settings > Scripting & Expressions"));

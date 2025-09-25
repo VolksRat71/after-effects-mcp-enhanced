@@ -52,7 +52,7 @@ export function requireSudo(platformInfo: PlatformInfo): void {
   }
 
   if (!checkSudoPrivileges()) {
-    console.error(colors.red("❌ Error: This installer requires administrator privileges on macOS.\n"));
+    console.error(colors.red("[MCP INSTALLER] ❌ Error: This installer requires administrator privileges on macOS.\n"));
     console.error(colors.yellow("Please run with sudo:"));
     console.error(colors.yellow("  sudo node install-bridge.js"));
     console.error(colors.yellow("or"));
@@ -61,5 +61,5 @@ export function requireSudo(platformInfo: PlatformInfo): void {
     process.exit(1);
   }
 
-  console.log(colors.green("✅ Running with administrator privileges\n"));
+  console.log(colors.green("[MCP INSTALLER] ✅ Running with administrator privileges\n"));
 }
