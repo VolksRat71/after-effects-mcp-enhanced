@@ -11,6 +11,4 @@ export function registerAnimationTools(server: McpServer, context: ToolContext):
   registerCopyAnimationTool(server, context);
   registerSetMultipleKeyframesTool(server, context);
   registerApplyAnimationTemplateTool(server, context);
-
-  console.log(colors.green('[MCP TOOLS] Animation tools registered successfully'));
 }

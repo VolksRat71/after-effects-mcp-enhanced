@@ -22,6 +22,10 @@ import {
   registerAnimationTools
 } from "./animation/index.js";
 
+import {
+  registerEffectsTools
+} from "./effects/index.js";
+
 /**
  * Register all tools with the MCP server
  */
@@ -46,7 +50,9 @@ export function registerAllTools(server: McpServer, context: ToolContext): void 
   // Register animation tools
   registerAnimationTools(server, context);
 
-  // TODO: Register effects tools
+  // Register effects tools
+  registerEffectsTools(server, context);
+
   // TODO: Register media tools
 
   console.log(colors.green('[MCP TOOLS] All tools registered successfully!'));
