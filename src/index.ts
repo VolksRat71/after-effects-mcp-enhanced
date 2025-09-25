@@ -1,12 +1,13 @@
 import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { StdioServerTransport } from "@modelcontextprotocol/sdk/server/stdio.js";
-import { execSync } from "child_process";
 import * as fs from "fs";
 import * as path from "path";
 import { z } from "zod";
 import { fileURLToPath } from 'url';
-import { resolveAfterEffectsPaths, getTempFilePath, validateAfterEffectsInstallation } from './utils/resolvePaths.js';
+import { getTempFilePath } from './utils/resolvePaths.js';
 import { HistoryManager } from './utils/historyManager.js';
+import { initFileManager, getFileManager } from './services/fileManager.js';
+import { initScriptExecutor, getScriptExecutor } from './services/scriptExecutor.js';
 
 // Create an MCP server
 const server = new McpServer({
@@ -25,190 +26,17 @@ const TEMP_DIR = path.join(__dirname, "temp");
 // Initialize history manager
 const historyManager = new HistoryManager();
 
-// Cleanup functions for temporary files
-function cleanupOldJSXFiles(): void {
-  try {
-    const tempDir = TEMP_DIR; // Use the same TEMP_DIR constant defined above
-    if (!fs.existsSync(tempDir)) return;
+// Initialize file manager
+const fileManager = initFileManager(TEMP_DIR);
 
-    const files = fs.readdirSync(tempDir);
-    const oneHourAgo = Date.now() - 3600000; // 1 hour in milliseconds
-    let cleanedCount = 0;
+// Initialize script executor
+const scriptExecutor = initScriptExecutor(TEMP_DIR, SCRIPTS_DIR);
 
-    files.forEach(file => {
-      if (file.endsWith('.jsx')) {
-        const filePath = path.join(tempDir, file);
-        try {
-          const stats = fs.statSync(filePath);
-          if (stats.mtimeMs < oneHourAgo) {
-            fs.unlinkSync(filePath);
-            cleanedCount++;
-            console.error(`Cleaned old JSX file: ${file}`);
-          }
-        } catch (e) {
-          // File might be locked or already deleted
-          console.error(`Could not clean ${file}:`, e);
-        }
-      }
-    });
-
-    if (cleanedCount > 0) {
-      console.error(`Cleaned ${cleanedCount} old JSX files from previous sessions`);
-    }
-  } catch (error) {
-    console.error('Error during cleanup:', error);
-  }
-}
-
-function scheduleFileCleanup(filePath: string, delayMs: number = 300000): void {
-  // Schedule cleanup after 5 minutes (default)
-  setTimeout(() => {
-    try {
-      if (fs.existsSync(filePath)) {
-        fs.unlinkSync(filePath);
-        console.error(`Cleaned up temp file: ${path.basename(filePath)}`);
-      }
-    } catch (e) {
-      // File might be in use or already deleted
-      console.error(`Could not clean up ${path.basename(filePath)}:`, e);
-    }
-  }, delayMs);
-}
-
-// Helper function to run After Effects scripts
+// Helper function to run After Effects scripts (delegating to scriptExecutor)
 function runExtendScript(scriptPath: string, args: Record<string, any> = {}): string {
-  try {
-    // Ensure temp directory exists
-    if (!fs.existsSync(TEMP_DIR)) {
-      fs.mkdirSync(TEMP_DIR, { recursive: true });
-    }
-
-    // Create a temporary file to hold the script arguments
-    const argsPath = path.join(TEMP_DIR, "args.json");
-    fs.writeFileSync(argsPath, JSON.stringify(args));
-
-    // Find After Effects executable location using cross-platform resolution
-    const aePaths = resolveAfterEffectsPaths();
-    const aePath = aePaths.executable;
-
-    // Verify After Effects executable exists
-    if (!aePath || !fs.existsSync(aePath)) {
-      const validation = validateAfterEffectsInstallation();
-      return `Error: ${validation.message}`;
-    }
-
-    // Verify script file exists
-    if (!fs.existsSync(scriptPath)) {
-      return `Error: Script file not found at "${scriptPath}".`;
-    }
-
-    // Try using the -m flag instead of -r for running scripts (alternative method)
-    // The -m flag tells After Effects to run a script without showing a dialog
-    const command = `"${aePath}" -m "${scriptPath}" "${argsPath}"`;
-    console.error(`Running command with -m flag: ${command}`);
-    
-    try {
-      const output = execSync(command, { encoding: 'utf8', timeout: 30000 });
-      return output;
-    } catch (execError: any) {
-      console.error("Command execution error:", execError);
-      
-      // If -m flag fails, try creating a JSX file that calls the script via BridgeTalk
-      // This is a different approach that can work if direct execution fails
-      console.error("Trying alternative approach using BridgeTalk...");
-      
-      const bridgeScriptPath = path.join(TEMP_DIR, "bridge_script.jsx");
-      const bridgeScriptContent = `
-#include "${scriptPath.replace(/\\/g, "/")}"
-alert("Script execution completed");
-      `;
-      
-      fs.writeFileSync(bridgeScriptPath, bridgeScriptContent);
-      
-      return `Error executing After Effects command: ${String(execError?.message || execError)}. 
-      This might be because After Effects cannot be accessed in headless mode.
-      Please try running the script "${path.basename(scriptPath)}" manually in After Effects.`;
-    }
-  } catch (error) {
-    console.error("Error running ExtendScript:", error);
-    return `Error: ${String(error)}`;
-  }
+  return scriptExecutor.runExtendScript(scriptPath, args);
 }
 
-// Helper function to read results from After Effects temp file
-function readResultsFromTempFile(): string {
-  try {
-    const tempFilePath = getTempFilePath('ae_mcp_result.json');
-    
-    // Add debugging info
-    console.error(`Checking for results at: ${tempFilePath}`);
-    
-    if (fs.existsSync(tempFilePath)) {
-      // Get file stats to check modification time
-      const stats = fs.statSync(tempFilePath);
-      console.error(`Result file exists, last modified: ${stats.mtime.toISOString()}`);
-      
-      const content = fs.readFileSync(tempFilePath, 'utf8');
-      console.error(`Result file content length: ${content.length} bytes`);
-      
-      // If the result file is older than 30 seconds, warn the user
-      const thirtySecondsAgo = new Date(Date.now() - 30 * 1000);
-      if (stats.mtime < thirtySecondsAgo) {
-        console.error(`WARNING: Result file is older than 30 seconds. After Effects may not be updating results.`);
-        return JSON.stringify({ 
-          warning: "Result file appears to be stale (not recently updated).",
-          message: "This could indicate After Effects is not properly writing results or the MCP Bridge Auto panel isn't running.",
-          lastModified: stats.mtime.toISOString(),
-          originalContent: content
-        });
-      }
-      
-      return content;
-    } else {
-      console.error(`Result file not found at: ${tempFilePath}`);
-      return JSON.stringify({ error: "No results file found. Please run a script in After Effects first." });
-    }
-  } catch (error) {
-    console.error("Error reading results file:", error);
-    return JSON.stringify({ error: `Failed to read results: ${String(error)}` });
-  }
-}
-
-// Helper function to write command to file
-function writeCommandFile(command: string, args: Record<string, any> = {}): void {
-  try {
-    const commandFile = getTempFilePath('ae_command.json');
-    const commandData = {
-      command,
-      args,
-      timestamp: new Date().toISOString(),
-      status: "pending"  // pending, running, completed, error
-    };
-    fs.writeFileSync(commandFile, JSON.stringify(commandData, null, 2));
-    console.error(`Command "${command}" written to ${commandFile}`);
-  } catch (error) {
-    console.error("Error writing command file:", error);
-  }
-}
-
-// Helper function to clear the results file to avoid stale cache
-function clearResultsFile(): void {
-  try {
-    const resultFile = getTempFilePath('ae_mcp_result.json');
-    
-    // Write a placeholder message to indicate the file is being reset
-    const resetData = {
-      status: "waiting",
-      message: "Waiting for new result from After Effects...",
-      timestamp: new Date().toISOString()
-    };
-    
-    fs.writeFileSync(resultFile, JSON.stringify(resetData, null, 2));
-    console.error(`Results file cleared at ${resultFile}`);
-  } catch (error) {
-    console.error("Error clearing results file:", error);
-  }
-}
 
 // Add a resource to expose project compositions
 server.resource(
@@ -275,10 +103,10 @@ server.tool(
 
     try {
       // Clear any stale result data
-      clearResultsFile();
+      fileManager.clearResultsFile();
 
       // Write command to file for After Effects to pick up
-      writeCommandFile(script, parameters);
+      fileManager.writeCommandFile(script, parameters);
 
       // Mark as successful (actual execution happens in After Effects)
       historyManager.completeCommand(commandId, 'success', { queued: true });
@@ -314,7 +142,7 @@ server.tool(
   {},
   async () => {
     try {
-      const result = readResultsFromTempFile();
+      const result = fileManager.readResultsFromTempFile();
       return {
         content: [
           {
@@ -476,7 +304,7 @@ server.tool(
   async (params) => {
     try {
       // Write command to file for After Effects to pick up
-      writeCommandFile("createComposition", params);
+      fileManager.writeCommandFile("createComposition", params);
       
       return {
         content: [
@@ -527,7 +355,7 @@ server.tool(
   async (parameters) => {
     try {
       // Queue the command for After Effects
-      writeCommandFile("setLayerKeyframe", parameters);
+      fileManager.writeCommandFile("setLayerKeyframe", parameters);
       
       return {
         content: [
@@ -564,7 +392,7 @@ server.tool(
   async (parameters) => {
     try {
       // Queue the command for After Effects
-      writeCommandFile("setLayerExpression", parameters);
+      fileManager.writeCommandFile("setLayerExpression", parameters);
       
       return {
         content: [
@@ -603,76 +431,12 @@ server.tool(
   },
   async (params) => {
     try {
-      // Generate a unique timestamp
-      const timestamp = new Date().getTime();
-      const tempFile = getTempFilePath(`ae_test_${timestamp}.jsx`);
-      
-      // Create a direct test script that doesn't rely on command files
-      let scriptContent = "";
-      if (params.operation === "keyframe") {
-        scriptContent = `
-          // Direct keyframe test script
-          try {
-            var comp = app.project.items[${params.compIndex}];
-            var layer = comp.layers[${params.layerIndex}];
-            var prop = layer.property("Transform").property("Opacity");
-            var time = 1; // 1 second
-            var value = 25; // 25% opacity
-            
-            // Set a keyframe
-            prop.setValueAtTime(time, value);
-            
-            // Write direct result
-            var resultFile = new File("${getTempFilePath('ae_test_result.txt').replace(/\\/g, '\\\\')}");
-            resultFile.open("w");
-            resultFile.write("SUCCESS: Added keyframe at time " + time + " with value " + value);
-            resultFile.close();
-            
-            // Visual feedback
-            alert("Test successful: Added opacity keyframe at " + time + "s with value " + value + "%");
-          } catch (e) {
-            var errorFile = new File("${getTempFilePath('ae_test_error.txt').replace(/\\/g, '\\\\')}");
-            errorFile.open("w");
-            errorFile.write("ERROR: " + e.toString());
-            errorFile.close();
-            
-            alert("Test failed: " + e.toString());
-          }
-        `;
-      } else if (params.operation === "expression") {
-        scriptContent = `
-          // Direct expression test script
-          try {
-            var comp = app.project.items[${params.compIndex}];
-            var layer = comp.layers[${params.layerIndex}];
-            var prop = layer.property("Transform").property("Position");
-            var expression = "wiggle(3, 30)";
-            
-            // Set the expression
-            prop.expression = expression;
-            
-            // Write direct result
-            var resultFile = new File("${getTempFilePath('ae_test_result.txt').replace(/\\/g, '\\\\')}");
-            resultFile.open("w");
-            resultFile.write("SUCCESS: Added expression: " + expression);
-            resultFile.close();
-            
-            // Visual feedback
-            alert("Test successful: Added position expression: " + expression);
-          } catch (e) {
-            var errorFile = new File("${getTempFilePath('ae_test_error.txt').replace(/\\/g, '\\\\')}");
-            errorFile.open("w");
-            errorFile.write("ERROR: " + e.toString());
-            errorFile.close();
-            
-            alert("Test failed: " + e.toString());
-          }
-        `;
-      }
-      
-      // Write the script to a temp file
-      fs.writeFileSync(tempFile, scriptContent);
-      console.error(`Written test script to: ${tempFile}`);
+      // Use scriptExecutor to create the test animation script
+      const tempFile = scriptExecutor.createTestAnimationScript(
+        params.operation,
+        params.compIndex,
+        params.layerIndex
+      );
       
       // Tell the user what to do
       return {
@@ -723,7 +487,7 @@ server.tool(
   async (parameters) => {
     try {
       // Queue the command for After Effects
-      writeCommandFile("applyEffect", parameters);
+      fileManager.writeCommandFile("applyEffect", parameters);
       
       return {
         content: [
@@ -771,7 +535,7 @@ server.tool(
   async (parameters) => {
     try {
       // Queue the command for After Effects
-      writeCommandFile("applyEffectTemplate", parameters);
+      fileManager.writeCommandFile("applyEffectTemplate", parameters);
       
       return {
         content: [
@@ -812,13 +576,13 @@ server.tool(
   async (parameters) => {
     try {
       // Queue the command for After Effects
-      writeCommandFile("applyEffect", parameters);
+      fileManager.writeCommandFile("applyEffect", parameters);
       
       // Wait a bit for After Effects to process the command
       await new Promise(resolve => setTimeout(resolve, 1000));
       
       // Get the results
-      const result = readResultsFromTempFile();
+      const result = fileManager.readResultsFromTempFile();
       
       return {
         content: [
@@ -865,13 +629,13 @@ server.tool(
   async (parameters) => {
     try {
       // Queue the command for After Effects
-      writeCommandFile("applyEffectTemplate", parameters);
+      fileManager.writeCommandFile("applyEffectTemplate", parameters);
       
       // Wait a bit for After Effects to process the command
       await new Promise(resolve => setTimeout(resolve, 1000));
       
       // Get the results
-      const result = readResultsFromTempFile();
+      const result = fileManager.readResultsFromTempFile();
       
       return {
         content: [
@@ -988,10 +752,10 @@ server.tool(
   async () => {
     try {
       // Clear any stale result data
-      clearResultsFile();
+      fileManager.clearResultsFile();
       
       // Write command to file for After Effects to pick up
-      writeCommandFile("bridgeTestEffects", {});
+      fileManager.writeCommandFile("bridgeTestEffects", {});
       
       return {
         content: [
@@ -1033,33 +797,17 @@ server.tool(
     });
 
     try {
-      // Create a temporary script file
-      const tempScriptName = `custom_${Date.now()}.jsx`;
-      const tempScriptPath = path.join(TEMP_DIR, tempScriptName);
-
-      // Wrap the script with error handling and capture return value
-      const wrappedScript = `
-(function() {
-  try {
-    return (function() {
-      ${script}
-    })();
-  } catch (error) {
-    return { error: error.toString(), line: error.line };
-  }
-})();
-`;
-
-      fs.writeFileSync(tempScriptPath, wrappedScript);
+      // Use scriptExecutor to prepare the custom script
+      const { tempScriptPath } = scriptExecutor.executeCustomScript(script, description);
 
       // Schedule cleanup of temp file
-      scheduleFileCleanup(tempScriptPath);
+      fileManager.scheduleFileCleanup(tempScriptPath);
 
       // Clear any stale result data
-      clearResultsFile();
+      fileManager.clearResultsFile();
 
       // Write command to file for After Effects to pick up
-      writeCommandFile("customScript", { scriptPath: tempScriptPath });
+      fileManager.writeCommandFile("customScript", { scriptPath: tempScriptPath });
 
       historyManager.completeCommand(commandId, 'success', {
         scriptPath: tempScriptPath,
@@ -1359,13 +1107,13 @@ server.tool(
       fs.writeFileSync(tempScriptPath, scriptContent, 'utf-8');
 
       // Schedule cleanup of temp file
-      scheduleFileCleanup(tempScriptPath);
+      fileManager.scheduleFileCleanup(tempScriptPath);
 
       // Clear any stale results
-      clearResultsFile();
+      fileManager.clearResultsFile();
 
       // Write command for After Effects
-      writeCommandFile("customScript", { scriptPath: tempScriptPath });
+      fileManager.writeCommandFile("customScript", { scriptPath: tempScriptPath });
 
       historyManager.completeCommand(commandId, 'success', { scriptPath: tempScriptPath });
 
@@ -1494,10 +1242,10 @@ server.tool(
       fs.writeFileSync(tempScriptPath, scriptContent, 'utf-8');
 
       // Schedule cleanup of temp file
-      scheduleFileCleanup(tempScriptPath);
+      fileManager.scheduleFileCleanup(tempScriptPath);
 
-      clearResultsFile();
-      writeCommandFile("customScript", { scriptPath: tempScriptPath });
+      fileManager.clearResultsFile();
+      fileManager.writeCommandFile("customScript", { scriptPath: tempScriptPath });
 
       historyManager.completeCommand(commandId, 'success', { keyframesSet: keyframes.length });
 
@@ -1644,10 +1392,10 @@ server.tool(
       fs.writeFileSync(tempScriptPath, scriptContent, 'utf-8');
 
       // Schedule cleanup of temp file
-      scheduleFileCleanup(tempScriptPath);
+      fileManager.scheduleFileCleanup(tempScriptPath);
 
-      clearResultsFile();
-      writeCommandFile("customScript", { scriptPath: tempScriptPath });
+      fileManager.clearResultsFile();
+      fileManager.writeCommandFile("customScript", { scriptPath: tempScriptPath });
 
       historyManager.completeCommand(commandId, 'success', { filesImported: files.length });
 
@@ -1786,10 +1534,10 @@ server.tool(
       fs.writeFileSync(tempScriptPath, scriptContent, 'utf-8');
 
       // Schedule cleanup of temp file
-      scheduleFileCleanup(tempScriptPath);
+      fileManager.scheduleFileCleanup(tempScriptPath);
 
-      clearResultsFile();
-      writeCommandFile("customScript", { scriptPath: tempScriptPath });
+      fileManager.clearResultsFile();
+      fileManager.writeCommandFile("customScript", { scriptPath: tempScriptPath });
 
       historyManager.completeCommand(commandId, 'success');
 
@@ -1953,10 +1701,10 @@ server.tool(
       fs.writeFileSync(tempScriptPath, scriptContent, 'utf-8');
 
       // Schedule cleanup of temp file
-      scheduleFileCleanup(tempScriptPath);
+      fileManager.scheduleFileCleanup(tempScriptPath);
 
-      clearResultsFile();
-      writeCommandFile("customScript", { scriptPath: tempScriptPath });
+      fileManager.clearResultsFile();
+      fileManager.writeCommandFile("customScript", { scriptPath: tempScriptPath });
 
       historyManager.completeCommand(commandId, 'success');
 
@@ -2185,10 +1933,10 @@ server.tool(
       fs.writeFileSync(tempScriptPath, scriptContent, 'utf-8');
 
       // Schedule cleanup of temp file
-      scheduleFileCleanup(tempScriptPath);
+      fileManager.scheduleFileCleanup(tempScriptPath);
 
-      clearResultsFile();
-      writeCommandFile("customScript", { scriptPath: tempScriptPath });
+      fileManager.clearResultsFile();
+      fileManager.writeCommandFile("customScript", { scriptPath: tempScriptPath });
 
       historyManager.completeCommand(commandId, 'success', { template });
 
@@ -2227,7 +1975,7 @@ async function main() {
   console.error(`Temp directory: ${TEMP_DIR}`);
 
   // Clean up old JSX files on startup
-  cleanupOldJSXFiles();
+  fileManager.cleanupOldJSXFiles();
 
   const transport = new StdioServerTransport();
   await server.connect(transport);
