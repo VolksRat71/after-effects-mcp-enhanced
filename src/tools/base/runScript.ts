@@ -1,6 +1,7 @@
 import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { z } from "zod";
 import { ToolRegistrar, ToolContext } from "../types.js";
+import colors from "colors";
 
 /**
  * Tool for running predefined scripts in After Effects
@@ -14,8 +15,8 @@ export const registerRunScriptTool: ToolRegistrar = (server: McpServer, context:
       parameters: z.record(z.any()).optional().describe("Optional parameters for the script")
     },
     async ({ script, parameters = {} }) => {
-      console.error(`[MCP] Tool invoked: run-script | Script: ${script}`);
-      console.error(`[MCP] Parameters: ${JSON.stringify(parameters)}`);
+      console.error(colors.cyan(`[MCP BASE] Tool invoked: run-script | Script: ${script}`));
+      console.error(colors.cyan(`[MCP BASE] Parameters: ${JSON.stringify(parameters)}`));
 
       // Start tracking this command
       const commandId = context.historyManager.startCommand('run-script', { script, parameters });
@@ -41,7 +42,7 @@ export const registerRunScriptTool: ToolRegistrar = (server: McpServer, context:
       if (!allowedScripts.includes(script)) {
         const errorMsg = `Error: Script "${script}" is not allowed. Allowed scripts are: ${allowedScripts.join(", ")}`;
         context.historyManager.completeCommand(commandId, 'error', undefined, errorMsg);
-        console.error(`[MCP] Tool failed: run-script | ${errorMsg}`);
+        console.error(colors.red(`[MCP BASE] Tool failed: run-script | ${errorMsg}`));
 
         return {
           content: [
@@ -64,8 +65,8 @@ export const registerRunScriptTool: ToolRegistrar = (server: McpServer, context:
         // Mark as successful (actual execution happens in After Effects)
         context.historyManager.completeCommand(commandId, 'success', { queued: true });
 
-        console.error(`[MCP] Tool success: run-script | Script queued: ${script}`);
-        console.error(`[MCP] Reply sent: Command queued for After Effects execution`);
+        console.error(colors.cyan(`[MCP BASE] Tool success: run-script | Script queued: ${script}`));
+        console.error(colors.cyan(`[MCP BASE] Reply sent: Command queued for After Effects execution`));
 
         return {
           content: [
@@ -84,7 +85,7 @@ export const registerRunScriptTool: ToolRegistrar = (server: McpServer, context:
           content: [
             {
               type: "text",
-              text: `Error queuing command: ${String(error)}`
+              text: `[MCP BASE] Error queuing command: ${String(error)}`
             }
           ],
           isError: true

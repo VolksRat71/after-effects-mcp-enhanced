@@ -1,4 +1,5 @@
 import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
+import colors from "colors";
 import { ToolRegistrar, ToolContext } from "../types.js";
 
 /**
@@ -10,7 +11,7 @@ export const registerGetHelpTool: ToolRegistrar = (server: McpServer, context: T
     "Get help on using the After Effects MCP integration",
     {},
     async () => {
-      console.error(`[MCP] Tool invoked: get-help`);
+      console.log(colors.cyan(`[MCP BASE] Tool invoked: get-help`));
 
       return {
         content: [
