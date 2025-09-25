@@ -19,12 +19,20 @@ import {
 } from "./layer/index.js";
 
 import {
-  registerAnimationTools
+  registerCopyAnimationTool,
+  registerSetMultipleKeyframesTool,
+  registerApplyAnimationTemplateTool
 } from "./animation/index.js";
 
 import {
-  registerEffectsTools
+  registerApplyEffectTool,
+  registerApplyEffectTemplateTool
 } from "./effects/index.js";
+
+import {
+  registerImportAssetsTool,
+  registerReplaceFootageTool
+} from "./media/index.js";
 
 /**
  * Register all tools with the MCP server
@@ -48,12 +56,20 @@ export function registerAllTools(server: McpServer, context: ToolContext): void 
   registerSetLayerExpressionTool(server, context);
 
   // Register animation tools
-  registerAnimationTools(server, context);
+  console.log(colors.yellow('[MCP TOOLS] Registering animation tools...'));
+  registerCopyAnimationTool(server, context);
+  registerSetMultipleKeyframesTool(server, context);
+  registerApplyAnimationTemplateTool(server, context);
 
   // Register effects tools
-  registerEffectsTools(server, context);
+  console.log(colors.yellow('[MCP TOOLS] Registering effects tools...'));
+  registerApplyEffectTool(server, context);
+  registerApplyEffectTemplateTool(server, context);
 
-  // TODO: Register media tools
+  // Register media tools
+  console.log(colors.yellow('[MCP TOOLS] Registering media tools...'));
+  registerImportAssetsTool(server, context);
+  registerReplaceFootageTool(server, context);
 
   console.log(colors.green('[MCP TOOLS] All tools registered successfully!'));
 }
