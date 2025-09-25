@@ -16,7 +16,7 @@
     "automation"
   ],
   "license": "MIT",
-  "main": "build/index.js",
+  "main": "build/server/index.js",
   "type": "module",
   "scripts": {
     "build": "tsc && npm run copy-scripts && npm run create-temp",
