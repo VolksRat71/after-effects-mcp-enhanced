@@ -22,7 +22,12 @@ const modules = [
   'json-polyfill.jsx',
   'file-operations.jsx',
   'ui-window.jsx',
-  // Add more modules as we create them
+  'composition-operations.jsx',
+  'layer-operations.jsx',
+  'effects-operations.jsx',
+  'media-operations.jsx',
+  'command-executor.jsx',
+  'bridge-main.jsx'
 ];
 
 // Read the main bridge file
@@ -48,17 +53,10 @@ modules.forEach(moduleName => {
   }
 });
 
-// For now, also include the main content (we'll modularize this more later)
-// Remove the JSON polyfill from main since it's now a module
-mainBridgeContent = mainBridgeContent.replace(/\/\/ JSON Polyfill[\s\S]*?^}/m, '');
-
-// Remove the getMCPDirectory and related functions since they're now in file-operations
-mainBridgeContent = mainBridgeContent.replace(/function getMCPDirectory\(\)[\s\S]*?^}/m, '');
-mainBridgeContent = mainBridgeContent.replace(/function getCommandFilePath\(\)[\s\S]*?^}/m, '');
-mainBridgeContent = mainBridgeContent.replace(/function getResultFilePath\(\)[\s\S]*?^}/m, '');
-
-combinedContent += '// === Main Bridge Code ===\n';
-combinedContent += mainBridgeContent;
+// Since we've modularized everything, we don't need the old main content
+// Just add a comment indicating this is the fully modularized version
+combinedContent += '// === All functionality is now modularized ===\n';
+combinedContent += '// The main() function in bridge-main.jsx starts the application\n';
 
 // Write the combined file to build directory
 const outputPath = path.join(projectRoot, 'build', 'scripts', 'mcp-bridge-auto.jsx');
