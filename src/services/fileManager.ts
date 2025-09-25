@@ -1,5 +1,6 @@
 import * as fs from 'fs';
 import * as path from 'path';
+import colors from 'colors';
 import { getTempFilePath } from '../utils/resolvePaths.js';
 
 /**
@@ -32,20 +33,20 @@ export class FileManager {
             if (stats.mtimeMs < oneHourAgo) {
               fs.unlinkSync(filePath);
               cleanedCount++;
-              console.error(`[MCP FileManager] Cleaned old JSX file: ${file}`);
+              console.log(colors.green(`[MCP FILEMANAGER] Cleaned old JSX file: ${file}`));
             }
           } catch (e) {
             // File might be locked or already deleted
-            console.error(`[MCP FileManager] Could not clean ${file}:`, e);
+            console.error(colors.yellow(`[MCP FILEMANAGER] Could not clean ${file}:`), e);
           }
         }
       });
 
       if (cleanedCount > 0) {
-        console.error(`[MCP FileManager] Cleaned ${cleanedCount} old JSX files from previous sessions`);
+        console.log(colors.green(`[MCP FILEMANAGER] Cleaned ${cleanedCount} old JSX files from previous sessions`));
       }
     } catch (error) {
-      console.error('[MCP FileManager] Error during cleanup:', error);
+      console.error(colors.red('[MCP FILEMANAGER] Error during cleanup:'), error);
     }
   }
 
@@ -58,11 +59,11 @@ export class FileManager {
       try {
         if (fs.existsSync(filePath)) {
           fs.unlinkSync(filePath);
-          console.error(`[MCP FileManager] Cleaned up temp file: ${path.basename(filePath)}`);
+          console.log(colors.green(`[MCP FILEMANAGER] Cleaned up temp file: ${path.basename(filePath)}`));
         }
       } catch (e) {
         // File might be in use or already deleted
-        console.error(`[MCP FileManager] Could not clean up ${path.basename(filePath)}:`, e);
+        console.error(colors.yellow(`[MCP FILEMANAGER] Could not clean up ${path.basename(filePath)}:`), e);
       }
     }, delayMs);
   }
@@ -82,9 +83,9 @@ export class FileManager {
       };
 
       fs.writeFileSync(resultFile, JSON.stringify(resetData, null, 2));
-      console.error(`[MCP FileManager] Results file cleared at ${resultFile}`);
+      console.log(colors.blue(`[MCP FILEMANAGER] Results file cleared at ${resultFile}`));
     } catch (error) {
-      console.error('[MCP FileManager] Error clearing results file:', error);
+      console.error(colors.red('[MCP FILEMANAGER] Error clearing results file:'), error);
     }
   }
 
@@ -96,20 +97,20 @@ export class FileManager {
       const tempFilePath = getTempFilePath('ae_mcp_result.json');
 
       // Add debugging info
-      console.error(`[MCP FileManager] Checking for results at: ${tempFilePath}`);
+      console.log(colors.cyan(`[MCP FILEMANAGER] Checking for results at: ${tempFilePath}`));
 
       if (fs.existsSync(tempFilePath)) {
         // Get file stats to check modification time
         const stats = fs.statSync(tempFilePath);
-        console.error(`[MCP FileManager] Result file exists, last modified: ${stats.mtime.toISOString()}`);
+        console.log(colors.cyan(`[MCP FILEMANAGER] Result file exists, last modified: ${stats.mtime.toISOString()}`));
 
         const content = fs.readFileSync(tempFilePath, 'utf8');
-        console.error(`[MCP FileManager] Result file content length: ${content.length} bytes`);
+        console.log(colors.cyan(`[MCP FILEMANAGER] Result file content length: ${content.length} bytes`));
 
         // If the result file is older than 30 seconds, warn the user
         const thirtySecondsAgo = new Date(Date.now() - 30 * 1000);
         if (stats.mtime < thirtySecondsAgo) {
-          console.error(`[MCP FileManager] WARNING: Result file is older than 30 seconds. After Effects may not be updating results.`);
+          console.log(colors.yellow(`[MCP FILEMANAGER] WARNING: Result file is older than 30 seconds. After Effects may not be updating results.`));
           return JSON.stringify({
             warning: "Result file appears to be stale (not recently updated).",
             message: "This could indicate After Effects is not properly writing results or the MCP Bridge Auto panel isn't running.",
@@ -120,11 +121,11 @@ export class FileManager {
 
         return content;
       } else {
-        console.error(`[MCP FileManager] Result file not found at: ${tempFilePath}`);
+        console.log(colors.yellow(`[MCP FILEMANAGER] Result file not found at: ${tempFilePath}`));
         return JSON.stringify({ error: "No results file found. Please run a script in After Effects first." });
       }
     } catch (error) {
-      console.error('[MCP FileManager] Error reading results file:', error);
+      console.error(colors.red('[MCP FILEMANAGER] Error reading results file:'), error);
       return JSON.stringify({ error: `Failed to read results: ${String(error)}` });
     }
   }
@@ -142,10 +143,10 @@ export class FileManager {
         status: "pending"  // pending, running, completed, error
       };
       fs.writeFileSync(commandFile, JSON.stringify(commandData, null, 2));
-      console.error(`[MCP FileManager] Command file written: ${command}`);
-      console.error(`[MCP FileManager] Command args: ${JSON.stringify(args).substring(0, 200)}${JSON.stringify(args).length > 200 ? '...' : ''}`);
+      console.log(colors.cyan(`[MCP FILEMANAGER] Command file written: ${command}`));
+      console.log(colors.cyan(`[MCP FILEMANAGER] Command args: ${JSON.stringify(args).substring(0, 200)}${JSON.stringify(args).length > 200 ? '...' : ''}`));
     } catch (error) {
-      console.error('[MCP FileManager] Error writing command file:', error);
+      console.error(colors.red('[MCP FILEMANAGER] Error writing command file:'), error);
       throw error; // Re-throw to let caller handle
     }
   }
@@ -163,11 +164,11 @@ export class FileManager {
           commandData.status = status;
 
           fs.writeFileSync(commandFile, JSON.stringify(commandData, null, 2));
-          console.error(`[MCP FileManager] Command status updated to: ${status}`);
+          console.log(colors.green(`[MCP FILEMANAGER] Command status updated to: ${status}`));
         }
       }
     } catch (e) {
-      console.error('[MCP FileManager] Error updating command status:', e);
+      console.error(colors.red('[MCP FILEMANAGER] Error updating command status:'), e);
     }
   }
 
@@ -177,7 +178,7 @@ export class FileManager {
   ensureTempDirectory(): void {
     if (!fs.existsSync(this.tempDir)) {
       fs.mkdirSync(this.tempDir, { recursive: true });
-      console.error(`[MCP FileManager] Created temp directory: ${this.tempDir}`);
+      console.log(colors.green(`[MCP FILEMANAGER] Created temp directory: ${this.tempDir}`));
     }
   }
 }

@@ -18,6 +18,10 @@ import {
   registerSetLayerExpressionTool
 } from "./layer/index.js";
 
+import {
+  registerAnimationTools
+} from "./animation/index.js";
+
 /**
  * Register all tools with the MCP server
  */
@@ -38,7 +42,10 @@ export function registerAllTools(server: McpServer, context: ToolContext): void 
   console.log(colors.yellow('[MCP TOOLS] Registering layer tools...'));
   registerSetLayerKeyframeTool(server, context);
   registerSetLayerExpressionTool(server, context);
-  // TODO: Register animation tools
+
+  // Register animation tools
+  registerAnimationTools(server, context);
+
   // TODO: Register effects tools
   // TODO: Register media tools
 

@@ -27,12 +27,8 @@ export function registerCreateCompositionTool(server: McpServer, context: ToolCo
     },
     async (params) => {
       try {
-        console.log(colors.cyan(`[MCP COMPOSITION] Creating composition: ${params.name}`));
-
         // Write command to file for After Effects to pick up
         fileManager.writeCommandFile("createComposition", params);
-
-        console.log(colors.green(`[MCP COMPOSITION] Command queued successfully`));
 
         return {
           content: [
@@ -45,7 +41,6 @@ export function registerCreateCompositionTool(server: McpServer, context: ToolCo
           ]
         };
       } catch (error) {
-        console.error(colors.red(`[MCP COMPOSITION] Error: ${String(error)}`));
         return {
           content: [
             {

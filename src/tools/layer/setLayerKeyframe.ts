@@ -29,12 +29,8 @@ export function registerSetLayerKeyframeTool(server: McpServer, context: ToolCon
     },
     async (parameters) => {
       try {
-        console.log(colors.cyan(`[MCP LAYER] Setting keyframe for ${parameters.propertyName} on layer ${parameters.layerIndex}`));
-
         // Queue the command for After Effects
         fileManager.writeCommandFile("setLayerKeyframe", parameters);
-
-        console.log(colors.green(`[MCP LAYER] Keyframe command queued successfully`));
 
         return {
           content: [
@@ -46,7 +42,6 @@ export function registerSetLayerKeyframeTool(server: McpServer, context: ToolCon
           ]
         };
       } catch (error) {
-        console.error(colors.red(`[MCP LAYER] Error: ${String(error)}`));
         return {
           content: [
             {

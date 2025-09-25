@@ -11,8 +11,6 @@ export const registerGetHelpTool: ToolRegistrar = (server: McpServer, context: T
     "Get help on using the After Effects MCP integration",
     {},
     async () => {
-      console.log(colors.cyan(`[MCP BASE] Tool invoked: get-help`));
-
       return {
         content: [
           {

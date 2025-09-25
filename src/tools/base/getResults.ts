@@ -11,8 +11,6 @@ export const registerGetResultsTool: ToolRegistrar = (server: McpServer, context
     "Get results from the last script executed in After Effects",
     {},
     async () => {
-      console.log(colors.cyan(`[MCP BASE] Tool invoked: get-results`));
-
       try {
         const result = context.fileManager.readResultsFromTempFile();
         console.log(colors.green(`[MCP BASE] Tool success: get-results | Retrieved ${result.length} bytes`));

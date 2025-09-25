@@ -20,12 +20,8 @@ export function registerSetLayerExpressionTool(server: McpServer, context: ToolC
     },
     async (parameters) => {
       try {
-        console.log(colors.cyan(`[MCP LAYER] Setting expression for ${parameters.propertyName} on layer ${parameters.layerIndex}`));
-
         // Queue the command for After Effects
         fileManager.writeCommandFile("setLayerExpression", parameters);
-
-        console.log(colors.green(`[MCP LAYER] Expression command queued successfully`));
 
         return {
           content: [
