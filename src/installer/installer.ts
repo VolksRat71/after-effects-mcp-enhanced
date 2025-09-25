@@ -1,5 +1,6 @@
 // Main installer orchestrator
 import * as path from "path";
+import colors from "colors";
 import { fileURLToPath } from "url";
 import { detectPlatform, requireSudo } from "./utils/platformDetector.js";
 import { PathResolver } from "./utils/pathResolver.js";
@@ -23,15 +24,15 @@ export class BridgeInstaller {
    * Main installation method
    */
   async install(): Promise<void> {
-    console.log("=== After Effects MCP Bridge Installer ===\n");
+    console.log(colors.blue("[MCP INSTALLER] === After Effects MCP Bridge Installer ===\n"));
 
     // Detect platform
     const platform = detectPlatform();
-    console.log(`Platform: ${platform.displayName}\n`);
+    console.log(colors.green(`[MCP INSTALLER] Platform: ${platform.displayName}\n`));
 
     // Check if platform is supported
     if (!platform.isSupported) {
-      console.error(`Error: ${platform.displayName} is not supported. Only Windows and macOS are supported.`);
+      console.error(colors.red(`[MCP INSTALLER] Error: ${platform.displayName} is not supported. Only Windows and macOS are supported.`));
       process.exit(1);
     }
 
@@ -45,13 +46,13 @@ export class BridgeInstaller {
     const aePaths = PathResolver.resolve();
 
     if (!aePaths) {
-      console.error(PathResolver.getNotFoundMessage());
+      console.error(colors.red(PathResolver.getNotFoundMessage()));
       process.exit(1);
     }
 
-    console.log(`Found After Effects at: ${aePaths.appPath}`);
-    console.log(`Scripts folder: ${aePaths.scriptsFolder}`);
-    console.log(`ScriptUI Panels folder: ${aePaths.scriptUIFolder}\n`);
+    console.log(colors.green(`[MCP INSTALLER] Found After Effects at: ${aePaths.appPath}`));
+    console.log(colors.green(`[MCP INSTALLER] Scripts folder: ${aePaths.scriptsFolder}`));
+    console.log(colors.green(`[MCP INSTALLER] ScriptUI Panels folder: ${aePaths.scriptUIFolder}\n`));
 
     // Install based on platform
     let success = false;

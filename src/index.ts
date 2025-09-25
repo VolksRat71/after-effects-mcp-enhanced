@@ -125,140 +125,9 @@ server.prompt(
 );
 
 
-// Add a tool specifically for creating compositions
-server.tool(
-  "create-composition",
-  "Create a new composition in After Effects with specified parameters",
-  {
-    name: z.string().describe("Name of the composition"),
-    width: z.number().int().positive().describe("Width of the composition in pixels"),
-    height: z.number().int().positive().describe("Height of the composition in pixels"),
-    pixelAspect: z.number().positive().optional().describe("Pixel aspect ratio (default: 1.0)"),
-    duration: z.number().positive().optional().describe("Duration in seconds (default: 10.0)"),
-    frameRate: z.number().positive().optional().describe("Frame rate in frames per second (default: 30.0)"),
-    backgroundColor: z.object({
-      r: z.number().int().min(0).max(255),
-      g: z.number().int().min(0).max(255),
-      b: z.number().int().min(0).max(255)
-    }).optional().describe("Background color of the composition (RGB values 0-255)")
-  },
-  async (params) => {
-    try {
-      // Write command to file for After Effects to pick up
-      fileManager.writeCommandFile("createComposition", params);
+// create-composition tool has been moved to src/tools/composition/createComposition.ts
 
-      return {
-        content: [
-          {
-            type: "text",
-            text: `Command to create composition "${params.name}" has been queued.\n` +
-                  `Please ensure the "MCP Bridge Auto" panel is open in After Effects.\n` +
-                  `Use the "get-results" tool after a few seconds to check for results.`
-          }
-        ]
-      };
-    } catch (error) {
-      return {
-        content: [
-          {
-            type: "text",
-            text: `Error queuing composition creation: ${String(error)}`
-          }
-        ],
-        isError: true
-      };
-    }
-  }
-);
-
-// --- BEGIN NEW TOOLS ---
-
-// Zod schema for common layer identification
-const LayerIdentifierSchema = {
-  compIndex: z.number().int().positive().describe("1-based index of the target composition in the project panel."),
-  layerIndex: z.number().int().positive().describe("1-based index of the target layer within the composition.")
-};
-
-// Zod schema for keyframe value (more specific types might be needed depending on property)
-// Using z.any() for flexibility, but can be refined (e.g., z.array(z.number()) for position/scale)
-const KeyframeValueSchema = z.any().describe("The value for the keyframe (e.g., [x,y] for Position, [w,h] for Scale, angle for Rotation, percentage for Opacity)");
-
-// Tool for setting a layer keyframe
-server.tool(
-  "setLayerKeyframe", // Corresponds to the function name in ExtendScript
-  "Set a keyframe for a specific layer property at a given time.",
-  {
-    ...LayerIdentifierSchema, // Reuse common identifiers
-    propertyName: z.string().describe("Name of the property to keyframe (e.g., 'Position', 'Scale', 'Rotation', 'Opacity')."),
-    timeInSeconds: z.number().describe("The time (in seconds) for the keyframe."),
-    value: KeyframeValueSchema
-  },
-  async (parameters) => {
-    try {
-      // Queue the command for After Effects
-      fileManager.writeCommandFile("setLayerKeyframe", parameters);
-
-      return {
-        content: [
-          {
-            type: "text",
-            text: `Command to set keyframe for "${parameters.propertyName}" on layer ${parameters.layerIndex} in comp ${parameters.compIndex} has been queued.\n` +
-                  `Use the "get-results" tool after a few seconds to check for confirmation.`
-          }
-        ]
-      };
-    } catch (error) {
-      return {
-        content: [
-          {
-            type: "text",
-            text: `Error queuing setLayerKeyframe command: ${String(error)}`
-          }
-        ],
-        isError: true
-      };
-    }
-  }
-);
-
-// Tool for setting a layer expression
-server.tool(
-  "setLayerExpression", // Corresponds to the function name in ExtendScript
-  "Set or remove an expression for a specific layer property.",
-  {
-    ...LayerIdentifierSchema, // Reuse common identifiers
-    propertyName: z.string().describe("Name of the property to apply the expression to (e.g., 'Position', 'Scale', 'Rotation', 'Opacity')."),
-    expressionString: z.string().describe("The JavaScript expression string. Provide an empty string (\"\") to remove the expression.")
-  },
-  async (parameters) => {
-    try {
-      // Queue the command for After Effects
-      fileManager.writeCommandFile("setLayerExpression", parameters);
-
-      return {
-        content: [
-          {
-            type: "text",
-            text: `Command to set expression for "${parameters.propertyName}" on layer ${parameters.layerIndex} in comp ${parameters.compIndex} has been queued.\n` +
-                  `Use the "get-results" tool after a few seconds to check for confirmation.`
-          }
-        ]
-      };
-    } catch (error) {
-      return {
-        content: [
-          {
-            type: "text",
-            text: `Error queuing setLayerExpression command: ${String(error)}`
-          }
-        ],
-        isError: true
-      };
-    }
-  }
-);
-
-// --- END NEW TOOLS ---
+// Layer tools have been moved to src/tools/layer/
 
 // --- BEGIN NEW TESTING TOOL ---
 // Add a special tool for directly testing the keyframe functionality
@@ -1811,19 +1680,20 @@ server.tool(
 
 // Start the MCP server
 async function main() {
-  console.error(colors.green("After Effects MCP Server starting..."));
-  console.error(`Scripts directory: ${SCRIPTS_DIR}`);
-  console.error(`Temp directory: ${TEMP_DIR}`);
+  console.log(colors.yellow("[MCP SERVER] After Effects MCP Server starting..."));
+
+  console.log(colors.blue(`[MCP INFO] Scripts directory: ${SCRIPTS_DIR}`));
+  console.log(colors.blue(`[MCP INFO] Temp directory: ${TEMP_DIR}`));
 
   // Clean up old JSX files on startup
   fileManager.cleanupOldJSXFiles();
 
   const transport = new StdioServerTransport();
   await server.connect(transport);
-  console.error("After Effects MCP Server running...");
+  console.log(colors.green("[MCP SERVER] After Effects MCP Server running..."));
 }
 
 main().catch(error => {
-  console.error("Fatal error:", error);
+  console.error(colors.red(`[MCP SERVER] Fatal error: ${error}`));
   process.exit(1);
 });

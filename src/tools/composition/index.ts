@@ -1,0 +1,1 @@
+export { registerCreateCompositionTool } from './createComposition.js';

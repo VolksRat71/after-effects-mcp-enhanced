@@ -1,5 +1,5 @@
 // Platform detection utilities
-import * as os from "os";
+import colors from "colors";
 
 export type Platform = "darwin" | "win32" | "unsupported";
 
@@ -52,14 +52,14 @@ export function requireSudo(platformInfo: PlatformInfo): void {
   }
 
   if (!checkSudoPrivileges()) {
-    console.error("❌ Error: This installer requires administrator privileges on macOS.\n");
-    console.error("Please run with sudo:");
-    console.error("  sudo node install-bridge.js");
-    console.error("or");
-    console.error("  sudo npm run install-bridge\n");
-    console.error("This is required to copy files to the After Effects application directory.");
+    console.error(colors.red("❌ Error: This installer requires administrator privileges on macOS.\n"));
+    console.error(colors.yellow("Please run with sudo:"));
+    console.error(colors.yellow("  sudo node install-bridge.js"));
+    console.error(colors.yellow("or"));
+    console.error(colors.yellow("  sudo npm run install-bridge\n"));
+    console.error(colors.yellow("This is required to copy files to the After Effects application directory."));
     process.exit(1);
   }
 
-  console.log("✅ Running with administrator privileges\n");
+  console.log(colors.green("✅ Running with administrator privileges\n"));
 }

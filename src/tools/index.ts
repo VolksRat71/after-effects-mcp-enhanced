@@ -9,23 +9,38 @@ import {
   registerRunScriptTool
 } from "./base/index.js";
 
+import {
+  registerCreateCompositionTool
+} from "./composition/index.js";
+
+import {
+  registerSetLayerKeyframeTool,
+  registerSetLayerExpressionTool
+} from "./layer/index.js";
+
 /**
  * Register all tools with the MCP server
  */
 export function registerAllTools(server: McpServer, context: ToolContext): void {
-  console.error(colors.yellow('[MCP] Registering tools...'));
+  console.log(colors.yellow('[MCP TOOLS] Registering tools...'));
 
   // Register base tools
-  console.error(colors.yellow('[MCP] Registering base tools...'));
+  console.log(colors.yellow('[MCP TOOLS] Registering base tools...'));
   registerGetResultsTool(server, context);
   registerGetHelpTool(server, context);
   registerRunScriptTool(server, context);
 
-  // TODO: Register composition tools
-  // TODO: Register layer tools
+  // Register composition tools
+  console.log(colors.yellow('[MCP TOOLS] Registering composition tools...'));
+  registerCreateCompositionTool(server, context);
+
+  // Register layer tools
+  console.log(colors.yellow('[MCP TOOLS] Registering layer tools...'));
+  registerSetLayerKeyframeTool(server, context);
+  registerSetLayerExpressionTool(server, context);
   // TODO: Register animation tools
   // TODO: Register effects tools
   // TODO: Register media tools
 
-  console.error(colors.yellow('[MCP] All tools registered successfully'));
+  console.log(colors.green('[MCP TOOLS] All tools registered successfully!'));
 }

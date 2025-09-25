@@ -1,6 +1,7 @@
 // File operation utilities for installer
 import * as fs from "fs";
 import * as path from "path";
+import colors from "colors";
 
 export interface CopyResult {
   success: boolean;
@@ -14,6 +15,7 @@ export class FileOperations {
    */
   static ensureDirectory(dirPath: string): void {
     if (!fs.existsSync(dirPath)) {
+      console.log(colors.yellow(`[MCP INSTALLER] Creating directory: ${dirPath}`));
       fs.mkdirSync(dirPath, { recursive: true });
     }
   }
@@ -50,7 +52,7 @@ export class FileOperations {
    */
   static validateSourceFile(sourcePath: string): void {
     if (!fs.existsSync(sourcePath)) {
-      console.error(`Error: Source script not found at ${sourcePath}`);
+      console.error(colors.red(`[MCP INSTALLER] Error: Source script not found at ${sourcePath}`));
       console.error('Please run "npm run build" first to generate the script.');
       process.exit(1);
     }
