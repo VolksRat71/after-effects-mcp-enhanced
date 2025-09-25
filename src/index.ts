@@ -1,8 +1,9 @@
-import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
-import { StdioServerTransport } from "@modelcontextprotocol/sdk/server/stdio.js";
 import * as fs from "fs";
 import * as path from "path";
+import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
+import { StdioServerTransport } from "@modelcontextprotocol/sdk/server/stdio.js";
 import { z } from "zod";
+import colors from "colors";
 import { fileURLToPath } from 'url';
 import { getTempFilePath } from './utils/resolvePaths.js';
 import { HistoryManager } from './utils/historyManager.js';
@@ -145,7 +146,7 @@ server.tool(
     try {
       // Write command to file for After Effects to pick up
       fileManager.writeCommandFile("createComposition", params);
-      
+
       return {
         content: [
           {
@@ -170,7 +171,7 @@ server.tool(
   }
 );
 
-// --- BEGIN NEW TOOLS --- 
+// --- BEGIN NEW TOOLS ---
 
 // Zod schema for common layer identification
 const LayerIdentifierSchema = {
@@ -196,7 +197,7 @@ server.tool(
     try {
       // Queue the command for After Effects
       fileManager.writeCommandFile("setLayerKeyframe", parameters);
-      
+
       return {
         content: [
           {
@@ -233,7 +234,7 @@ server.tool(
     try {
       // Queue the command for After Effects
       fileManager.writeCommandFile("setLayerExpression", parameters);
-      
+
       return {
         content: [
           {
@@ -257,9 +258,9 @@ server.tool(
   }
 );
 
-// --- END NEW TOOLS --- 
+// --- END NEW TOOLS ---
 
-// --- BEGIN NEW TESTING TOOL --- 
+// --- BEGIN NEW TESTING TOOL ---
 // Add a special tool for directly testing the keyframe functionality
 server.tool(
   "test-animation",
@@ -277,7 +278,7 @@ server.tool(
         params.compIndex,
         params.layerIndex
       );
-      
+
       // Tell the user what to do
       return {
         content: [
@@ -307,7 +308,7 @@ This bypasses the MCP Bridge Auto panel and will directly modify the specified l
     }
   }
 );
-// --- END NEW TESTING TOOL --- 
+// --- END NEW TESTING TOOL ---
 
 // --- BEGIN NEW EFFECTS TOOLS ---
 
@@ -328,7 +329,7 @@ server.tool(
     try {
       // Queue the command for After Effects
       fileManager.writeCommandFile("applyEffect", parameters);
-      
+
       return {
         content: [
           {
@@ -360,9 +361,9 @@ server.tool(
     compIndex: z.number().int().positive().describe("1-based index of the target composition in the project panel."),
     layerIndex: z.number().int().positive().describe("1-based index of the target layer within the composition."),
     templateName: z.enum([
-      "gaussian-blur", 
-      "directional-blur", 
-      "color-balance", 
+      "gaussian-blur",
+      "directional-blur",
+      "color-balance",
       "brightness-contrast",
       "curves",
       "glow",
@@ -376,7 +377,7 @@ server.tool(
     try {
       // Queue the command for After Effects
       fileManager.writeCommandFile("applyEffectTemplate", parameters);
-      
+
       return {
         content: [
           {
@@ -417,13 +418,13 @@ server.tool(
     try {
       // Queue the command for After Effects
       fileManager.writeCommandFile("applyEffect", parameters);
-      
+
       // Wait a bit for After Effects to process the command
       await new Promise(resolve => setTimeout(resolve, 1000));
-      
+
       // Get the results
       const result = fileManager.readResultsFromTempFile();
-      
+
       return {
         content: [
           {
@@ -454,9 +455,9 @@ server.tool(
     compIndex: z.number().int().positive().describe("1-based index of the target composition in the project panel."),
     layerIndex: z.number().int().positive().describe("1-based index of the target layer within the composition."),
     templateName: z.enum([
-      "gaussian-blur", 
-      "directional-blur", 
-      "color-balance", 
+      "gaussian-blur",
+      "directional-blur",
+      "color-balance",
       "brightness-contrast",
       "curves",
       "glow",
@@ -470,13 +471,13 @@ server.tool(
     try {
       // Queue the command for After Effects
       fileManager.writeCommandFile("applyEffectTemplate", parameters);
-      
+
       // Wait a bit for After Effects to process the command
       await new Promise(resolve => setTimeout(resolve, 1000));
-      
+
       // Get the results
       const result = fileManager.readResultsFromTempFile();
-      
+
       return {
         content: [
           {
@@ -593,10 +594,10 @@ server.tool(
     try {
       // Clear any stale result data
       fileManager.clearResultsFile();
-      
+
       // Write command to file for After Effects to pick up
       fileManager.writeCommandFile("bridgeTestEffects", {});
-      
+
       return {
         content: [
           {
@@ -1810,7 +1811,7 @@ server.tool(
 
 // Start the MCP server
 async function main() {
-  console.error("After Effects MCP Server starting...");
+  console.error(colors.green("After Effects MCP Server starting..."));
   console.error(`Scripts directory: ${SCRIPTS_DIR}`);
   console.error(`Temp directory: ${TEMP_DIR}`);
 

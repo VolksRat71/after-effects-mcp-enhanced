@@ -1,5 +1,6 @@
 import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { ToolContext } from "./types.js";
+import colors from "colors";
 
 // Import all tool registrars
 import {
@@ -12,10 +13,10 @@ import {
  * Register all tools with the MCP server
  */
 export function registerAllTools(server: McpServer, context: ToolContext): void {
-  console.error('[MCP] Registering tools...');
+  console.error(colors.yellow('[MCP] Registering tools...'));
 
   // Register base tools
-  console.error('[MCP] Registering base tools...');
+  console.error(colors.yellow('[MCP] Registering base tools...'));
   registerGetResultsTool(server, context);
   registerGetHelpTool(server, context);
   registerRunScriptTool(server, context);
@@ -26,5 +27,5 @@ export function registerAllTools(server: McpServer, context: ToolContext): void 
   // TODO: Register effects tools
   // TODO: Register media tools
 
-  console.error('[MCP] All tools registered successfully');
+  console.error(colors.yellow('[MCP] All tools registered successfully'));
 }

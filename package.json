@@ -7,7 +7,14 @@
     "type": "git",
     "url": "https://github.com/VolksRat71/after-effects-mcp-enhanced.git"
   },
-  "keywords": ["after-effects", "mcp", "model-context-protocol", "animation", "adobe", "automation"],
+  "keywords": [
+    "after-effects",
+    "mcp",
+    "model-context-protocol",
+    "animation",
+    "adobe",
+    "automation"
+  ],
   "license": "MIT",
   "main": "build/index.js",
   "type": "module",
@@ -21,8 +28,7 @@
   },
   "dependencies": {
     "@modelcontextprotocol/sdk": "^1.0.0",
-    "node-fetch": "^3.3.2",
-    "sudo-prompt": "^9.2.1",
+    "colors": "^1.4.0",
     "zod": "^3.22.2"
   },
   "devDependencies": {
