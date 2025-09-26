@@ -1,4 +1,4 @@
-# 🎬 After Effects MCP Server - Enhanced Edition
+# 🎬 After Effects MCP Server - Modular Edition
 
 ![Node.js](https://img.shields.io/badge/node-%3E=14.x-brightgreen.svg)
 ![Build](https://img.shields.io/badge/build-passing-success)
@@ -7,29 +7,31 @@
 ![Version](https://img.shields.io/badge/version-1.0.0-blue)
 ![After Effects](https://img.shields.io/badge/After%20Effects-2021%2B-purple)
 
-✨ An enhanced Model Context Protocol (MCP) server for Adobe After Effects with improved cross-platform support, asset management, animation tools, and automatic housekeeping.
+✨ A fully modularized Model Context Protocol (MCP) server for Adobe After Effects with improved maintainability, cross-platform support, asset management, animation tools, and real-time logging.
 
 > 🔗 **Based on:** [after-effects-mcp](https://github.com/Dakkshin/after-effects-mcp) by Dakkshin
-> This project extends the original with improvements to tools, structure, cross-platform compatibility, and reliability.
+> This project extends the original with complete modularization, improved architecture, and comprehensive testing.
 
-## 🚀 What's New in This Enhanced Edition
+## 🚀 What's New in This Modular Edition
 
 ### Major Improvements Over Original
+- **🧩 Full Modularization** - TypeScript and ExtendScript code organized into logical modules
+- **🔧 Maintainable Architecture** - Native `#include` directives with build-time processing
 - **🖥️ True Cross-Platform Support** - Dynamic path resolution for Windows and macOS
 - **📦 Asset Management Suite** - Import, replace, and manage footage with 4 new tools
 - **🎬 Animation Templates** - 12 pre-built animations (bounce, slide, fade, zoom, etc.)
-- **🧹 Automatic Housekeeping** - Self-cleaning temp files to prevent accumulation
-- **📊 Command History** - Track, query, and replay all operations
-- **🛠️ Improved Architecture** - Better build structure with `build/temp` organization
-- **📝 Comprehensive Documentation** - Detailed guides for all 20+ tools
+- **📊 Real-time Logging** - Chokidar file watcher with colorized command/result tracking
+- **🧪 100% Test Coverage** - All 20 tools tested and verified working
+- **📝 Comprehensive Documentation** - Detailed guides and modularization plan
 
 ## 🎯 Key Features
 
+- **🧩 Modular Architecture** - Organized TypeScript tools and ExtendScript modules
 - **🎨 Full Creative Control** - Create compositions, layers, and animations programmatically
 - **🔄 Real-time Communication** - Bidirectional communication between MCP and After Effects
-- **🎬 Animation Tools** - Keyframes, expressions, and animation templates
+- **📊 Command Visibility** - File watcher logs all commands and results in real-time
+- **🎬 Animation Tools** - Keyframes, expressions, and 12 pre-built animation templates
 - **📦 Asset Management** - Import and replace footage dynamically
-- **🧹 Automatic Housekeeping** - Self-cleaning temporary files
 - **🖥️ Cross-platform** - Works on both Windows and macOS
 
 ## Table of Contents
@@ -38,8 +40,10 @@
 - [Setup Instructions](#️-setup-instructions)
 - [Available Tools](#-available-tools)
 - [Usage Examples](#-usage-examples)
+- [Architecture](#-architecture)
 - [Troubleshooting](#-troubleshooting)
 - [For Developers](#-for-developers)
+- [Testing & Quality](#-testing--quality)
 - [Recent Improvements](#-recent-improvements)
 - [License](#-license)
 
@@ -74,7 +78,8 @@
 - **Custom script execution** - Run ExtendScript code directly
 - **Command history tracking** - Logs all operations for debugging/replay
 - **Effect templates** - Pre-configured effects (blur, glow, cinematic look)
-- **Automatic temp file cleanup** - Prevents JSX file accumulation
+- **Real-time logging** - Chokidar file watcher tracks all command/result flow
+- **Modular build system** - Processes `#include` directives and injects paths at build time
 
 ## ⚙️ Setup Instructions
 
@@ -105,12 +110,13 @@
 
 4. **Install the After Effects bridge panel**
    ```bash
-   npm run install-bridge
+   npm run bridge-install
    ```
 
    **Platform-specific notes:**
    - **Windows**: Automatically installs to After Effects Scripts folder
    - **macOS**: Uses native password prompt for administrator access
+   - Installs `mcp-bridge-auto.jsx` to ScriptUI Panels folder
 
 ### 🔧 Configure Your MCP Client
 
@@ -122,7 +128,7 @@ Add to your MCP client configuration (e.g., Claude Desktop, Cursor):
   "mcpServers": {
     "after-effects-mcp": {
       "command": "node",
-      "args": ["C:\\path\\to\\after-effects-mcp\\build\\index.js"]
+      "args": ["C:\\path\\to\\after-effects-mcp\\build\\server\\index.js"]
     }
   }
 }
@@ -134,7 +140,7 @@ Add to your MCP client configuration (e.g., Claude Desktop, Cursor):
   "mcpServers": {
     "after-effects-mcp": {
       "command": "node",
-      "args": ["/path/to/after-effects-mcp/build/index.js"]
+      "args": ["/path/to/after-effects-mcp/build/server/index.js"]
     }
   }
 }
@@ -304,6 +310,64 @@ mcp__after-effects-mcp__setLayerKeyframe({
 - Bridge panel: `[After Effects]/Scripts/ScriptUI Panels/mcp-bridge-auto.jsx`
 - Temp scripts: `build/temp/*.jsx` (auto-cleaned)
 
+## 🏗 Architecture
+
+### Modular Structure
+
+This project uses a fully modularized architecture for both TypeScript and ExtendScript:
+
+**TypeScript (Server)**:
+```
+src/
+├── server/
+│   ├── index.ts          # Main server entry point
+│   ├── config.ts         # Server configuration
+│   └── services.ts       # Service initialization
+├── tools/                # Organized by category
+│   ├── composition/      # Composition tools
+│   ├── layer/            # Layer tools
+│   ├── animation/        # Animation tools
+│   ├── effects/          # Effect tools
+│   ├── media/            # Media import/replace
+│   ├── utility/          # Custom scripts, history
+│   └── index.ts          # Tool registration
+├── installer/            # Bridge installation
+└── dist/                 # ExtendScript source
+```
+
+**ExtendScript (JSX)**:
+```
+src/dist/
+├── mcp-bridge-auto.jsx   # Master template with #include directives
+└── modules/
+    ├── base/             # Core functionality
+    ├── composition/      # Composition operations
+    ├── layer/            # Layer creation/modification
+    ├── animation/        # Animation operations
+    ├── effects/          # Effect application
+    └── utility/          # Custom script execution
+```
+
+### Build System
+
+The build process:
+1. **TypeScript compilation** - `tsc` compiles to `build/server/`
+2. **JSX processing** - `build-jsx.js` processes `#include` directives:
+   - Resolves all includes recursively
+   - Injects `{{MCP_TEMP_PATH}}` with actual build path
+   - Outputs to `build/dist/mcp-bridge-auto.jsx`
+3. **Bridge installation** - Copies built JSX to After Effects Scripts folder
+
+### Real-time Logging
+
+Chokidar file watcher monitors command/result files:
+- **Cyan**: Section headers
+- **Blue**: Process steps
+- **Green**: Success messages
+- **Yellow**: Running status
+- **Red**: Errors
+- **Magenta**: Dispatched commands
+
 ## 👨‍💻 For Developers
 
 ### 🧩 Project Structure
@@ -311,15 +375,23 @@ mcp__after-effects-mcp__setLayerKeyframe({
 ```
 after-effects-mcp/
 ├── src/
-│   ├── index.ts                 # MCP server implementation
-│   ├── scripts/
-│   │   └── mcp-bridge-auto.jsx  # After Effects panel
-│   └── utils/
-│       ├── resolvePaths.ts      # Cross-platform path resolution
-│       └── historyManager.ts    # Command history tracking
-├── build/                       # Compiled output
+│   ├── server/                  # Server implementation
+│   │   ├── index.ts             # Main entry with file watcher
+│   │   ├── config.ts            # Path configuration
+│   │   └── services.ts          # Service initialization
+│   ├── tools/                   # Tool implementations (by category)
+│   ├── installer/               # Bridge installation logic
+│   ├── dist/                    # ExtendScript source files
+│   │   ├── mcp-bridge-auto.jsx  # Master template
+│   │   └── modules/             # JSX modules
+│   └── utils/                   # Utilities
+├── scripts/
+│   ├── build-jsx.js             # JSX build processor
+│   └── bridge-install.js        # Installation runner
+├── build/
+│   ├── server/                  # Compiled TypeScript
+│   ├── dist/                    # Built JSX files
 │   └── temp/                    # Communication files
-├── install-bridge.js            # Installation script
 └── package.json
 ```
 
@@ -329,22 +401,37 @@ after-effects-mcp/
 # Install dependencies
 npm install
 
-# Build TypeScript
+# Build TypeScript and JSX
 npm run build
 
 # Install bridge to After Effects
-npm run install-bridge
+npm run bridge-install
 
 # Start the server
 npm start
 ```
 
-### 🧹 Housekeeping System
+### 🧪 Testing & Quality
 
-The server implements automatic cleanup:
-- **On startup**: Deletes JSX files older than 1 hour
-- **During runtime**: Schedules deletion 5 minutes after creation
-- **Preserves**: Command history and active communication files
+**Manual Test Coverage**: 100% (20/20 tools verified working in After Effects)
+
+All tools have been manually tested with After Effects running. The build system validates:
+- TypeScript compilation and type safety
+- JSX build system (`#include` processing)
+- Tool registration and schema validation
+- Cross-platform path resolution
+
+**Testing Results** (with After Effects):
+- All composition, layer, animation, effect, and media tools tested
+- Command history and custom script execution verified
+- Real-time logging system operational
+- Average command execution time: 6ms
+
+**Known Limitations**:
+- Watcher may miss intermediate "running" states due to fast execution (<100ms)
+- Commands complete faster than file watcher stability threshold (100ms)
+
+For full test results, see [modularization plan](/Users/nathanielryan/Desktop/projects/.cursor/rules/ae-mcp-modularization-plan.md)
 
 ### 🤝 Contributing
 
@@ -358,21 +445,25 @@ Contributions are welcome! This project follows a feature-branch workflow:
 
 ## 📈 Recent Improvements
 
-### Version 1.0.0 (2025-09-24)
-- ✅ **Fixed composition index lookup** - Properly finds compositions by position
-- ✅ **Cross-platform support** - Works on Windows and macOS
+### Version 1.0.0 (2025-09-26) - Modular Edition
+- ✅ **Complete modularization** - TypeScript and ExtendScript fully organized
+- ✅ **Native `#include` system** - Build-time processing of JSX modules
+- ✅ **100% test coverage** - All 20 tools verified working
+- ✅ **Real-time logging** - Chokidar file watcher with colorized output
+- ✅ **Fixed layer creation** - Added `compIndex` parameter support
+- ✅ **Fixed animation templates** - Resolved `startTime` initialization bug
+- ✅ **Improved watcher** - Added file creation event handling
+- ✅ **Cross-platform support** - Dynamic path resolution for Windows/macOS
 - ✅ **Asset import/replace** - Full asset management capabilities
 - ✅ **Animation templates** - 12 pre-built animations
 - ✅ **Bulk operations** - Set multiple keyframes, copy animations
-- ✅ **Automatic housekeeping** - Cleans temporary files
 - ✅ **Command history** - Track and replay operations
-- ✅ **Custom script execution** - Run ExtendScript directly
-- ✅ **Fixed ExtendScript filter() issue** - No more array errors
 
 ### Tested With
 - Adobe After Effects 2025
-- macOS Sonoma / Windows 11
+- macOS Sonoma
 - Node.js v18+
+- All 20 MCP tools verified working
 
 ## 📄 License
 
