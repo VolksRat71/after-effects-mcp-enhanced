@@ -1,5 +1,8 @@
 import { StdioServerTransport } from '@modelcontextprotocol/sdk/server/stdio.js';
 import colors from 'colors';
+import chokidar from 'chokidar';
+import * as fs from 'fs';
+import * as path from 'path';
 import { createServer, PATHS } from './config.js';
 import { initializeServices } from './services.js';
 import { registerAllTools } from '../tools/index.js';
@@ -25,6 +28,57 @@ async function main() {
 
   // Register all tools with the server
   registerAllTools(server, context);
+
+  // Set up file watcher for command and result files
+  const commandFilePath = path.join(PATHS.TEMP_DIR, 'ae_command.json');
+  const resultFilePath = path.join(PATHS.TEMP_DIR, 'ae_mcp_result.json');
+
+  const watcher = chokidar.watch([commandFilePath, resultFilePath], {
+    persistent: true,
+    ignoreInitial: true,
+    awaitWriteFinish: {
+      stabilityThreshold: 100,
+      pollInterval: 50
+    }
+  });
+
+  watcher.on('change', (filePath: string) => {
+    try {
+      const fileName = path.basename(filePath);
+
+      if (fileName === 'ae_command.json') {
+        // Command file changed - read and log the dispatched command
+        const content = fs.readFileSync(filePath, 'utf8');
+        const commandData = JSON.parse(content);
+
+        if (commandData.status === 'pending') {
+          console.log(colors.magenta(`[MCP WATCHER] → Dispatched command: ${colors.bold(commandData.command)}`));
+        } else if (commandData.status === 'running') {
+          console.log(colors.yellow(`[MCP WATCHER] ⚡ Executing command: ${colors.bold(commandData.command)}`));
+        }
+      } else if (fileName === 'ae_mcp_result.json') {
+        // Result file changed - read and log the received result
+        const content = fs.readFileSync(filePath, 'utf8');
+        const resultData = JSON.parse(content);
+
+        if (resultData.status === 'success') {
+          console.log(colors.green(`[MCP WATCHER] ✓ Received result: ${colors.bold(resultData.command || 'unknown')}`));
+        } else if (resultData.status === 'error') {
+          console.log(colors.red(`[MCP WATCHER] ✗ Error result: ${colors.bold(resultData.command || 'unknown')} - ${resultData.error}`));
+        }
+      }
+    } catch (error) {
+      console.error(colors.red(`[MCP WATCHER] Error parsing file change: ${error}`));
+    }
+  });
+
+  watcher.on('ready', () => {
+    console.log(colors.cyan(`[MCP WATCHER] Watching command and result files...`));
+  });
+
+  watcher.on('error', (error: unknown) => {
+    console.error(colors.red(`[MCP WATCHER] Watcher error: ${error}`));
+  });
 
   // Connect to transport
   const transport = new StdioServerTransport();

@@ -54,7 +54,7 @@ export function requireSudo(platformInfo: PlatformInfo): void {
   if (!checkSudoPrivileges()) {
     console.error(colors.red("[MCP INSTALLER] ❌ Error: This installer requires administrator privileges on macOS.\n"));
     console.error(colors.yellow("Please run with sudo:"));
-    console.error(colors.yellow("  sudo node install-bridge.js"));
+    console.error(colors.yellow("  sudo node scripts/bridge-install.js"));
     console.error(colors.yellow("or"));
     console.error(colors.yellow("  sudo npm run install-bridge\n"));
     console.error(colors.yellow("This is required to copy files to the After Effects application directory."));

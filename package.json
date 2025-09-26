@@ -19,20 +19,21 @@
   "main": "build/server/index.js",
   "type": "module",
   "scripts": {
-    "build": "tsc && npm run copy-scripts && npm run build-jsx && npm run create-temp",
+    "build": "tsc && npm run build-jsx && npm run create-temp",
     "build-jsx": "node scripts/build-jsx.js",
-    "copy-scripts": "node -e \"const fs = require('fs'); fs.cpSync('./src/scripts', './build/scripts', {recursive: true, force: true});\"",
-    "create-temp": "node -e \"const fs = require('fs'); fs.mkdirSync('./build/temp', {recursive: true});\"",
+    "create-temp": "mkdir -p build/temp",
     "start": "node build/index.js",
-    "install-bridge": "node install-bridge.js",
-    "postinstall": "npm run build"
+    "bridge-install": "node scripts/bridge-install.js",
+    "postinstall": "npm run build && echo '\n✓ Build complete! Run \"npm run bridge-install\" to install the bridge script in After Effects.\n'"
   },
   "dependencies": {
     "@modelcontextprotocol/sdk": "^1.0.0",
+    "chokidar": "^4.0.3",
     "colors": "^1.4.0",
     "zod": "^3.22.2"
   },
   "devDependencies": {
+    "@types/chokidar": "^1.7.5",
     "@types/node": "^20.17.30",
     "typescript": "^5.2.2"
   }

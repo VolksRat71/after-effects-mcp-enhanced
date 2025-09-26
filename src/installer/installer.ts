@@ -17,7 +17,7 @@ export class BridgeInstaller {
 
   constructor() {
     // Path to the built bridge script
-    this.sourceScript = path.join(__dirname, "..", "..", "build", "scripts", "mcp-bridge-auto.jsx");
+    this.sourceScript = path.join(__dirname, "..", "..", "build", "dist", "mcp-bridge-auto.jsx");
   }
 
   /**

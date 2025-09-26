@@ -6,6 +6,7 @@
 import fs from 'fs';
 import path from 'path';
 import { fileURLToPath } from 'url';
+import colors from 'colors';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -14,10 +15,10 @@ const projectRoot = path.resolve(__dirname, '..');
 const buildTempPath = path.join(projectRoot, 'build', 'temp').replace(/\\/g, '/');
 const srcScriptsDir = path.join(projectRoot, 'src', 'scripts');
 const masterTemplatePath = path.join(srcScriptsDir, 'mcp-bridge-auto.jsx');
-const outputPath = path.join(projectRoot, 'build', 'scripts', 'mcp-bridge-auto.jsx');
+const outputPath = path.join(projectRoot, 'build', 'dist', 'mcp-bridge-auto.jsx');
 
-console.log(`\n=== Starting JSX Build Process ===\n`);
-console.log(`Build temp path: ${buildTempPath}`);
+console.log(colors.cyan('\n[JSX BUILD] === Starting JSX Build Process ===\n'));
+console.log(colors.blue(`[JSX BUILD] Build temp path: ${buildTempPath}`));
 
 /**
  * Process #include directives recursively
@@ -31,13 +32,13 @@ function processIncludes(content, baseDir, processedFiles = new Set()) {
 
     // Prevent circular includes
     if (processedFiles.has(fullPath)) {
-      console.warn(`⚠ Warning: Circular include detected: ${includePath}`);
+      console.warn(colors.yellow(`[JSX BUILD] ⚠ Warning: Circular include detected: ${includePath}`));
       return `// Circular include prevented: ${includePath}`;
     }
 
     // Check if file exists
     if (!fs.existsSync(fullPath)) {
-      console.error(`✗ Error: Include file not found: ${includePath}`);
+      console.error(colors.red(`[JSX BUILD] ✗ Error: Include file not found: ${includePath}`));
       throw new Error(`Include file not found: ${includePath}`);
     }
 
@@ -64,11 +65,11 @@ function processIncludes(content, baseDir, processedFiles = new Set()) {
 
 try {
   // Read the master template
-  console.log(`Reading master template: ${masterTemplatePath}`);
+  console.log(colors.blue(`[JSX BUILD] Reading master template: ${masterTemplatePath}`));
   const masterContent = fs.readFileSync(masterTemplatePath, 'utf8');
 
   // Process all includes
-  console.log(`Processing #include directives...`);
+  console.log(colors.blue(`[JSX BUILD] Processing #include directives...`));
   const processedContent = processIncludes(masterContent, srcScriptsDir);
 
   // Add build header
@@ -90,14 +91,14 @@ try {
   const lines = finalContent.split('\n').length;
   const sizeKB = Math.round(finalContent.length / 1024);
 
-  console.log(`\n✓ Built JSX file to: ${outputPath}`);
-  console.log(`✓ Temp path injected: ${buildTempPath}`);
-  console.log(`✓ Total lines: ${lines}`);
-  console.log(`✓ Total size: ${sizeKB} KB`);
-  console.log(`\n=== Build Complete ===\n`);
+  console.log(colors.green(`\n[JSX BUILD] ✓ Built JSX file to: ${outputPath}`));
+  console.log(colors.green(`[JSX BUILD] ✓ Temp path injected: ${buildTempPath}`));
+  console.log(colors.green(`[JSX BUILD] ✓ Total lines: ${lines}`));
+  console.log(colors.green(`[JSX BUILD] ✓ Total size: ${sizeKB} KB`));
+  console.log(colors.cyan(`\n[JSX BUILD] === Build Complete ===\n`));
 
 } catch (error) {
-  console.error(`\n✗ Build failed: ${error.message}`);
-  console.error(error.stack);
+  console.error(colors.red(`\n[JSX BUILD] ✗ Build failed: ${error.message}`));
+  console.error(colors.red(error.stack));
   process.exit(1);
 }
