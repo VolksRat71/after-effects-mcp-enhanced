@@ -102,7 +102,7 @@ function executeCommand(command, args) {
 
         try {
             var resultObj = JSON.parse(resultString);
-            resultObj._responseTimestamp = new Date().toISOString();
+            resultObj._responseTimestamp = new Date().toString();
             resultObj._commandExecuted = command;
             resultString = JSON.stringify(resultObj, null, 2);
             logToPanel("Added timestamp to result JSON for tracking freshness.");
@@ -173,15 +173,11 @@ function executeCommand(command, args) {
 // Check for new commands
 var isChecking = false;
 function checkForCommands() {
+    if (!globalAutoRunCheckbox.value || isChecking) return;
+
+    isChecking = true;
+
     try {
-        if (!globalAutoRunCheckbox) {
-            return;
-        }
-
-        if (!globalAutoRunCheckbox.value || isChecking) return;
-
-        isChecking = true;
-
         var commandPath = getCommandFilePath();
         logToPanel("Checking for commands at: " + commandPath);
 
@@ -197,7 +193,7 @@ function checkForCommands() {
                 try {
                     var commandData = JSON.parse(content);
 
-                    if (commandData.status === "pending" || commandData.status === "running") {
+                    if (commandData.status === "pending") {
                         logToPanel("Executing command: " + commandData.command);
                         updateCommandStatus("running");
 
@@ -215,13 +211,4 @@ function checkForCommands() {
     }
 
     isChecking = false;
-}
-
-// Set up timer to check for commands
-function startCommandChecker() {
-    // NOTE: app.scheduleTask doesn't work reliably in modular ExtendScript
-    // The scheduled task runs in a different scope and can't access our functions
-    // For now, we'll rely on manual checks via the button
-    // TODO: Implement a different polling mechanism if auto-check is needed
-    logToPanel("Auto-check disabled. Use 'Check for Commands Now' button.");
 }
