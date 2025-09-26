@@ -6,7 +6,8 @@ function getMCPDirectory() {
         var userFolder = Folder.userData.parent.parent;
         return userFolder.fsName + "\\after-effects-mcp\\build\\temp";
     } else {
-        return "/Users/" + $.getenv("USER") + "/Desktop/projects/after-effects-mcp/build/temp";
+        // Build script will replace {{MCP_TEMP_PATH}} with actual path
+        return "{{MCP_TEMP_PATH}}";
     }
 }
 

@@ -11,7 +11,9 @@ function createUIPanel() {
     var aeVersion = parseFloat(app.version);
     var isAE2025OrLater = aeVersion >= 24.0;
 
-    var panel = new Window("palette", "MCP Bridge Auto", undefined);
+    // Add version to panel title so you can verify correct version is loaded
+    var panelTitle = "MCP Bridge Auto v2.5 (Modular)";
+    var panel = new Window("palette", panelTitle, undefined);
     panel.orientation = "column";
     panel.alignChildren = ["fill", "top"];
     panel.spacing = 10;

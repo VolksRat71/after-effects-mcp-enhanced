@@ -1,13 +1,3 @@
-// import { getCommandFilePath, getResultFilePath } from "./file-operations"
-// import { logToPanel } from "./ui-panel"
-// import { getProjectInfo, listCompositions, getLayerInfo } from "../composition/getProjectInfo"
-// import { createComposition } from "../composition/createComposition"
-// import { createTextLayer, createShapeLayer, createSolidLayer } from "../layer/createLayers"
-// import { setLayerProperties } from "../layer/setLayerProperties"
-// import { setLayerKeyframe, setLayerExpression } from "../layer/keyframeAndExpression"
-// import { applyEffect } from "../effects/applyEffect"
-// import { applyEffectTemplate } from "../effects/applyEffectTemplate"
-// import { executeCustomScript } from "../utility/customScript"
 
 // Update command file status
 function updateCommandStatus(status) {
@@ -183,11 +173,15 @@ function executeCommand(command, args) {
 // Check for new commands
 var isChecking = false;
 function checkForCommands() {
-    if (!globalAutoRunCheckbox.value || isChecking) return;
-
-    isChecking = true;
-
     try {
+        if (!globalAutoRunCheckbox) {
+            return;
+        }
+
+        if (!globalAutoRunCheckbox.value || isChecking) return;
+
+        isChecking = true;
+
         var commandPath = getCommandFilePath();
         logToPanel("Checking for commands at: " + commandPath);
 
@@ -203,7 +197,7 @@ function checkForCommands() {
                 try {
                     var commandData = JSON.parse(content);
 
-                    if (commandData.status === "pending") {
+                    if (commandData.status === "pending" || commandData.status === "running") {
                         logToPanel("Executing command: " + commandData.command);
                         updateCommandStatus("running");
 
@@ -225,6 +219,9 @@ function checkForCommands() {
 
 // Set up timer to check for commands
 function startCommandChecker() {
-    var checkInterval = 2000;
-    app.scheduleTask("checkForCommands()", checkInterval, true);
+    // NOTE: app.scheduleTask doesn't work reliably in modular ExtendScript
+    // The scheduled task runs in a different scope and can't access our functions
+    // For now, we'll rely on manual checks via the button
+    // TODO: Implement a different polling mechanism if auto-check is needed
+    logToPanel("Auto-check disabled. Use 'Check for Commands Now' button.");
 }

@@ -1,8 +1,6 @@
 /**
  * Build script for ExtendScript JSX files
- * Combines modular JSX files based on import comment syntax
- *
- * Import syntax: // import { function1, function2 } from "./path/to/module"
+ * Processes #include directives and injects dynamic paths
  */
 
 import fs from 'fs';
@@ -14,176 +12,92 @@ const __dirname = path.dirname(__filename);
 
 const projectRoot = path.resolve(__dirname, '..');
 const buildTempPath = path.join(projectRoot, 'build', 'temp').replace(/\\/g, '/');
-const modulesDir = path.join(projectRoot, 'src', 'scripts', 'modules');
+const srcScriptsDir = path.join(projectRoot, 'src', 'scripts');
+const masterTemplatePath = path.join(srcScriptsDir, 'mcp-bridge-auto.jsx');
+const outputPath = path.join(projectRoot, 'build', 'scripts', 'mcp-bridge-auto.jsx');
 
-console.log(`Building JSX with temp path: ${buildTempPath}`);
+console.log(`\n=== Starting JSX Build Process ===\n`);
+console.log(`Build temp path: ${buildTempPath}`);
 
-// Parse import comments from a file
-function parseImports(content) {
-  const importRegex = /\/\/\s*import\s*\{([^}]*)\}\s*from\s*["']([^"']+)["']/g;
-  const imports = [];
-  let match;
+/**
+ * Process #include directives recursively
+ */
+function processIncludes(content, baseDir, processedFiles = new Set()) {
+  const includeRegex = /#include\s+"([^"]+)"/g;
 
-  while ((match = importRegex.exec(content)) !== null) {
-    const functions = match[1].split(',').map(f => f.trim());
-    const modulePath = match[2];
-    imports.push({ functions, modulePath });
-  }
+  return content.replace(includeRegex, (match, includePath) => {
+    // Resolve the full path
+    const fullPath = path.resolve(baseDir, includePath);
 
-  return imports;
-}
-
-// Recursively collect all module files and their dependencies
-function collectModules() {
-  const modules = new Map();
-  const visited = new Set();
-
-  function scanDirectory(dir) {
-    const files = fs.readdirSync(dir);
-
-    for (const file of files) {
-      const fullPath = path.join(dir, file);
-      const stat = fs.statSync(fullPath);
-
-      if (stat.isDirectory()) {
-        scanDirectory(fullPath);
-      } else if (file.endsWith('.jsx')) {
-        const relativePath = path.relative(modulesDir, fullPath).replace(/\\/g, '/');
-        const content = fs.readFileSync(fullPath, 'utf8');
-        const imports = parseImports(content);
-
-        modules.set(relativePath, {
-          path: fullPath,
-          content: content,
-          imports: imports,
-          processed: false
-        });
-      }
-    }
-  }
-
-  scanDirectory(modulesDir);
-  return modules;
-}
-
-// Resolve module path relative to importing module
-function resolveModulePath(fromPath, importPath) {
-  // Remove leading "./" if present
-  importPath = importPath.replace(/^\.\//, '');
-
-  // Get directory of the importing module
-  const fromDir = path.dirname(fromPath);
-
-  // Resolve the import path
-  let resolved = path.join(fromDir, importPath).replace(/\\/g, '/');
-
-  // Add .jsx extension if not present
-  if (!resolved.endsWith('.jsx')) {
-    resolved += '.jsx';
-  }
-
-  return resolved;
-}
-
-// Build dependency graph and determine order
-function buildDependencyOrder(modules) {
-  const ordered = [];
-  const visited = new Set();
-  const visiting = new Set();
-
-  function visit(modulePath) {
-    if (visited.has(modulePath)) return;
-    if (visiting.has(modulePath)) {
-      throw new Error(`Circular dependency detected: ${modulePath}`);
+    // Prevent circular includes
+    if (processedFiles.has(fullPath)) {
+      console.warn(`⚠ Warning: Circular include detected: ${includePath}`);
+      return `// Circular include prevented: ${includePath}`;
     }
 
-    visiting.add(modulePath);
-    const module = modules.get(modulePath);
-
-    if (!module) {
-      console.warn(`Warning: Module not found: ${modulePath}`);
-      visiting.delete(modulePath);
-      return;
+    // Check if file exists
+    if (!fs.existsSync(fullPath)) {
+      console.error(`✗ Error: Include file not found: ${includePath}`);
+      throw new Error(`Include file not found: ${includePath}`);
     }
 
-    // Visit dependencies first
-    for (const imp of module.imports) {
-      const depPath = resolveModulePath(modulePath, imp.modulePath);
-      visit(depPath);
-    }
+    // Mark as processed
+    processedFiles.add(fullPath);
 
-    visiting.delete(modulePath);
-    visited.add(modulePath);
-    ordered.push(modulePath);
-  }
+    // Read the file
+    let fileContent = fs.readFileSync(fullPath, 'utf8');
 
-  // Start with main.jsx
-  const mainPath = 'base/main.jsx';
-  if (modules.has(mainPath)) {
-    visit(mainPath);
-  }
+    // Replace {{MCP_TEMP_PATH}} placeholder with actual build temp path
+    fileContent = fileContent.replace(/\{\{MCP_TEMP_PATH\}\}/g, buildTempPath);
 
-  // Visit any remaining modules
-  for (const modulePath of modules.keys()) {
-    visit(modulePath);
-  }
+    // Recursively process any nested includes
+    const fileDir = path.dirname(fullPath);
+    fileContent = processIncludes(fileContent, fileDir, processedFiles);
 
-  return ordered;
+    // Add marker comments
+    const relativePath = path.relative(srcScriptsDir, fullPath).replace(/\\/g, '/');
+    return `\n// === Included: ${relativePath} ===\n` +
+           fileContent +
+           `\n// === End: ${relativePath} ===\n`;
+  });
 }
 
-// Strip import comments from content
-function stripImports(content) {
-  return content.replace(/\/\/\s*import\s*\{[^}]*\}\s*from\s*["'][^"']+["']\s*\n?/g, '');
-}
-
-// Build the combined JSX file
 try {
-  console.log('\n=== Starting JSX Build Process ===\n');
+  // Read the master template
+  console.log(`Reading master template: ${masterTemplatePath}`);
+  const masterContent = fs.readFileSync(masterTemplatePath, 'utf8');
 
-  // Collect all modules
-  const modules = collectModules();
-  console.log(`Found ${modules.size} module files`);
+  // Process all includes
+  console.log(`Processing #include directives...`);
+  const processedContent = processIncludes(masterContent, srcScriptsDir);
 
-  // Determine build order
-  const buildOrder = buildDependencyOrder(modules);
-  console.log(`\nBuild order (${buildOrder.length} modules):`);
-  buildOrder.forEach((m, i) => console.log(`  ${i + 1}. ${m}`));
+  // Add build header
+  const finalContent = `// MCP Bridge Auto - Built ${new Date().toISOString()}\n` +
+                       `// Auto-generated from master template with #include directives\n` +
+                       `// DO NOT EDIT - Edit source files in src/scripts/ instead\n\n` +
+                       processedContent;
 
-  // Build combined content
-  let combinedContent = '// MCP Bridge Auto - Built ' + new Date().toISOString() + '\n';
-  combinedContent += '// Auto-generated from modular source files\n';
-  combinedContent += '// DO NOT EDIT - Edit source files in src/scripts/modules/ instead\n\n';
-
-  for (const modulePath of buildOrder) {
-    const module = modules.get(modulePath);
-    if (!module) continue;
-
-    let moduleContent = stripImports(module.content);
-
-    // Replace path placeholders
-    moduleContent = moduleContent.replace(/\{\{MCP_TEMP_PATH\}\}/g, buildTempPath);
-
-    combinedContent += `\n// === Module: ${modulePath} ===\n`;
-    combinedContent += moduleContent + '\n';
-  }
-
-  // Write output
-  const outputPath = path.join(projectRoot, 'build', 'scripts', 'mcp-bridge-auto.jsx');
+  // Ensure output directory exists
   const outputDir = path.dirname(outputPath);
-
   if (!fs.existsSync(outputDir)) {
     fs.mkdirSync(outputDir, { recursive: true });
   }
 
-  fs.writeFileSync(outputPath, combinedContent);
+  // Write output file
+  fs.writeFileSync(outputPath, finalContent, 'utf8');
+
+  // Calculate statistics
+  const lines = finalContent.split('\n').length;
+  const sizeKB = Math.round(finalContent.length / 1024);
 
   console.log(`\n✓ Built JSX file to: ${outputPath}`);
   console.log(`✓ Temp path injected: ${buildTempPath}`);
-  console.log(`✓ Total size: ${Math.round(combinedContent.length / 1024)} KB`);
-  console.log('\n=== Build Complete ===\n');
+  console.log(`✓ Total lines: ${lines}`);
+  console.log(`✓ Total size: ${sizeKB} KB`);
+  console.log(`\n=== Build Complete ===\n`);
 
 } catch (error) {
-  console.error('\n✗ Build failed:', error.message);
+  console.error(`\n✗ Build failed: ${error.message}`);
   console.error(error.stack);
   process.exit(1);
 }

@@ -1,5 +1,3 @@
-// import { createUIPanel, logToPanel } from "./ui-panel"
-// import { getCommandFilePath, checkForCommands, startCommandChecker } from "./command-executor"
 
 // Global variables for UI components
 var globalPanel;
