@@ -14,7 +14,7 @@
 
 ## 🚀 What's New in This Modular Edition
 
-### Major Improvements Over Original
+### Improvements Over Original
 - **🧩 Full Modularization** - TypeScript and ExtendScript code organized into logical modules
 - **🔧 Maintainable Architecture** - Native `#include` directives with build-time processing
 - **🖥️ True Cross-Platform Support** - Dynamic path resolution for Windows and macOS
