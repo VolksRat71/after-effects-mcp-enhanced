@@ -30,7 +30,6 @@ export function registerApplyAnimationTemplateTool(server: McpServer, context: T
     var compIndex = ${compIndex};
     var layerIndex = ${layerIndex};
     var duration = ${duration};
-    var startTime = ${startTime !== undefined ? startTime : 'comp.time'};
 
     // Find composition
     var comp = null;
@@ -60,6 +59,8 @@ export function registerApplyAnimationTemplateTool(server: McpServer, context: T
       });
     }
 
+    // Set startTime after comp is defined
+    var startTime = ${startTime !== undefined ? startTime : 'comp.time'};
     if (startTime === 'comp.time') {
       startTime = comp.time;
     }

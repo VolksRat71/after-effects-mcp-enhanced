@@ -19,10 +19,9 @@
   "main": "build/server/index.js",
   "type": "module",
   "scripts": {
-    "build": "tsc && npm run build-jsx && npm run create-temp",
+    "build": "tsc && npm run build-jsx",
     "build-jsx": "node scripts/build-jsx.js",
-    "create-temp": "mkdir -p build/temp",
-    "start": "node build/index.js",
+    "start": "node build/server/index.js",
     "bridge-install": "node scripts/bridge-install.js",
     "postinstall": "npm run build && echo '\n✓ Build complete! Run \"npm run bridge-install\" to install the bridge script in After Effects.\n'"
   },

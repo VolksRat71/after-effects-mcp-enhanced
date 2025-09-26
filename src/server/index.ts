@@ -33,6 +33,8 @@ async function main() {
   const commandFilePath = path.join(PATHS.TEMP_DIR, 'ae_command.json');
   const resultFilePath = path.join(PATHS.TEMP_DIR, 'ae_mcp_result.json');
 
+  let watcherReady = false;
+
   const watcher = chokidar.watch([commandFilePath, resultFilePath], {
     persistent: true,
     ignoreInitial: true,
@@ -42,7 +44,7 @@ async function main() {
     }
   });
 
-  watcher.on('change', (filePath: string) => {
+  const handleFileEvent = (filePath: string) => {
     try {
       const fileName = path.basename(filePath);
 
@@ -55,25 +57,37 @@ async function main() {
           console.log(colors.magenta(`[MCP WATCHER] → Dispatched command: ${colors.bold(commandData.command)}`));
         } else if (commandData.status === 'running') {
           console.log(colors.yellow(`[MCP WATCHER] ⚡ Executing command: ${colors.bold(commandData.command)}`));
+        } else if (commandData.status === 'completed' && commandData.command) {
+          console.log(colors.cyan(`[MCP WATCHER] ✓ Completed command: ${colors.bold(commandData.command)}`));
         }
       } else if (fileName === 'ae_mcp_result.json') {
         // Result file changed - read and log the received result
         const content = fs.readFileSync(filePath, 'utf8');
         const resultData = JSON.parse(content);
 
-        if (resultData.status === 'success') {
-          console.log(colors.green(`[MCP WATCHER] ✓ Received result: ${colors.bold(resultData.command || 'unknown')}`));
-        } else if (resultData.status === 'error') {
-          console.log(colors.red(`[MCP WATCHER] ✗ Error result: ${colors.bold(resultData.command || 'unknown')} - ${resultData.error}`));
+        const commandName = resultData._commandExecuted || resultData.command || 'unknown';
+
+        if (resultData.status === 'success' || resultData.success === true) {
+          const message = resultData.message || JSON.stringify(resultData).substring(0, 100);
+          console.log(colors.green(`[MCP WATCHER] ✓ Success result (${commandName}): ${colors.bold(message)}`));
+        } else if (resultData.status === 'error' || resultData.success === false || resultData.error) {
+          const errorMsg = resultData.error || resultData.message || 'Unknown error';
+          console.log(colors.red(`[MCP WATCHER] ✗ Error result (${commandName}): ${colors.bold(errorMsg)}`));
         }
       }
     } catch (error) {
-      console.error(colors.red(`[MCP WATCHER] Error parsing file change: ${error}`));
+      console.error(colors.red(`[MCP WATCHER] Error parsing file event: ${error}`));
     }
-  });
+  };
+
+  watcher.on('add', handleFileEvent);
+  watcher.on('change', handleFileEvent);
 
   watcher.on('ready', () => {
-    console.log(colors.cyan(`[MCP WATCHER] Watching command and result files...`));
+    if (!watcherReady) {
+      watcherReady = true;
+      console.log(colors.cyan(`[MCP WATCHER] Watching command and result files...`));
+    }
   });
 
   watcher.on('error', (error: unknown) => {

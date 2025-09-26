@@ -13,7 +13,7 @@ const __dirname = path.dirname(__filename);
 
 const projectRoot = path.resolve(__dirname, '..');
 const buildTempPath = path.join(projectRoot, 'build', 'temp').replace(/\\/g, '/');
-const srcScriptsDir = path.join(projectRoot, 'src', 'scripts');
+const srcScriptsDir = path.join(projectRoot, 'src', 'dist');
 const masterTemplatePath = path.join(srcScriptsDir, 'mcp-bridge-auto.jsx');
 const outputPath = path.join(projectRoot, 'build', 'dist', 'mcp-bridge-auto.jsx');
 
@@ -82,6 +82,13 @@ try {
   const outputDir = path.dirname(outputPath);
   if (!fs.existsSync(outputDir)) {
     fs.mkdirSync(outputDir, { recursive: true });
+  }
+
+  // Ensure temp directory exists
+  const tempDir = path.join(projectRoot, 'build', 'temp');
+  if (!fs.existsSync(tempDir)) {
+    fs.mkdirSync(tempDir, { recursive: true });
+    console.log(colors.green(`[JSX BUILD] ✓ Created temp directory: ${tempDir}`));
   }
 
   // Write output file
