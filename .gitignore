@@ -6,7 +6,6 @@ yarn-debug.log
 
 # Build directories
 build/
-dist/
 
 # IDEs and editors
 .vscode/
