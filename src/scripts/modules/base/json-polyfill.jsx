@@ -1,8 +1,4 @@
-/**
- * JSON Polyfill for After Effects
- * After Effects doesn't have JSON built-in, so we need to provide it
- */
-
+// JSON Polyfill for After Effects (which doesn't have JSON built-in)
 if (typeof JSON === 'undefined') {
     JSON = {};
 
