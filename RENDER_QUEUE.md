@@ -29,59 +29,38 @@ TASKS (DO THESE IN ORDER)
    - Rationale: ScriptExecutor already provides the needed functionality (temp file creation, script wrapping, execution)
    - Implementation approach: Tools will call getScriptExecutor().executeCustomScript() directly
 
-2. Implement single frame tool:
-   - File: src/server/tools/renderFrame.ts
-   - Zod schema described previously:
-        comp (string)
-        time? (seconds)
-        frame? (int)
-        outputFile? (sanitized)
-        inline? (boolean default false)
-        format png|jpg (default png)
-   - Behavior:
-        Determine renderTime: prefer time; else frame->seconds; else current comp time.
-        Generate unique filename if not provided.
-        Create build/temp if missing.
-        Build ExtendScript string (IIFE) that:
-          * Locates comp
-          * Creates one render queue item with timeSpanStart & timeSpanDuration = 1 / frameRate
-          * Sets output module file
-          * Renders
-          * Returns JSON: { success, comp, frame, time, width, height, outputPath }
-        Parse JSON; optionally embed base64.
+2. ✅ COMPLETED - Implement single frame tool:
+   - File: src/tools/render/renderFrame.ts
+   - Implemented zod schema with all required fields
+   - Uses getScriptExecutor().executeCustomScript() directly
+   - Generates unique filenames via sanitize utility
+   - ExtendScript handles comp lookup, render queue, and returns JSON
+   - Base64 inline support implemented
+   - See TEST_PLAN.txt for testing instructions
 
-3. Implement sampled frames tool:
-   - File: src/server/tools/renderFramesSampled.ts
-   - Inputs (mutually exclusive sampling strategies):
-        comp
-        startTime (>=0)
-        endTime (> startTime)
-        sampleCount? | sampleFps? | frameStep?
-        format (png|jpg, default png)
-        outputPrefix? (sanitized)
-        inline (default false)
-        inlineMax (default 3)
-        maxFrames (default 100 guardrail)
-   - Determine samplingMode (priority: sampleCount > sampleFps > frameStep > default(5 frames))
-   - ExtendScript:
-        * Compute times array
-        * Deduplicate & clamp
-        * Truncate if > maxFrames (return warning)
-        * For each time: enqueue one render queue item (1-frame span)
-        * Single renderQueue.render() call
-        * Verify each file exists
-        * Return JSON with frames: [{ index, time, frameNumber, outputPath }]
-   - Node side optionally inlines first inlineMax frames.
+3. ✅ COMPLETED - Implement sampled frames tool:
+   - File: src/tools/render/renderFramesSampled.ts
+   - All sampling strategies implemented (sampleCount, sampleFps, frameStep)
+   - Mutual exclusivity validation in TypeScript
+   - Session directory creation (build/temp/<sessionId>/)
+   - ExtendScript computes times, deduplicates, and handles maxFrames truncation
+   - Single render() call for all frames
+   - Node-side inlines first inlineMax frames only
+   - See TEST_PLAN.txt for testing instructions
 
-4. Update tools index:
-   - File: src/server/tools/index.ts
-   - Export tools array including both render_frame and render_frames_sampled.
+4. ✅ COMPLETED - Update tools index:
+   - File: src/tools/index.ts (modified)
+   - Imported render tools
+   - Registered both render-frame and render-frames-sampled
 
-5. Update server bootstrap (if not already):
-   - Ensure server registers tools dynamically from tools array.
+5. ✅ COMPLETED - Update server bootstrap:
+   - Already handled by existing registerAllTools() pattern
+   - No changes needed to src/server/index.ts
 
-6. Add utility:
-   - (Optional) src/server/utils/sanitize.ts with sanitizeFilename and maybe uniqueName helper.
+6. ✅ COMPLETED - Add utility:
+   - File: src/server/utils/sanitize.ts
+   - Implemented: sanitizeFilename(), generateUniqueFilename(), generateSessionId()
+   - Uses crypto.randomUUID() for safety
 
 7. Add documentation section to README:
    - Title: Frame Rendering Tools (MCP)

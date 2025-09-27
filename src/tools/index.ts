@@ -47,6 +47,11 @@ import {
   registerExportHistoryAsScriptTool
 } from "./history/index.js";
 
+import {
+  registerRenderFrameTool,
+  registerRenderFramesSampledTool
+} from "./render/index.js";
+
 /**
  * Register all tools with the MCP server
  */
@@ -96,6 +101,11 @@ export function registerAllTools(server: McpServer, context: ToolContext): void 
   console.log(colors.yellow('[MCP TOOLS] Registering history tools...'));
   registerGetCommandHistoryTool(server, context);
   registerExportHistoryAsScriptTool(server, context);
+
+  // Register render tools
+  console.log(colors.yellow('[MCP TOOLS] Registering render tools...'));
+  registerRenderFrameTool(server, context);
+  registerRenderFramesSampledTool(server, context);
 
   console.log(colors.green('[MCP TOOLS] All tools registered successfully!'));
 }

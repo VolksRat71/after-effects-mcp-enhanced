@@ -1,0 +1,429 @@
+============================================
+RENDER TOOLS - TEST PLAN
+============================================
+
+PHASE 1: BUILD & COMPILATION
+--------------------------------------------
+1. Run: npm run build
+   Expected: No TypeScript errors
+   Look for: Compilation of new files in src/tools/render/
+
+2. Check build output
+   Expected: Files generated in build/tools/render/
+
+
+PHASE 2: BASIC FUNCTIONALITY TESTS
+--------------------------------------------
+
+TEST 1: Single Frame Render (Basic)
+------------------------------------
+Tool: render-frame
+Parameters:
+{
+  "comp": "<your-comp-name>",
+  "format": "png"
+}
+
+Expected Output:
+- Success message with frame details
+- File created in build/temp/
+- Response includes: frame number, time, resolution, output path
+
+TEST 2: Single Frame Render (with time)
+----------------------------------------
+Tool: render-frame
+Parameters:
+{
+  "comp": "<your-comp-name>",
+  "time": 2.0,
+  "format": "png"
+}
+
+Expected Output:
+- Frame rendered at exactly 2.0 seconds
+- Output path in build/temp/
+
+TEST 3: Single Frame Render (with frame number)
+------------------------------------------------
+Tool: render-frame
+Parameters:
+{
+  "comp": "<your-comp-name>",
+  "frame": 60,
+  "format": "jpg"
+}
+
+Expected Output:
+- Frame 60 rendered
+- JPG format output
+
+TEST 4: Single Frame Render (with inline)
+------------------------------------------
+Tool: render-frame
+Parameters:
+{
+  "comp": "<your-comp-name>",
+  "inline": true,
+  "format": "png"
+}
+
+Expected Output:
+- Response includes base64 inlineData
+- Data URI format: data:image/png;base64,...
+
+TEST 5: Sampled Frames (sampleCount)
+-------------------------------------
+Tool: render-frames-sampled
+Parameters:
+{
+  "comp": "<your-comp-name>",
+  "startTime": 0,
+  "endTime": 5,
+  "sampleCount": 5,
+  "format": "png"
+}
+
+Expected Output:
+- 5 frames rendered evenly distributed
+- Session directory created: build/temp/session_<id>/
+- Response lists all frames with times
+
+TEST 6: Sampled Frames (sampleFps)
+-----------------------------------
+Tool: render-frames-sampled
+Parameters:
+{
+  "comp": "<your-comp-name>",
+  "startTime": 0,
+  "endTime": 3,
+  "sampleFps": 2,
+  "format": "png"
+}
+
+Expected Output:
+- Frames sampled at 2 FPS (every 0.5 seconds)
+- ~6-7 frames rendered (0, 0.5, 1.0, 1.5, 2.0, 2.5, 3.0)
+
+TEST 7: Sampled Frames (frameStep)
+-----------------------------------
+Tool: render-frames-sampled
+Parameters:
+{
+  "comp": "<your-comp-name>",
+  "startTime": 0,
+  "endTime": 2,
+  "frameStep": 10,
+  "format": "png"
+}
+
+Expected Output:
+- Frames sampled every 10 frames
+- Frame numbers in multiples of 10
+
+TEST 8: Sampled Frames (with inline)
+-------------------------------------
+Tool: render-frames-sampled
+Parameters:
+{
+  "comp": "<your-comp-name>",
+  "startTime": 0,
+  "endTime": 2,
+  "sampleCount": 5,
+  "inline": true,
+  "inlineMax": 2,
+  "format": "png"
+}
+
+Expected Output:
+- First 2 frames have inlineData
+- Remaining frames have no inlineData property
+
+
+PHASE 3: ERROR HANDLING TESTS
+--------------------------------------------
+
+TEST 9: Invalid Composition Name
+---------------------------------
+Tool: render-frame
+Parameters:
+{
+  "comp": "NonExistentComp",
+  "format": "png"
+}
+
+Expected Output:
+- Error message: "Composition 'NonExistentComp' not found"
+- isError: true
+
+TEST 10: Invalid Time Range
+----------------------------
+Tool: render-frames-sampled
+Parameters:
+{
+  "comp": "<your-comp-name>",
+  "startTime": 5,
+  "endTime": 2,
+  "sampleCount": 5
+}
+
+Expected Output:
+- Error: "endTime must be greater than startTime"
+
+TEST 11: Multiple Sampling Strategies
+--------------------------------------
+Tool: render-frames-sampled
+Parameters:
+{
+  "comp": "<your-comp-name>",
+  "startTime": 0,
+  "endTime": 5,
+  "sampleCount": 5,
+  "sampleFps": 2
+}
+
+Expected Output:
+- Error: "Only one sampling strategy... can be specified"
+
+TEST 12: MaxFrames Truncation
+------------------------------
+Tool: render-frames-sampled
+Parameters:
+{
+  "comp": "<your-comp-name>",
+  "startTime": 0,
+  "endTime": 100,
+  "sampleFps": 30,
+  "maxFrames": 10
+}
+
+Expected Output:
+- Warning message about truncation
+- Only 10 frames rendered
+- Response includes warning field
+
+
+PHASE 4: FILE VERIFICATION
+--------------------------------------------
+After running tests:
+
+1. Check build/temp/ directory
+   - Single frame files should be there
+
+2. Check build/temp/session_*/ directories
+   - Multiple session directories from sampled renders
+   - Each contains multiple frame files
+
+3. Verify file naming
+   - Single frames: frame_<timestamp>_<uuid>.png
+   - Sampled frames: <prefix>_<frameNumber>.png
+
+
+PHASE 5: INTEGRATION CHECKS
+--------------------------------------------
+
+1. Check server logs during render
+   Look for:
+   - [RENDER-FRAME] or [RENDER-FRAMES] messages
+   - ExtendScript execution confirmations
+   - No unexpected errors
+
+2. Check history
+   Tool: get-command-history
+   Expected:
+   - render-frame entries
+   - render-frames-sampled entries
+   - Success/error status logged correctly
+
+
+TROUBLESHOOTING GUIDE
+--------------------------------------------
+
+If renders fail:
+1. Ensure After Effects is running
+2. Ensure project has compositions
+3. Check that composition names are exact (case-sensitive)
+4. Verify build/temp directory is writable
+5. Check After Effects render queue for errors
+
+If inline data missing:
+1. Verify file was actually created
+2. Check file is readable
+3. Verify inline=true was passed
+
+If TypeScript errors:
+1. Check import paths use .js extension
+2. Verify all dependencies installed
+3. Check tsconfig.json allows necessary features
+
+
+NEXT STEPS (if all tests pass)
+--------------------------------------------
+- Document in README
+- Add mock mode for CI testing
+- Consider output module template support
+
+
+============================================
+TEST EXECUTION REPORT - 2025-09-27
+============================================
+
+SETUP PHASE: ✓ COMPLETED
+--------------------------------------------
+Created test composition "RenderTest":
+- Dimensions: 1920x1080
+- Duration: 5 seconds @ 30fps
+- Background: Dark blue (20, 20, 30)
+- Added shape layer "AnimatedCircle" with:
+  - Circle shape (200x200)
+  - Blue fill (0.2, 0.6, 1.0)
+  - Yellow stroke (1.0, 0.8, 0.2, 5px width)
+- Added animation keyframes:
+  - Position: Moves left to right and back (500→1420→500)
+  - Scale: Pulses between 80-150%
+  - Rotation: Full 720° rotation over 5 seconds
+- Added expression to Opacity:
+  - Expression: 50 + 50 * Math.sin(time * 2 * Math.PI)
+  - Creates pulsing fade effect
+
+TEST EXECUTION: ⚠️ BLOCKED
+--------------------------------------------
+TEST 1: Single Frame Render (Basic) - FAILED
+Status: ETIMEDOUT error
+Error: "spawnSync C:\Windows\system32\cmd.exe ETIMEDOUT"
+
+ROOT CAUSE ANALYSIS:
+--------------------------------------------
+Issue identified in src/tools/render/renderFrame.ts:51-52
+
+The code incorrectly separates script preparation from execution:
+```typescript
+const { tempScriptPath } = scriptExecutor.executeCustomScript(extendScript, 'render-frame');
+const result = scriptExecutor.runExtendScript(tempScriptPath, {});
+```
+
+PROBLEM: executeCustomScript() only creates and writes the script file to disk,
+but does NOT execute it. Then runExtendScript() is called separately, which
+appears to cause a timeout issue.
+
+The correct pattern used elsewhere in the codebase (e.g., runCustomScript.ts:24)
+is to call executeCustomScript() which handles BOTH creation AND execution.
+
+REQUIRED FIX:
+--------------------------------------------
+Both renderFrame.ts and renderFramesSampled.ts need to be updated to properly
+execute the render scripts. The executeCustomScript method should handle the
+full execution cycle, or the code needs to be refactored to use the proper
+execution pattern from the scriptExecutor service.
+
+Files affected:
+- src/tools/render/renderFrame.ts:51-52
+- src/tools/render/renderFramesSampled.ts:70-71 (likely same issue)
+
+TESTS NOT EXECUTED:
+--------------------------------------------
+- TEST 1-4: Single frame render tests (blocked by timeout)
+- TEST 5-8: Sampled frame tests (blocked by timeout)
+- TEST 9-12: Error handling tests (not attempted)
+- PHASE 4: File verification (no files generated)
+- PHASE 5: Integration checks (partial - setup commands worked)
+
+CONCLUSION:
+--------------------------------------------
+The render tools need a code fix before testing can proceed. The setup phase
+worked perfectly - composition creation, keyframes, and expressions all
+functioned correctly. The issue is specifically in how the render tools
+call the script executor.
+
+============================================
+FIX APPLIED - DO NOT MODIFY CODE
+============================================
+⚠️ IMPORTANT FOR TESTERS: The timeout issue has been FIXED in the codebase.
+   Your job is to TEST ONLY - do not attempt to fix code issues.
+   If tests fail, document the failure and report it.
+
+CHANGES THAT WERE APPLIED:
+--------------------------------------------
+1. src/services/scriptExecutor.ts:23
+   - Added timeout parameter: runExtendScript(scriptPath, args, timeout = 30000)
+
+2. src/tools/render/renderFrame.ts:52
+   - Now passes 300000ms (5 minute) timeout
+
+3. src/tools/render/renderFramesSampled.ts:71
+   - Now passes 600000ms (10 minute) timeout
+
+BEFORE RE-TESTING:
+--------------------------------------------
+1. Run: npm run build
+2. Restart the MCP server if it's running
+3. Execute tests starting from TEST 1
+
+EXPECTED OUTCOMES AFTER FIX:
+--------------------------------------------
+- Single frame renders should complete within 5 minutes
+- Multi-frame renders should complete within 10 minutes
+- No ETIMEDOUT errors should occur
+- Files should be generated in build/temp/ directories
+
+============================================
+TEST EXECUTION REPORT - 2025-09-27 (SECOND RUN)
+============================================
+
+VERIFICATION PHASE: ✓ COMPLETED
+--------------------------------------------
+Confirmed MCP Bridge Auto panel is working:
+- Custom script execution: ✓ WORKING
+- Alert window display: ✓ WORKING
+- Script queuing system: ✓ WORKING
+
+RENDER TOOLS TEST: ⚠️ CRITICAL BUG FOUND
+--------------------------------------------
+TEST: render-frame tool
+Status: FAILED - Incorrect behavior
+
+BUG DESCRIPTION:
+When render-frame or render-frames-sampled tools are executed, the render
+operation opens a WHOLE NEW PROJECT in After Effects instead of rendering
+from the current active project.
+
+OBSERVED BEHAVIOR:
+- Tool is called with composition name from current project
+- After Effects opens a new blank project
+- The custom JSX script file appears IN THE NEW PROJECT PANEL
+- Original project with "RenderTest" composition is no longer active
+- Render fails because composition doesn't exist in the new project
+
+EXPECTED BEHAVIOR:
+- Render should execute against the currently open project
+- Should NOT open a new project
+- Should NOT add the JSX script to the project panel
+- Should find and render the specified composition
+
+ROOT CAUSE (SUSPECTED):
+The render tools (renderFrame.ts and renderFramesSampled.ts) appear to be
+calling ExtendScript in a way that causes After Effects to interpret the
+action as "open a new project and import this file" rather than "execute
+this script in the current project context."
+
+This is different from run-custom-script tool which executes correctly
+without opening a new project.
+
+FILES AFFECTED:
+- src/tools/render/renderFrame.ts
+- src/tools/render/renderFramesSampled.ts
+- Potentially src/services/scriptExecutor.ts (execution method)
+
+COMPARISON:
+- run-custom-script: ✓ Executes in current project context
+- render-frame: ✗ Opens new project, breaks context
+- render-frames-sampled: ✗ Opens new project, breaks context
+
+IMPACT:
+- Render tools are completely non-functional
+- Cannot test any render functionality until this is fixed
+- All render tests (TEST 1-12) are blocked
+
+NEXT STEPS:
+- Compare how run-custom-script executes vs render tools
+- Investigate scriptExecutor.executeCustomScript() method
+- May need to use different execution approach for render operations

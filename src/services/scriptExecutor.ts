@@ -20,7 +20,7 @@ export class ScriptExecutor {
   /**
    * Run an ExtendScript file in After Effects
    */
-  runExtendScript(scriptPath: string, args: Record<string, any> = {}): string {
+  runExtendScript(scriptPath: string, args: Record<string, any> = {}, timeout: number = 30000): string {
     try {
       console.log(colors.cyan(`[MCP SCRIPTEXECUTOR] Running script: ${scriptPath}`));
       console.log(colors.cyan(`[MCP SCRIPTEXECUTOR] Script args: ${JSON.stringify(args).substring(0, 200)}${JSON.stringify(args).length > 200 ? '...' : ''}`));
@@ -58,7 +58,7 @@ export class ScriptExecutor {
       console.log(colors.blue(`[MCP SCRIPTEXECUTOR] Running command with -m flag: ${command}`));
 
       try {
-        const output = execSync(command, { encoding: 'utf8', timeout: 30000 });
+        const output = execSync(command, { encoding: 'utf8', timeout: timeout });
         console.log(colors.green(`[MCP SCRIPTEXECUTOR] Script executed successfully`));
         return output;
       } catch (execError: any) {
