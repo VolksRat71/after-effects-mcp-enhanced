@@ -538,8 +538,6 @@ All tools have been manually tested with After Effects running. The build system
 - Watcher may miss intermediate "running" states due to fast execution (<100ms)
 - Commands complete faster than file watcher stability threshold (100ms)
 
-For full test results, see [modularization plan](/Users/nathanielryan/Desktop/projects/.cursor/rules/ae-mcp-modularization-plan.md)
-
 ### 🤝 Contributing
 
 Contributions are welcome! This project follows a feature-branch workflow:
