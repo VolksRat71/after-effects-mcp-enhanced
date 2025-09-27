@@ -1,6 +1,7 @@
 // File operation utilities for installer
 import * as fs from "fs";
 import * as path from "path";
+import { execSync } from "child_process";
 import colors from "colors";
 
 export interface CopyResult {
@@ -29,11 +30,15 @@ export class FileOperations {
       const destDir = path.dirname(destination);
       this.ensureDirectory(destDir);
 
-      // Copy the file
-      fs.copyFileSync(source, destination);
-
-      // Set appropriate permissions (readable by all)
-      fs.chmodSync(destination, 0o644);
+      // On macOS, use sudo cp command for system directories
+      // On Windows, fs.copyFileSync works fine
+      if (process.platform === "darwin") {
+        execSync(`sudo cp "${source}" "${destination}"`, { stdio: "inherit" });
+        execSync(`sudo chmod 644 "${destination}"`, { stdio: "inherit" });
+      } else {
+        fs.copyFileSync(source, destination);
+        fs.chmodSync(destination, 0o644);
+      }
 
       return {
         success: true,
