@@ -5,13 +5,13 @@ import colors from 'colors';
 import { LayerIdentifierSchema } from './setLayerKeyframe.js';
 
 /**
- * Register the setLayerExpression tool
+ * Register the set-layer-expression tool
  */
 export function registerSetLayerExpressionTool(server: McpServer, context: ToolContext): void {
   const { fileManager } = context;
 
   server.tool(
-    "setLayerExpression",
+    "set-layer-expression",
     "Set or remove an expression for a specific layer property.",
     {
       ...LayerIdentifierSchema,
@@ -21,7 +21,7 @@ export function registerSetLayerExpressionTool(server: McpServer, context: ToolC
     async (parameters) => {
       try {
         // Queue the command for After Effects
-        fileManager.writeCommandFile("setLayerExpression", parameters);
+        fileManager.writeCommandFile("set-layer-expression", parameters);
 
         return {
           content: [
@@ -38,7 +38,7 @@ export function registerSetLayerExpressionTool(server: McpServer, context: ToolC
           content: [
             {
               type: "text",
-              text: `[MCP LAYER] Error queuing setLayerExpression command: ${String(error)}`
+              text: `[MCP LAYER] Error queuing set-layer-expression command: ${String(error)}`
             }
           ],
           isError: true

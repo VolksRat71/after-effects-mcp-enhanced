@@ -1,11 +1,10 @@
 # 🎬 After Effects MCP Server - Modular Edition
 
-![Node.js](https://img.shields.io/badge/node-%3E=14.x-brightgreen.svg)
-![Build](https://img.shields.io/badge/build-passing-success)
+![Node.js](https://img.shields.io/badge/node-%3E=16.x-brightgreen.svg)
 ![License](https://img.shields.io/badge/license-MIT-blue)
 ![Platform](https://img.shields.io/badge/platform-Windows%20%7C%20macOS-blue)
 ![Version](https://img.shields.io/badge/version-1.0.0-blue)
-![After Effects](https://img.shields.io/badge/After%20Effects-2021%2B-purple)
+![After Effects](https://img.shields.io/badge/After%20Effects-2020%2B-purple)
 
 ✨ A fully modularized Model Context Protocol (MCP) server for Adobe After Effects with improved maintainability, cross-platform support, asset management, animation tools, and real-time logging.
 
@@ -21,7 +20,7 @@
 - **📦 Asset Management Suite** - Import, replace, and manage footage with 4 new tools
 - **🎬 Animation Templates** - 12 pre-built animations (bounce, slide, fade, zoom, etc.)
 - **📊 Real-time Logging** - Chokidar file watcher with colorized command/result tracking
-- **🧪 100% Test Coverage** - All 20 tools tested and verified working
+- **🧪 All 20 Tools Verified** - Manually tested and confirmed working in After Effects
 - **📝 Comprehensive Documentation** - Detailed guides and modularization plan
 
 ## 🎯 Key Features
@@ -34,9 +33,58 @@
 - **📦 Asset Management** - Import and replace footage dynamically
 - **🖥️ Cross-platform** - Works on both Windows and macOS
 
+### Detailed Capabilities
+
+<details>
+<summary><strong>🎥 Composition Management</strong></summary>
+
+- Create compositions with custom settings (size, frame rate, duration, background color)
+- List all compositions in a project with details
+- Get project information including frame rate, dimensions, and duration
+- Get composition by index - properly finds compositions by position
+</details>
+
+<details>
+<summary><strong>🧱 Layer Creation & Management</strong></summary>
+
+- Create text layers with customizable properties (font, size, color, position)
+- Create shape layers (rectangle, ellipse, polygon, star) with colors and strokes
+- Create solid/adjustment layers for backgrounds and effects
+- Modify layer properties like position, scale, rotation, opacity, and timing
+- Get layer properties with keyframe data and applied effects
+</details>
+
+<details>
+<summary><strong>🌀 Animation</strong></summary>
+
+- Set keyframes for any layer property (Position, Scale, Rotation, Opacity, etc.)
+- Bulk keyframe operations - set multiple keyframes at once
+- Copy animations between layers with time offsets
+- Apply expressions to layer properties for dynamic animations
+- Animation templates - 12 pre-built animations (bounce, slide, fade, zoom, shake, etc.)
+</details>
+
+<details>
+<summary><strong>📂 Asset Management</strong></summary>
+
+- Import assets - import images/videos from disk paths
+- Replace footage - swap layer source files dynamically
+- Auto-add to composition with position and scale options
+</details>
+
+<details>
+<summary><strong>🛠️ Advanced Features</strong></summary>
+
+- Custom script execution - run ExtendScript code directly
+- Command history tracking - logs all operations for debugging/replay
+- Effect templates - pre-configured effects (blur, glow, cinematic look)
+- Real-time logging - Chokidar file watcher tracks all command/result flow
+- Modular build system - processes `#include` directives and injects paths at build time
+</details>
+
 ## Table of Contents
 - [Key Features](#-key-features)
-- [Features](#-features)
+- [Quickstart](#-quickstart)
 - [Setup Instructions](#️-setup-instructions)
 - [Available Tools](#-available-tools)
 - [Usage Examples](#-usage-examples)
@@ -47,48 +95,19 @@
 - [Recent Improvements](#-recent-improvements)
 - [License](#-license)
 
-## 📦 Features
-
-### 🎥 Core Composition Features
-- **Create compositions** with custom settings (size, frame rate, duration, background color)
-- **List all compositions** in a project with details
-- **Get project information** including frame rate, dimensions, and duration
-- **Get composition by index** - Properly finds compositions by position
-
-### 🧱 Layer Management
-- **Create text layers** with customizable properties (font, size, color, position)
-- **Create shape layers** (rectangle, ellipse, polygon, star) with colors and strokes
-- **Create solid/adjustment layers** for backgrounds and effects
-- **Modify layer properties** like position, scale, rotation, opacity, and timing
-- **Get layer properties** with keyframe data and applied effects
-
-### 🌀 Animation Capabilities
-- **Set keyframes** for any layer property (Position, Scale, Rotation, Opacity, etc.)
-- **Bulk keyframe operations** - Set multiple keyframes at once
-- **Copy animations** between layers with time offsets
-- **Apply expressions** to layer properties for dynamic animations
-- **Animation templates** - 12 pre-built animations (bounce, slide, fade, etc.)
-
-### 📂 Asset Management
-- **Import assets** - Import images/videos from disk paths
-- **Replace footage** - Swap layer source files dynamically
-- **Auto-add to composition** with position and scale options
-
-### 🛠️ Advanced Features
-- **Custom script execution** - Run ExtendScript code directly
-- **Command history tracking** - Logs all operations for debugging/replay
-- **Effect templates** - Pre-configured effects (blur, glow, cinematic look)
-- **Real-time logging** - Chokidar file watcher tracks all command/result flow
-- **Modular build system** - Processes `#include` directives and injects paths at build time
-
 ## ⚙️ Setup Instructions
 
 ### 🛠 Prerequisites
-- Adobe After Effects (2021 or later, tested with 2025)
-- Node.js (v14 or later)
-- npm or yarn package manager
-- **Windows**: Administrator privileges for installation
-- **macOS**: After Effects must have been run at least once
+
+**System Requirements:**
+- **Operating Systems**: Windows 10/11 or macOS 10.14 (Mojave) or later
+- **Adobe After Effects**: Version 2020 or later (tested with 2021, 2023, 2025)
+- **Node.js**: v16 or later (v18+ recommended for best compatibility)
+- **Package Manager**: npm or yarn
+
+**Platform-Specific:**
+- **Windows**: Administrator privileges required for installation
+- **macOS**: After Effects must have been run at least once; may need Full Disk Access in System Settings
 
 ### 📥 Installation
 
@@ -109,14 +128,23 @@
    ```
 
 4. **Install the After Effects bridge panel**
+
+   **For macOS:**
+   ```bash
+   sudo npm run bridge-install
+   ```
+   - You will be prompted for your administrator password
+   - The installer uses `sudo cp` to copy files to `/Applications/Adobe After Effects [version]/Scripts/ScriptUI Panels/`
+   - Installs `mcp-bridge-auto.jsx` to the ScriptUI Panels folder
+
+   **For Windows:**
    ```bash
    npm run bridge-install
    ```
-
-   **Platform-specific notes:**
-   - **Windows**: Automatically installs to After Effects Scripts folder
-   - **macOS**: Uses native password prompt for administrator access
-   - Installs `mcp-bridge-auto.jsx` to ScriptUI Panels folder
+   - A User Account Control (UAC) prompt will appear requesting administrator privileges
+   - The installer uses PowerShell with elevated privileges to copy files
+   - If UAC is cancelled, it will attempt a regular copy (may fail without admin rights)
+   - Installs to `C:\Program Files\Adobe\Adobe After Effects [version]\Support Files\Scripts\ScriptUI Panels\`
 
 ### 🔧 Configure Your MCP Client
 
@@ -184,10 +212,10 @@ Add to your MCP client configuration (e.g., Claude Desktop, Cursor):
 ### Animation Tools
 | Tool | Description |
 |------|-------------|
-| `setLayerKeyframe` | Set a keyframe for a layer property |
+| `set-layer-keyframe` | Set a keyframe for a layer property |
 | `set-multiple-keyframes` | Set multiple keyframes at once |
 | `copy-animation` | Copy all keyframes between layers |
-| `setLayerExpression` | Apply expressions to properties |
+| `set-layer-expression` | Apply expressions to properties |
 | `apply-animation-template` | Apply pre-built animations |
 
 ### Asset Management
@@ -249,7 +277,7 @@ mcp__after-effects-mcp__apply-animation-template({
 ### Setting Keyframes
 ```javascript
 // Animate position over time
-mcp__after-effects-mcp__setLayerKeyframe({
+mcp__after-effects-mcp__set-layer-keyframe({
   compIndex: 1,
   layerIndex: 1,
   propertyName: "Position",
@@ -257,7 +285,7 @@ mcp__after-effects-mcp__setLayerKeyframe({
   value: [100, 540]
 })
 
-mcp__after-effects-mcp__setLayerKeyframe({
+mcp__after-effects-mcp__set-layer-keyframe({
   compIndex: 1,
   layerIndex: 1,
   propertyName: "Position",
@@ -460,10 +488,19 @@ Contributions are welcome! This project follows a feature-branch workflow:
 - ✅ **Command history** - Track and replay operations
 
 ### Tested With
-- Adobe After Effects 2025
-- macOS Sonoma
-- Node.js v18+
-- All 20 MCP tools verified working
+
+**Operating Systems:**
+- macOS Sonoma (14.x)
+- Windows 10/11
+
+**After Effects Versions:**
+- Adobe After Effects 2025 (primary test platform)
+- Compatible with After Effects 2020, 2021, 2022, 2023, 2024
+
+**Runtime:**
+- Node.js v18+ (all 20 MCP tools verified working)
+
+**Note:** While the software is compatible with After Effects 2020+, installation paths and UI locations may vary slightly between versions.
 
 ## 📄 License
 

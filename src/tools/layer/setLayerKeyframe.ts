@@ -13,13 +13,13 @@ export const LayerIdentifierSchema = {
 const KeyframeValueSchema = z.any().describe("The value for the keyframe (e.g., [x,y] for Position, [w,h] for Scale, angle for Rotation, percentage for Opacity)");
 
 /**
- * Register the setLayerKeyframe tool
+ * Register the set-layer-keyframe tool
  */
 export function registerSetLayerKeyframeTool(server: McpServer, context: ToolContext): void {
   const { fileManager } = context;
 
   server.tool(
-    "setLayerKeyframe",
+    "set-layer-keyframe",
     "Set a keyframe for a specific layer property at a given time.",
     {
       ...LayerIdentifierSchema,
@@ -30,7 +30,7 @@ export function registerSetLayerKeyframeTool(server: McpServer, context: ToolCon
     async (parameters) => {
       try {
         // Queue the command for After Effects
-        fileManager.writeCommandFile("setLayerKeyframe", parameters);
+        fileManager.writeCommandFile("set-layer-keyframe", parameters);
 
         return {
           content: [
@@ -46,7 +46,7 @@ export function registerSetLayerKeyframeTool(server: McpServer, context: ToolCon
           content: [
             {
               type: "text",
-              text: `[MCP LAYER] Error queuing setLayerKeyframe command: ${String(error)}`
+              text: `[MCP LAYER] Error queuing set-layer-keyframe command: ${String(error)}`
             }
           ],
           isError: true

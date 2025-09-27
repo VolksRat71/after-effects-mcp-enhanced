@@ -49,8 +49,8 @@ Available scripts:
 - createShapeLayer: Create a new shape layer
 - createSolidLayer: Create a new solid layer
 - setLayerProperties: Set properties for a layer
-- setLayerKeyframe: Set a keyframe for a layer property
-- setLayerExpression: Set an expression for a layer property
+- set-layer-keyframe: Set a keyframe for a layer property
+- set-layer-expression: Set an expression for a layer property
 - applyEffect: Apply an effect to a layer
 - applyEffectTemplate: Apply a predefined effect template to a layer
 

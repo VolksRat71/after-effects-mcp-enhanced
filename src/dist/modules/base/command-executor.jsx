@@ -67,15 +67,15 @@ function executeCommand(command, args) {
                 result = setLayerProperties(args);
                 logToPanel("Returned from setLayerProperties.");
                 break;
-            case "setLayerKeyframe":
-                logToPanel("Calling setLayerKeyframe function...");
+            case "set-layer-keyframe":
+                logToPanel("Calling set-layer-keyframe function...");
                 result = setLayerKeyframe(args.compIndex, args.layerIndex, args.propertyName, args.timeInSeconds, args.value);
-                logToPanel("Returned from setLayerKeyframe.");
+                logToPanel("Returned from set-layer-keyframe.");
                 break;
-            case "setLayerExpression":
-                logToPanel("Calling setLayerExpression function...");
+            case "set-layer-expression":
+                logToPanel("Calling set-layer-expression function...");
                 result = setLayerExpression(args.compIndex, args.layerIndex, args.propertyName, args.expressionString);
-                logToPanel("Returned from setLayerExpression.");
+                logToPanel("Returned from set-layer-expression.");
                 break;
             case "applyEffect":
                 logToPanel("Calling applyEffect function...");
