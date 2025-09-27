@@ -95,6 +95,50 @@
 - [Recent Improvements](#-recent-improvements)
 - [License](#-license)
 
+## ⚡ Quickstart
+
+**Get started in 5 minutes:**
+
+```bash
+# Clone and install dependencies
+git clone https://github.com/VolksRat71/after-effects-mcp-enhanced.git
+cd after-effects-mcp-enhanced
+npm install
+
+# Build the project
+npm run build
+
+# Install bridge to After Effects
+# macOS (requires password):
+sudo npm run bridge-install
+
+# Windows (will prompt for UAC):
+npm run bridge-install
+```
+
+**Configure your MCP client** (Claude Desktop, Cursor, etc.):
+
+```json
+{
+  "mcpServers": {
+    "after-effects-mcp": {
+      "command": "node",
+      "args": ["/absolute/path/to/after-effects-mcp-enhanced/build/server/index.js"]
+    }
+  }
+}
+```
+
+**Enable scripting in After Effects:**
+1. Open After Effects
+2. Go to Preferences > Scripting & Expressions
+   *(Edit > Preferences on Windows, After Effects > Settings on macOS)*
+3. Enable "Allow Scripts to Write Files and Access Network"
+4. Restart After Effects
+5. Open Window > mcp-bridge-auto.jsx
+
+**Done!** Start using MCP commands from your AI assistant.
+
 ## ⚙️ Setup Instructions
 
 ### 🛠 Prerequisites
@@ -156,7 +200,7 @@ Add to your MCP client configuration (e.g., Claude Desktop, Cursor):
   "mcpServers": {
     "after-effects-mcp": {
       "command": "node",
-      "args": ["C:\\path\\to\\after-effects-mcp\\build\\server\\index.js"]
+      "args": ["C:\\path\\to\\after-effects-mcp-enhanced\\build\\server\\index.js"]
     }
   }
 }
@@ -168,7 +212,7 @@ Add to your MCP client configuration (e.g., Claude Desktop, Cursor):
   "mcpServers": {
     "after-effects-mcp": {
       "command": "node",
-      "args": ["/path/to/after-effects-mcp/build/server/index.js"]
+      "args": ["/path/to/after-effects-mcp-enhanced/build/server/index.js"]
     }
   }
 }
@@ -316,7 +360,7 @@ mcp__after-effects-mcp__set-layer-keyframe({
 
 **Permission denied errors**
 - **Windows**: Run installation as administrator
-- **macOS**: Grant After Effects full disk access in System Settings
+- **macOS**: Grant After Effects full disk access in System Settings (see [Security & Permissions](#security--permissions) below)
 
 **Scripts not appearing in Window menu**
 - Restart After Effects after installation
@@ -337,6 +381,41 @@ mcp__after-effects-mcp__set-layer-keyframe({
 **Scripts:**
 - Bridge panel: `[After Effects]/Scripts/ScriptUI Panels/mcp-bridge-auto.jsx`
 - Temp scripts: `build/temp/*.jsx` (auto-cleaned)
+
+### Security & Permissions
+
+**Why does this project need elevated permissions?**
+
+This MCP server requires certain system permissions to function properly:
+
+**During Installation:**
+- **macOS**: Requires `sudo` to copy the bridge script to `/Applications/Adobe After Effects [version]/Scripts/ScriptUI Panels/`
+  - This is a protected system directory that requires administrator privileges
+  - The installer uses `sudo cp` to place the bridge panel where After Effects can load it
+
+- **Windows**: Requires administrator privileges (UAC prompt) to copy to `C:\Program Files\Adobe\`
+  - Uses PowerShell with elevated privileges to write to protected directories
+
+**During Runtime:**
+- **File System Access**: The bridge panel needs to:
+  - Read command files from `build/temp/ae_command.json`
+  - Write result files to `build/temp/ae_mcp_result.json`
+  - Access these files for bidirectional communication between MCP and After Effects
+
+- **After Effects Scripting Permission**: Must enable "Allow Scripts to Write Files and Access Network" in AE preferences
+  - Required for the bridge panel to read/write communication files
+  - This is a standard After Effects security setting for any script that performs file I/O
+
+**macOS Full Disk Access (if needed):**
+- If you see permission errors when the bridge runs, grant After Effects "Full Disk Access" in:
+  - System Settings > Privacy & Security > Full Disk Access
+  - Add Adobe After Effects to the allowed apps list
+- This allows After Effects to access the temp files in your project directory
+
+**What data is accessed?**
+- Only files within the project directory (`build/temp/`)
+- No personal data, browser history, or system files are accessed
+- All file operations are limited to After Effects project data and MCP communication files
 
 ## 🏗 Architecture
 
@@ -401,7 +480,7 @@ Chokidar file watcher monitors command/result files:
 ### 🧩 Project Structure
 
 ```
-after-effects-mcp/
+after-effects-mcp-enhanced/
 ├── src/
 │   ├── server/                  # Server implementation
 │   │   ├── index.ts             # Main entry with file watcher
