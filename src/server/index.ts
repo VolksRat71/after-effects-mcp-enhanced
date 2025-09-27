@@ -51,6 +51,9 @@ async function main() {
       if (fileName === 'ae_command.json') {
         // Command file changed - read and log the dispatched command
         const content = fs.readFileSync(filePath, 'utf8');
+        if (!content || content.trim() === '') {
+          return;
+        }
         const commandData = JSON.parse(content);
 
         if (commandData.status === 'pending') {
@@ -63,6 +66,9 @@ async function main() {
       } else if (fileName === 'ae_mcp_result.json') {
         // Result file changed - read and log the received result
         const content = fs.readFileSync(filePath, 'utf8');
+        if (!content || content.trim() === '') {
+          return;
+        }
         const resultData = JSON.parse(content);
 
         const commandName = resultData._commandExecuted || resultData.command || 'unknown';
