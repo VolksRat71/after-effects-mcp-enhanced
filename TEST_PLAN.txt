@@ -366,6 +366,56 @@ EXPECTED OUTCOMES AFTER FIX:
 - Files should be generated in build/temp/ directories
 
 ============================================
+MAJOR REFACTOR APPLIED - PANEL-BASED EXECUTION
+============================================
+⚠️ CRITICAL CHANGE: Render tools now use panel-based execution
+
+ROOT CAUSE OF PREVIOUS BUG:
+--------------------------------------------
+The render tools were using direct execution (AfterFX.exe -m script.jsx) which
+caused After Effects to open a NEW PROJECT instead of executing in the current
+project context. This made the tools completely non-functional.
+
+NEW ARCHITECTURE:
+--------------------------------------------
+Both render tools now use the MCP Bridge Auto panel execution pattern:
+
+1. Tool queues command → fileManager.writeCommandFile()
+2. Panel watches file → detects "renderFrame" or "renderFramesSampled" command
+3. Panel executes JSX → runs in CURRENT PROJECT context
+4. Panel writes result → ae_mcp_result.json
+5. User calls get-results → retrieves rendering results
+
+WORKFLOW CHANGES FOR TESTING:
+--------------------------------------------
+1. Call render-frame or render-frames-sampled tool
+   → Response: "Command has been queued"
+
+2. Wait for render to complete in After Effects
+   → Watch the render queue in AE
+
+3. Call get-results tool
+   → Retrieves the render results with metadata
+
+FILES MODIFIED:
+--------------------------------------------
+- src/tools/render/renderFrame.ts (now queues commands)
+- src/tools/render/renderFramesSampled.ts (now queues commands)
+- src/dist/modules/render/renderFrame.jsx (NEW - panel execution logic)
+- src/dist/modules/render/renderFramesSampled.jsx (NEW - panel execution logic)
+- src/dist/mcp-bridge-auto.jsx (includes new render modules)
+- src/dist/modules/base/command-executor.jsx (added renderFrame & renderFramesSampled cases)
+
+BEFORE RE-TESTING (UPDATED):
+--------------------------------------------
+1. Run: npm run build
+2. Reinstall panel: npm run install (to copy updated mcp-bridge-auto.jsx)
+3. Restart After Effects
+4. Open MCP Bridge Auto panel
+5. Enable Auto-run checkbox
+6. Execute tests starting from TEST 1
+
+============================================
 TEST EXECUTION REPORT - 2025-09-27 (SECOND RUN)
 ============================================
 

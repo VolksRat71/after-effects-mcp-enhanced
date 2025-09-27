@@ -25,6 +25,10 @@
 // Utilities
 #include "./modules/utility/customScript.jsx"
 
+// Render operations
+#include "./modules/render/renderFrame.jsx"
+#include "./modules/render/renderFramesSampled.jsx"
+
 // Command execution
 #include "./modules/base/command-executor.jsx"
 

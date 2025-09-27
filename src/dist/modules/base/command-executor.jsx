@@ -92,6 +92,16 @@ function executeCommand(command, args) {
                 result = executeCustomScript(args);
                 logToPanel("Custom script execution complete.");
                 break;
+            case "renderFrame":
+                logToPanel("Calling renderFrame function...");
+                result = renderFrame(args);
+                logToPanel("Returned from renderFrame.");
+                break;
+            case "renderFramesSampled":
+                logToPanel("Calling renderFramesSampled function...");
+                result = renderFramesSampled(args);
+                logToPanel("Returned from renderFramesSampled.");
+                break;
             default:
                 result = JSON.stringify({ error: "Unknown command: " + command });
         }

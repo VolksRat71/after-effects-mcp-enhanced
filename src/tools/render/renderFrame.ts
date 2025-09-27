@@ -1,14 +1,12 @@
 import { z } from 'zod';
 import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
 import { ToolContext } from '../types.js';
-import colors from 'colors';
 import * as fs from 'fs';
 import * as path from 'path';
-import { getScriptExecutor } from '../../services/scriptExecutor.js';
 import { sanitizeFilename, generateUniqueFilename } from '../../server/utils/sanitize.js';
 
 export function registerRenderFrameTool(server: McpServer, context: ToolContext): void {
-  const { historyManager } = context;
+  const { fileManager, historyManager } = context;
 
   server.tool(
     "render-frame",
@@ -25,7 +23,6 @@ export function registerRenderFrameTool(server: McpServer, context: ToolContext)
       const commandId = historyManager.startCommand('render-frame', params);
 
       try {
-        const scriptExecutor = getScriptExecutor();
         const tempDir = path.join(process.cwd(), 'build', 'temp');
 
         if (!fs.existsSync(tempDir)) {
@@ -38,59 +35,27 @@ export function registerRenderFrameTool(server: McpServer, context: ToolContext)
 
         const outputPath = path.join(tempDir, outputFile);
 
-        const extendScript = buildRenderFrameScript({
+        fileManager.writeCommandFile("renderFrame", {
           comp: params.comp,
           time: params.time,
           frame: params.frame,
           outputPath: outputPath.replace(/\\/g, '/'),
-          format: params.format || 'png'
+          format: params.format || 'png',
+          inline: params.inline
         });
 
-        console.log(colors.cyan(`[RENDER-FRAME] Executing render script for comp: ${params.comp}`));
-
-        const { tempScriptPath } = scriptExecutor.executeCustomScript(extendScript, 'render-frame');
-        const result = scriptExecutor.runExtendScript(tempScriptPath, {}, 300000);
-
-        try {
-          fs.unlinkSync(tempScriptPath);
-        } catch (err) {
-        }
-
-        let resultData;
-        try {
-          resultData = JSON.parse(result);
-        } catch (parseError) {
-          throw new Error(`Failed to parse ExtendScript result: ${result}`);
-        }
-
-        if (!resultData.success) {
-          throw new Error(resultData.error || 'Render failed');
-        }
-
-        let responseText = `Successfully rendered frame from composition "${params.comp}"\n`;
-        responseText += `Frame: ${resultData.frame}\n`;
-        responseText += `Time: ${resultData.time}s\n`;
-        responseText += `Resolution: ${resultData.width}x${resultData.height}\n`;
-        responseText += `Output: ${resultData.outputPath}`;
-
-        const responseContent: any = {
-          type: "text",
-          text: responseText
-        };
-
-        if (params.inline && fs.existsSync(outputPath)) {
-          const imageBuffer = fs.readFileSync(outputPath);
-          const base64Data = imageBuffer.toString('base64');
-          const mimeType = params.format === 'jpg' ? 'image/jpeg' : 'image/png';
-          resultData.inlineData = `data:${mimeType};base64,${base64Data}`;
-
-          responseContent.text += `\n\nInline image data included in response.`;
-        }
-
-        historyManager.completeCommand(commandId, 'success', resultData);
+        historyManager.completeCommand(commandId, 'success', { queued: true });
 
         return {
-          content: [responseContent]
+          content: [
+            {
+              type: "text",
+              text: `Command to render frame from composition "${params.comp}" has been queued.\n` +
+                    `Output will be saved to: ${outputPath}\n` +
+                    `Please ensure the "MCP Bridge Auto" panel is open in After Effects.\n` +
+                    `Use the "get-results" tool after rendering completes to check for results.`
+            }
+          ]
         };
 
       } catch (error) {
@@ -108,92 +73,4 @@ export function registerRenderFrameTool(server: McpServer, context: ToolContext)
       }
     }
   );
-}
-
-function buildRenderFrameScript(params: {
-  comp: string;
-  time?: number;
-  frame?: number;
-  outputPath: string;
-  format: string;
-}): string {
-  const esc = (s: string) => s.replace(/\\/g, '\\\\').replace(/"/g, '\\"');
-
-  return `
-(function() {
-  try {
-    var compName = "${esc(params.comp)}";
-    var outputPath = "${esc(params.outputPath)}";
-    var format = "${params.format}";
-
-    var comp = null;
-    for (var i = 1; i <= app.project.numItems; i++) {
-      if (app.project.item(i) instanceof CompItem && app.project.item(i).name === compName) {
-        comp = app.project.item(i);
-        break;
-      }
-    }
-
-    if (!comp) {
-      return JSON.stringify({
-        success: false,
-        error: "Composition '" + compName + "' not found"
-      });
-    }
-
-    var renderTime = ${params.time !== undefined ? params.time :
-                      params.frame !== undefined ? `(${params.frame} / comp.frameRate)` :
-                      'comp.time'};
-
-    if (renderTime < 0 || renderTime > comp.duration) {
-      return JSON.stringify({
-        success: false,
-        error: "Time " + renderTime + "s is out of composition range (0-" + comp.duration + "s)"
-      });
-    }
-
-    var rqItem = app.project.renderQueue.items.add(comp);
-    rqItem.timeSpanStart = renderTime;
-    rqItem.timeSpanDuration = 1 / comp.frameRate;
-
-    var outputModule = rqItem.outputModule(1);
-
-    if (format === "jpg") {
-      outputModule.file = new File(outputPath);
-      try {
-        outputModule.applyTemplate("JPEG Sequence");
-      } catch (e) {
-        outputModule.file = new File(outputPath);
-      }
-    } else {
-      outputModule.file = new File(outputPath);
-      try {
-        outputModule.applyTemplate("PNG Sequence");
-      } catch (e) {
-        outputModule.file = new File(outputPath);
-      }
-    }
-
-    app.project.renderQueue.render();
-
-    var frameNumber = Math.floor(renderTime * comp.frameRate);
-
-    return JSON.stringify({
-      success: true,
-      comp: compName,
-      frame: frameNumber,
-      time: renderTime,
-      width: comp.width,
-      height: comp.height,
-      outputPath: outputPath
-    });
-
-  } catch (error) {
-    return JSON.stringify({
-      success: false,
-      error: error.toString()
-    });
-  }
-})();
-`;
 }

@@ -24,10 +24,12 @@ REPOSITORY CONTEXT (ASSUMED)
 --------------------------------------------------
 TASKS (DO THESE IN ORDER)
 --------------------------------------------------
-1. ✅ SKIPPED - Bridge layer not needed:
-   - Decision: Use existing ScriptExecutor.executeCustomScript() directly
-   - Rationale: ScriptExecutor already provides the needed functionality (temp file creation, script wrapping, execution)
-   - Implementation approach: Tools will call getScriptExecutor().executeCustomScript() directly
+1. ✅ COMPLETED (REVISED) - Execution architecture:
+   - Initial approach: Direct execution via ScriptExecutor (FAILED - opened new project)
+   - Final approach: Panel-based execution via fileManager.writeCommandFile()
+   - Rationale: Direct execution (-m flag) causes AE to open new project when already running
+   - Implementation: Tools queue commands, MCP Bridge Auto panel executes in current project context
+   - JSX modules created: src/dist/modules/render/renderFrame.jsx & renderFramesSampled.jsx
 
 2. ✅ COMPLETED - Implement single frame tool:
    - File: src/tools/render/renderFrame.ts
