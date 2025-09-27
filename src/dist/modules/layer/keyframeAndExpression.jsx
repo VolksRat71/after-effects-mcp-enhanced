@@ -53,7 +53,18 @@ function setLayerKeyframe(compIndex, layerIndex, propertyName, timeInSeconds, va
              property.setValueAtTime(comp.time, property.value);
         }
 
-        property.setValueAtTime(timeInSeconds, value);
+        // Parse value if it's a string (from JSON serialization)
+        var parsedValue = value;
+        if (typeof value === 'string') {
+            try {
+                parsedValue = JSON.parse(value);
+            } catch (e) {
+                // If parse fails, use as-is
+                parsedValue = value;
+            }
+        }
+
+        property.setValueAtTime(timeInSeconds, parsedValue);
 
         return JSON.stringify({ success: true, message: "Keyframe set for '" + propertyName + "' on layer '" + layer.name + "' at " + timeInSeconds + "s." });
     } catch (e) {

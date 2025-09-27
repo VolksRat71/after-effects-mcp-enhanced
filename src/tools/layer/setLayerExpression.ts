@@ -8,7 +8,7 @@ import { LayerIdentifierSchema } from './setLayerKeyframe.js';
  * Register the set-layer-expression tool
  */
 export function registerSetLayerExpressionTool(server: McpServer, context: ToolContext): void {
-  const { fileManager } = context;
+  const { fileManager, historyManager } = context;
 
   server.tool(
     "set-layer-expression",
@@ -19,9 +19,15 @@ export function registerSetLayerExpressionTool(server: McpServer, context: ToolC
       expressionString: z.string().describe("The JavaScript expression string. Provide an empty string (\"\") to remove the expression.")
     },
     async (parameters) => {
+      // Start tracking this command
+      const commandId = historyManager.startCommand('set-layer-expression', parameters);
+
       try {
         // Queue the command for After Effects
         fileManager.writeCommandFile("set-layer-expression", parameters);
+
+        // Mark as successful (actual execution happens in After Effects)
+        historyManager.completeCommand(commandId, 'success', { queued: true });
 
         return {
           content: [
@@ -34,6 +40,8 @@ export function registerSetLayerExpressionTool(server: McpServer, context: ToolC
         };
       } catch (error) {
         console.error(colors.red(`[MCP LAYER] Error: ${String(error)}`));
+        historyManager.completeCommand(commandId, 'error', undefined, String(error));
+
         return {
           content: [
             {

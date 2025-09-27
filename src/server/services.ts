@@ -14,7 +14,8 @@ interface PathConfig {
  */
 export function initializeServices(paths: PathConfig): ToolContext {
   // Initialize managers
-  const historyManager = new HistoryManager();
+  const historyPath = `${paths.TEMP_DIR}/ae_command_history.json`;
+  const historyManager = new HistoryManager(historyPath);
   const fileManager = initFileManager(paths.TEMP_DIR);
   const scriptExecutor = initScriptExecutor(paths.TEMP_DIR, paths.SCRIPTS_DIR);
 

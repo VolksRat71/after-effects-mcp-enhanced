@@ -16,7 +16,7 @@ const KeyframeValueSchema = z.any().describe("The value for the keyframe (e.g., 
  * Register the set-layer-keyframe tool
  */
 export function registerSetLayerKeyframeTool(server: McpServer, context: ToolContext): void {
-  const { fileManager } = context;
+  const { fileManager, historyManager } = context;
 
   server.tool(
     "set-layer-keyframe",
@@ -28,9 +28,15 @@ export function registerSetLayerKeyframeTool(server: McpServer, context: ToolCon
       value: KeyframeValueSchema
     },
     async (parameters) => {
+      // Start tracking this command
+      const commandId = historyManager.startCommand('set-layer-keyframe', parameters);
+
       try {
         // Queue the command for After Effects
         fileManager.writeCommandFile("set-layer-keyframe", parameters);
+
+        // Mark as successful (actual execution happens in After Effects)
+        historyManager.completeCommand(commandId, 'success', { queued: true });
 
         return {
           content: [
@@ -42,6 +48,8 @@ export function registerSetLayerKeyframeTool(server: McpServer, context: ToolCon
           ]
         };
       } catch (error) {
+        historyManager.completeCommand(commandId, 'error', undefined, String(error));
+
         return {
           content: [
             {
