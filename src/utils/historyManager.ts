@@ -1,5 +1,6 @@
 import * as fs from 'fs';
 import * as path from 'path';
+import { fileURLToPath } from 'url';
 
 interface CommandHistoryEntry {
   id: string;
@@ -28,8 +29,9 @@ export class HistoryManager {
 
   constructor(historyPath?: string) {
     // Use provided path or default to build/temp directory
-    const baseDir = path.dirname(path.dirname(path.dirname(import.meta.url.replace('file://', ''))));
-    const tempDir = path.join(baseDir, 'build', 'temp');
+    const __filename = fileURLToPath(import.meta.url);
+    const __dirname = path.dirname(__filename);
+    const tempDir = path.join(__dirname, '..', '..', 'temp');
 
     // Ensure build/temp directory exists
     if (!fs.existsSync(tempDir)) {
