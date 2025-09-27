@@ -3,7 +3,7 @@ import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
 import { ToolContext } from '../types.js';
 
 export function registerApplyEffectTemplateTool(server: McpServer, context: ToolContext): void {
-  const { fileManager } = context;
+  const { fileManager, historyManager } = context;
 
   server.tool(
     "apply-effect-template",
@@ -25,9 +25,13 @@ export function registerApplyEffectTemplateTool(server: McpServer, context: Tool
       customSettings: z.record(z.any()).optional().describe("Optional custom settings to override defaults.")
     },
     async (parameters) => {
+      const commandId = historyManager.startCommand('apply-effect-template', parameters);
+
       try {
         // Queue the command for After Effects
         fileManager.writeCommandFile("applyEffectTemplate", parameters);
+
+        historyManager.completeCommand(commandId, 'success', { queued: true });
 
         return {
           content: [
@@ -39,6 +43,8 @@ export function registerApplyEffectTemplateTool(server: McpServer, context: Tool
           ]
         };
       } catch (error) {
+        historyManager.completeCommand(commandId, 'error', undefined, String(error));
+
         return {
           content: [
             {

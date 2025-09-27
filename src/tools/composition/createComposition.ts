@@ -7,7 +7,7 @@ import colors from 'colors';
  * Register the create-composition tool
  */
 export function registerCreateCompositionTool(server: McpServer, context: ToolContext): void {
-  const { fileManager } = context;
+  const { fileManager, historyManager } = context;
 
   server.tool(
     "create-composition",
@@ -26,9 +26,13 @@ export function registerCreateCompositionTool(server: McpServer, context: ToolCo
       }).optional().describe("Background color of the composition (RGB values 0-255)")
     },
     async (params) => {
+      const commandId = historyManager.startCommand('create-composition', params);
+
       try {
         // Write command to file for After Effects to pick up
         fileManager.writeCommandFile("createComposition", params);
+
+        historyManager.completeCommand(commandId, 'success', { queued: true });
 
         return {
           content: [
@@ -41,6 +45,8 @@ export function registerCreateCompositionTool(server: McpServer, context: ToolCo
           ]
         };
       } catch (error) {
+        historyManager.completeCommand(commandId, 'error', undefined, String(error));
+
         return {
           content: [
             {

@@ -3,7 +3,7 @@ import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
 import { ToolContext } from '../types.js';
 
 export function registerApplyEffectTool(server: McpServer, context: ToolContext): void {
-  const { fileManager } = context;
+  const { fileManager, historyManager } = context;
 
   server.tool(
     "apply-effect",
@@ -18,9 +18,13 @@ export function registerApplyEffectTool(server: McpServer, context: ToolContext)
       effectSettings: z.record(z.any()).optional().describe("Optional parameters for the effect (e.g., { 'Blurriness': 25 }).")
     },
     async (parameters) => {
+      const commandId = historyManager.startCommand('apply-effect', parameters);
+
       try {
         // Queue the command for After Effects
         fileManager.writeCommandFile("applyEffect", parameters);
+
+        historyManager.completeCommand(commandId, 'success', { queued: true });
 
         return {
           content: [
@@ -32,6 +36,8 @@ export function registerApplyEffectTool(server: McpServer, context: ToolContext)
           ]
         };
       } catch (error) {
+        historyManager.completeCommand(commandId, 'error', undefined, String(error));
+
         return {
           content: [
             {
