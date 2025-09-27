@@ -106,27 +106,31 @@ function renderFramesSampled(args) {
 
             var outputModule = rqItem.outputModule(1);
 
+            var fileNameWithoutExt = outputPath.substring(0, outputPath.lastIndexOf("."));
+            var sequencePath = fileNameWithoutExt + "[#####]." + format;
+
             if (format === "jpg") {
-                outputModule.file = new File(outputPath);
                 try {
                     outputModule.applyTemplate("JPEG Sequence");
                 } catch (e) {
-                    outputModule.file = new File(outputPath);
                 }
             } else {
-                outputModule.file = new File(outputPath);
                 try {
                     outputModule.applyTemplate("PNG Sequence");
                 } catch (e) {
-                    outputModule.file = new File(outputPath);
                 }
             }
+
+            outputModule.file = new File(sequencePath);
+
+            var paddedFrame = ("00000" + frameNumber).slice(-5);
+            var actualOutputPath = fileNameWithoutExt + paddedFrame + "." + format;
 
             frames.push({
                 index: i,
                 time: renderTime,
                 frameNumber: frameNumber,
-                outputPath: outputPath
+                outputPath: actualOutputPath
             });
         }
 

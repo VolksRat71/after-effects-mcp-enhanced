@@ -43,31 +43,35 @@ function renderFrame(args) {
 
         var outputModule = rqItem.outputModule(1);
 
+        var fileNameWithoutExt = outputPath.substring(0, outputPath.lastIndexOf("."));
+        var sequencePath = fileNameWithoutExt + "[#####]." + format;
+
         if (format === "jpg") {
-            outputModule.file = new File(outputPath);
             try {
                 outputModule.applyTemplate("JPEG Sequence");
             } catch (e) {
-                outputModule.file = new File(outputPath);
             }
         } else {
-            outputModule.file = new File(outputPath);
             try {
                 outputModule.applyTemplate("PNG Sequence");
             } catch (e) {
-                outputModule.file = new File(outputPath);
             }
         }
+
+        outputModule.file = new File(sequencePath);
 
         app.project.renderQueue.render();
 
         var frameNumber = Math.floor(renderTime * comp.frameRate);
 
-        var resultFile = new File(outputPath);
+        var paddedFrame = ("00000" + frameNumber).slice(-5);
+        var actualOutputPath = fileNameWithoutExt + paddedFrame + "." + format;
+        var resultFile = new File(actualOutputPath);
+
         if (!resultFile.exists) {
             return JSON.stringify({
                 success: false,
-                error: "Render completed but output file was not created at: " + outputPath
+                error: "Render completed but output file was not created at: " + actualOutputPath
             });
         }
 
@@ -78,15 +82,16 @@ function renderFrame(args) {
             time: renderTime,
             width: comp.width,
             height: comp.height,
-            outputPath: outputPath
+            outputPath: actualOutputPath
         };
 
         if (args.inline) {
             try {
-                resultFile.encoding = "BINARY";
-                resultFile.open("r");
-                var fileData = resultFile.read();
-                resultFile.close();
+                var inlineFile = new File(actualOutputPath);
+                inlineFile.encoding = "BINARY";
+                inlineFile.open("r");
+                var fileData = inlineFile.read();
+                inlineFile.close();
 
                 var base64Data = "";
                 var bytes = [];
