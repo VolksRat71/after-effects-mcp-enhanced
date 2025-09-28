@@ -92,6 +92,13 @@ function renderFramesSampled(args) {
             times = times.slice(0, maxFrames);
         }
 
+        for (var i = app.project.renderQueue.numItems; i >= 1; i--) {
+            var item = app.project.renderQueue.item(i);
+            if (item.comment && item.comment.indexOf("[MCP]") === 0) {
+                item.remove();
+            }
+        }
+
         var frames = [];
 
         for (var i = 0; i < times.length; i++) {
@@ -101,6 +108,7 @@ function renderFramesSampled(args) {
             var outputPath = sessionDir + "/" + outputFile;
 
             var rqItem = app.project.renderQueue.items.add(comp);
+            rqItem.comment = "[MCP] Frame " + frameNumber;
 
             try {
                 rqItem.applyTemplate("Best Settings");
@@ -114,8 +122,6 @@ function renderFramesSampled(args) {
             try {
                 outputModule.applyTemplate("TIFF Sequence with Alpha");
             } catch (e) {}
-
-            outputModule.name = "Frame_" + frameNumber + "_" + i;
 
             var fileNameWithoutExt = outputPath.substring(0, outputPath.lastIndexOf("."));
             var sequencePath = fileNameWithoutExt + "[#####].tif";

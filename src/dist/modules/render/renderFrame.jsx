@@ -41,7 +41,15 @@ function renderFrame(args) {
         var basePath = outputPath.replace(/\.[^.]+$/, "");
         var sequencePath = basePath + "_[#####].tif";
 
+        for (var i = app.project.renderQueue.numItems; i >= 1; i--) {
+            var item = app.project.renderQueue.item(i);
+            if (item.comment && item.comment.indexOf("[MCP]") === 0) {
+                item.remove();
+            }
+        }
+
         var rqItem = app.project.renderQueue.items.add(comp);
+        rqItem.comment = "[MCP] Render Frame";
 
         try {
             rqItem.applyTemplate("Best Settings");
