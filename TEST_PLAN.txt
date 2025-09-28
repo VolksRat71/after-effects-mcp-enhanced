@@ -11,6 +11,26 @@ DO:
 - Document any errors or unexpected behavior
 - Verify file outputs
 
+⚠️ CRITICAL FIXES APPLIED - VERIFY THESE:
+--------------------------------------------
+**FIX #1: Render Queue Cleanup**
+- Scripts now clear only [MCP]-tagged items before rendering
+- User-created queue items are preserved
+- VERIFY: Check AE Render Queue Comment field shows "[MCP] Render Frame" or "[MCP] Frame {number}"
+- VERIFY: User-created items (without [MCP] tag) remain in queue after MCP render
+
+**FIX #2: Read-Only Property Removed**
+- Removed attempt to set outputModule.name (line 118 in renderFramesSampled.jsx)
+- This was causing "Unable to set 'name'. It is a readOnly attribute" error
+- VERIFY: Multi-frame renders (TEST 11, 12) complete without read-only errors
+
+**WHAT TO WATCH FOR:**
+1. No "output module name already in use" errors
+2. No "readOnly attribute" errors
+3. Render queue comment shows "[MCP]" prefix on MCP-created items
+4. User queue items (if any) are NOT removed by MCP renders
+5. All PNG files are created successfully
+
 ============================================
 SETUP REQUIREMENTS
 ============================================
@@ -361,7 +381,9 @@ TEST 11: MaxFrames Truncation
 ------------------------------
 Purpose: Verify maxFrames limit
 
-⚠️ FIX APPLIED: Output module naming conflict resolved
+⚠️ FIXES APPLIED (Session 2025-09-28):
+1. Removed read-only outputModule.name assignment (was causing error)
+2. Added [MCP] render queue cleanup before rendering
 
 Step 1: Call render-frames-sampled tool
 Parameters:
@@ -383,10 +405,17 @@ Verify in results:
 - framesRendered: 10
 - Only 10 files created
 - NO "output module name already in use" error
+- NO "readOnly attribute" error
+
+⚠️ CHECK RENDER QUEUE IN AE:
+- Each item should have Comment: "[MCP] Frame {number}"
+- Any user-created items should remain untouched
 
 PASS CRITERIA:
 ✓ Warning message present
 ✓ Only 10 frames rendered
+✓ No "output module name already in use" errors
+✓ No "readOnly attribute" errors
 ✓ No errors
 ✓ No output module naming conflicts
 
@@ -395,7 +424,9 @@ TEST 12: Inline Data with Multiple Frames
 ------------------------------------------
 Purpose: Verify inlineMax parameter
 
-⚠️ FIX APPLIED: Output module naming conflict resolved
+⚠️ FIXES APPLIED (Session 2025-09-28):
+1. Removed read-only outputModule.name assignment (was causing error)
+2. Added [MCP] render queue cleanup before rendering
 
 Step 1: Call render-frames-sampled tool
 Parameters:
@@ -418,11 +449,16 @@ Verify in results:
 - frames[3] does NOT have "inlineData" field
 - frames[4] does NOT have "inlineData" field
 - NO "output module name already in use" error
+- NO "readOnly attribute" error
+
+⚠️ CHECK RENDER QUEUE IN AE:
+- Each item should have Comment: "[MCP] Frame {number}"
 
 PASS CRITERIA:
 ✓ Only first 2 frames have inline data
 ✓ Inline data is valid base64
-✓ No output module naming conflicts
+✓ No "output module name already in use" errors
+✓ No "readOnly attribute" errors
 
 
 ============================================
