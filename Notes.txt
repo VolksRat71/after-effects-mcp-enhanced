@@ -1,0 +1,7 @@
+Make sure to note allowing network perms in AE
+
+We need to make 2 versions of this, 1 for LLMS to use as a visual qa type
+
+Can we add documentation for useage for the llms?
+
+Why do they keep attempting `list-compostions` rather than listCompostion

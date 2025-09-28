@@ -37,42 +37,51 @@ function renderFrame(args) {
             });
         }
 
+        var frameNumber = Math.floor(renderTime * comp.frameRate);
+        var basePath = outputPath.replace(/\.[^.]+$/, "");
+        var sequencePath = basePath + "_[#####].tif";
+
         var rqItem = app.project.renderQueue.items.add(comp);
+
+        try {
+            rqItem.applyTemplate("Best Settings");
+        } catch (e) {}
+
         rqItem.timeSpanStart = renderTime;
         rqItem.timeSpanDuration = 1 / comp.frameRate;
 
         var outputModule = rqItem.outputModule(1);
 
-        var fileNameWithoutExt = outputPath.substring(0, outputPath.lastIndexOf("."));
-        var sequencePath = fileNameWithoutExt + "[#####]." + format;
-
-        if (format === "jpg") {
-            try {
-                outputModule.applyTemplate("JPEG Sequence");
-            } catch (e) {
-            }
-        } else {
-            try {
-                outputModule.applyTemplate("PNG Sequence");
-            } catch (e) {
-            }
+        try {
+            outputModule.applyTemplate("TIFF Sequence with Alpha");
+        } catch (e) {
+            return JSON.stringify({
+                success: false,
+                error: "Could not apply TIFF Sequence with Alpha template: " + e.toString()
+            });
         }
 
         outputModule.file = new File(sequencePath);
 
         app.project.renderQueue.render();
 
-        var frameNumber = Math.floor(renderTime * comp.frameRate);
-
         var paddedFrame = ("00000" + frameNumber).slice(-5);
-        var actualOutputPath = fileNameWithoutExt + paddedFrame + "." + format;
-        var resultFile = new File(actualOutputPath);
+        var actualOutputPath = basePath + "_" + paddedFrame + ".tif";
 
-        if (!resultFile.exists) {
-            return JSON.stringify({
-                success: false,
-                error: "Render completed but output file was not created at: " + actualOutputPath
-            });
+        var tiffFile = new File(actualOutputPath);
+        if (!tiffFile.exists) {
+            var folder = new Folder(tiffFile.parent.fsName);
+            var baseNameOnly = tiffFile.name.replace(/_\d{5}\.tif$/, "");
+            var files = folder.getFiles(baseNameOnly + "*.tif");
+
+            if (files && files.length > 0) {
+                actualOutputPath = files[0].fsName;
+            } else {
+                return JSON.stringify({
+                    success: false,
+                    error: "Render completed but TIFF file not found. Expected: " + actualOutputPath
+                });
+            }
         }
 
         var result = {
@@ -82,7 +91,9 @@ function renderFrame(args) {
             time: renderTime,
             width: comp.width,
             height: comp.height,
-            outputPath: actualOutputPath
+            outputPath: actualOutputPath,
+            needsConversion: true,
+            targetFormat: format
         };
 
         if (args.inline) {

@@ -29,6 +29,7 @@
     "@modelcontextprotocol/sdk": "^1.0.0",
     "chokidar": "^4.0.3",
     "colors": "^1.4.0",
+    "sharp": "^0.33.0",
     "zod": "^3.22.2"
   },
   "devDependencies": {

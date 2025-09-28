@@ -38,6 +38,7 @@ logs/
 .env.development.local
 .env.test.local
 .env.production.local
+.claude*
 
 # After Effects temporary files
 *.aep-lock

@@ -7,9 +7,9 @@ export function registerRunCustomScriptTool(server: McpServer, context: ToolCont
 
   server.tool(
     "run-custom-script",
-    "Run custom ExtendScript code in After Effects (use with caution)",
+    "Run custom ExtendScript code in After Effects (use with caution). IMPORTANT: To return results, use 'return JSON.stringify({...})' at the end of your script. The script is automatically wrapped in a function, so the return value will be captured. Example: 'var result = {success: true, data: \"test\"}; return JSON.stringify(result);'",
     {
-      script: z.string().describe("ExtendScript code to execute"),
+      script: z.string().describe("ExtendScript code to execute. Must use 'return JSON.stringify({...})' to return results that will appear in get-results."),
       description: z.string().optional().describe("Description of what this script does")
     },
     async ({ script, description }) => {
@@ -43,8 +43,9 @@ export function registerRunCustomScriptTool(server: McpServer, context: ToolCont
               type: "text",
               text: `Custom script has been queued for execution.\n` +
                   (description ? `Description: ${description}\n` : '') +
-                  `Script saved to: ${tempScriptPath}\n` +
-                  `Use the "get-results" tool after a few seconds to check for results.`
+                  `Script saved to: ${tempScriptPath}\n\n` +
+                  `To get results: Use the "get-results" tool after a few seconds.\n` +
+                  `Note: Your script must use 'return JSON.stringify({...})' to return results.`
             }
           ]
         };

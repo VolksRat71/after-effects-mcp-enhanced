@@ -97,34 +97,30 @@ function renderFramesSampled(args) {
         for (var i = 0; i < times.length; i++) {
             var renderTime = times[i];
             var frameNumber = Math.floor(renderTime * comp.frameRate);
-            var outputFile = outputPrefix + "_" + frameNumber + "." + format;
+            var outputFile = outputPrefix + "_" + frameNumber + ".tif";
             var outputPath = sessionDir + "/" + outputFile;
 
             var rqItem = app.project.renderQueue.items.add(comp);
+
+            try {
+                rqItem.applyTemplate("Best Settings");
+            } catch (e) {}
+
             rqItem.timeSpanStart = renderTime;
             rqItem.timeSpanDuration = 1 / comp.frameRate;
 
             var outputModule = rqItem.outputModule(1);
 
+            try {
+                outputModule.applyTemplate("TIFF Sequence with Alpha");
+            } catch (e) {}
+
             var fileNameWithoutExt = outputPath.substring(0, outputPath.lastIndexOf("."));
-            var sequencePath = fileNameWithoutExt + "[#####]." + format;
-
-            if (format === "jpg") {
-                try {
-                    outputModule.applyTemplate("JPEG Sequence");
-                } catch (e) {
-                }
-            } else {
-                try {
-                    outputModule.applyTemplate("PNG Sequence");
-                } catch (e) {
-                }
-            }
-
+            var sequencePath = fileNameWithoutExt + "[#####].tif";
             outputModule.file = new File(sequencePath);
 
             var paddedFrame = ("00000" + frameNumber).slice(-5);
-            var actualOutputPath = fileNameWithoutExt + paddedFrame + "." + format;
+            var actualOutputPath = fileNameWithoutExt + paddedFrame + ".tif";
 
             frames.push({
                 index: i,
@@ -152,7 +148,9 @@ function renderFramesSampled(args) {
             samplingMode: samplingMode,
             framesRendered: frames.length,
             sessionDir: sessionDir,
-            frames: frames
+            frames: frames,
+            needsConversion: true,
+            targetFormat: format
         };
 
         if (warning) {
