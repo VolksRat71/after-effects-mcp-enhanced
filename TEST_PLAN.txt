@@ -361,34 +361,41 @@ TEST 11: MaxFrames Truncation
 ------------------------------
 Purpose: Verify maxFrames limit
 
+⚠️ FIX APPLIED: Output module naming conflict resolved
+
 Step 1: Call render-frames-sampled tool
 Parameters:
 {
   "comp": "<comp-name>",
   "startTime": 0,
-  "endTime": 10,
+  "endTime": 5,
   "sampleFps": 30,
   "maxFrames": 10
 }
 
-Expected: Would sample ~300 frames, but truncates to 10
+Expected: Would sample ~150 frames, but truncates to 10
+(Note: Using endTime=5 to stay within typical comp duration)
 
 Step 2-4: Same as TEST 5
 
 Verify in results:
-- "warning": "Requested 300 frames, truncated to maxFrames=10"
+- "warning": "Requested 150 frames, truncated to maxFrames=10"
 - framesRendered: 10
 - Only 10 files created
+- NO "output module name already in use" error
 
 PASS CRITERIA:
 ✓ Warning message present
 ✓ Only 10 frames rendered
 ✓ No errors
+✓ No output module naming conflicts
 
 
 TEST 12: Inline Data with Multiple Frames
 ------------------------------------------
 Purpose: Verify inlineMax parameter
+
+⚠️ FIX APPLIED: Output module naming conflict resolved
 
 Step 1: Call render-frames-sampled tool
 Parameters:
@@ -410,10 +417,12 @@ Verify in results:
 - frames[2] does NOT have "inlineData" field
 - frames[3] does NOT have "inlineData" field
 - frames[4] does NOT have "inlineData" field
+- NO "output module name already in use" error
 
 PASS CRITERIA:
 ✓ Only first 2 frames have inline data
 ✓ Inline data is valid base64
+✓ No output module naming conflicts
 
 
 ============================================

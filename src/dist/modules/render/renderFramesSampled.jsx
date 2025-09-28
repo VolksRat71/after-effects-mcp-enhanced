@@ -115,6 +115,8 @@ function renderFramesSampled(args) {
                 outputModule.applyTemplate("TIFF Sequence with Alpha");
             } catch (e) {}
 
+            outputModule.name = "Frame_" + frameNumber + "_" + i;
+
             var fileNameWithoutExt = outputPath.substring(0, outputPath.lastIndexOf("."));
             var sequencePath = fileNameWithoutExt + "[#####].tif";
             outputModule.file = new File(sequencePath);
