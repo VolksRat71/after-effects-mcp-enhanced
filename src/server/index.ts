@@ -31,6 +31,15 @@ async function main() {
   // Clean up old JSX files on startup
   context.fileManager.cleanupOldJSXFiles();
 
+  // Clear any pending commands from previous sessions
+  const commandFilePath = path.join(PATHS.TEMP_DIR, 'ae_command.json');
+  try {
+    await fs.promises.writeFile(commandFilePath, '{}', 'utf-8');
+    console.log(colors.cyan("[MCP SERVER] Cleared pending commands from previous session"));
+  } catch (e) {
+    // File might not exist yet, which is fine
+  }
+
   // Start TIFF converter watchers
   const buildTempDir = path.join(path.dirname(PATHS.TEMP_DIR), 'temp');
   const buildDistDir = path.join(path.dirname(PATHS.TEMP_DIR), 'dist');
@@ -102,7 +111,7 @@ async function main() {
   console.log(colors.green("[MCP SERVER] Documentation resources registered"));
 
   // Set up file watcher for command and result files
-  const commandFilePath = path.join(PATHS.TEMP_DIR, 'ae_command.json');
+  // commandFilePath already declared above
   const resultFilePath = path.join(PATHS.TEMP_DIR, 'ae_mcp_result.json');
 
   let watcherReady = false;

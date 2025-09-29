@@ -1,0 +1,118 @@
+1. Initial Discovery
+
+"What tools are available for After Effects?"
+✅ Should reference the documentation resources
+✅ Should mention visual debugging capabilities
+
+2. Basic Information Gathering
+
+"List all compositions in my project"
+✅ Should use list-compositions (not run-script)
+✅ Should follow with get-results
+✅ No JSON parsing errors in panel
+
+3. Project Information
+
+"Get information about the current project"
+✅ Should use get-project-info directly
+✅ Should work without errors
+
+4. Visual Debugging Test
+
+"Show me what frame 30 looks like in GH Docs Animation"
+✅ Should use render-frame-debug
+✅ Should mention it's for debugging/temporary
+✅ Should read the PNG file to describe what it sees
+✅ File should be in build/temp/ as PNG (not TIFF)
+
+5. Animation Analysis
+
+"Help me understand what's happening in the animation between 0 and 3 seconds"
+✅ Should use render-frames-sampled-debug
+✅ Should read multiple frames
+✅ Should describe the motion/changes
+✅ Files in build/temp/session_*/ as PNG
+
+6. Create and Verify Workflow
+
+"Create a text layer that says 'Hello World' at position 960, 540 and show me what it
+looks like"
+✅ Should create the text layer
+✅ Should use render-frame-debug to verify
+✅ Should read the image and confirm the text is visible
+
+7. Animation Template Test
+
+"Make the text fade in over 1 second and show me the animation"
+✅ Should apply fade-in animation template
+✅ Should use render-frames-sampled-debug to show animation
+✅ Should describe the fade effect from the frames
+
+8. User Export Test
+
+"Export frame 60 as 'thumbnail.png' for my presentation"
+✅ Should use render-frame-export (not debug)
+✅ Should specify outputFile parameter
+✅ Should mention file is in build/dist/ and permanent
+✅ File should be PNG, not TIFF
+
+9. Sequence Export Test
+
+"I need an image sequence from 0 to 2 seconds for my client, 10 frames total"
+✅ Should use render-frames-sampled-export
+✅ Should mention permanent storage
+✅ All files should be PNG in build/dist/
+
+10. Complex Debugging Scenario
+
+"Something looks wrong with my bounce animation around 1.5 seconds. Can you help
+identify the issue?"
+✅ Should proactively use render-frames-sampled-debug
+✅ Should focus on the problem area (around 1.5s)
+✅ Should read frames and identify visual issues
+✅ Should suggest fixes based on what it sees
+
+Quick Validation Checks
+
+After running these tests, verify:
+
+# Check file formats
+ls build/temp/*.png        # Should have PNG files
+ls build/temp/*.tif        # Should be empty (auto-converted)
+ls build/dist/*.png        # Should have PNG files
+ls build/dist/*.tif        # Should be empty (auto-converted)
+
+# Check the command file for proper JSON
+cat build/temp/ae_command.json
+
+# Panel should show clean execution:
+# ◆ Command detected: listCompositions
+# ✓ Completed: listCompositions
+# (No JSON parsing errors)
+
+Success Indicators
+
+The session is working correctly if Claude:
+- ✅ Never attempts list-compostions or other misspellings
+- ✅ Uses kebab-case tools directly (not run-script)
+- ✅ Proactively uses visual debugging
+- ✅ Distinguishes debug vs export contexts
+- ✅ All renders produce PNG files (no lingering TIFF)
+- ✅ No JSON parsing errors in the panel
+- ✅ Reads and describes image contents accurately
+
+Red Flags
+
+Problems to watch for:
+- ❌ "Error parsing command" messages in panel
+- ❌ TIFF files not being converted
+- ❌ Using export tools for debugging
+- ❌ Not using visual tools when appropriate
+- ❌ Confusion about tool names
+
+This sequence tests all the major improvements:
+- Naming consistency
+- Visual debugging workflow
+- TIFF conversion
+- Debug vs export distinction
+- Resource documentation access

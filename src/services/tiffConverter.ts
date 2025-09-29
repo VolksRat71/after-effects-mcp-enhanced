@@ -35,31 +35,42 @@ export class TiffConverterService {
 
     console.log(colors.cyan(`[TIFF CONVERTER] Starting to watch: ${dirPath}`));
 
-    // Watch for both .tif and .tiff files
-    const patterns = [
-      path.join(dirPath, '*.tif'),
-      path.join(dirPath, '*.tiff'),
-      path.join(dirPath, '**/*.tif'),
-      path.join(dirPath, '**/*.tiff')
-    ];
-
-    const watcher = chokidar.watch(patterns, {
+    // Optimized watch configuration
+    const watcher = chokidar.watch(dirPath, {
       persistent: true,
-      ignoreInitial: true,
+      ignoreInitial: true,  // Don't process existing files (we do that separately)
       awaitWriteFinish: {
-        stabilityThreshold: this.fileStabilityTimeout,
+        stabilityThreshold: 1000,  // Wait 1 second for file to stabilize
         pollInterval: 100
-      }
+      },
+      usePolling: true,  // Required for After Effects file detection
+      interval: 500,     // Poll every 500ms - balance between performance and speed
+      binaryInterval: 500,
+      depth: 10,         // Reasonable depth for subdirectories
+      alwaysStat: true,  // Get file stats for size checking
+      atomic: true,      // Handle atomic writes
+      ignorePermissionErrors: true,
+      followSymlinks: false
     });
 
     watcher
+      .on('ready', () => {
+        console.log(colors.green(`[TIFF CONVERTER] Watcher ready for: ${dirPath}`));
+      })
       .on('add', async (filePath) => {
-        console.log(colors.blue(`[TIFF CONVERTER] TIFF detected: ${path.basename(filePath)}`));
-        await this.convertTiff(filePath, targetFormat, deleteOriginal);
+        // Only log TIFF files to reduce noise
+        if (filePath.match(/\.tiff?$/i)) {
+          console.log(colors.blue(`[TIFF CONVERTER] TIFF detected: ${path.basename(filePath)}`));
+          const pngPath = filePath.replace(/\.tiff?$/i, '.png');
+          if (!fs.existsSync(pngPath) && !this.processingFiles.has(filePath)) {
+            // awaitWriteFinish handles the stability check now
+            await this.convertTiff(filePath, targetFormat, deleteOriginal);
+          }
+        }
       })
       .on('change', async (filePath) => {
         // Handle case where file is rewritten
-        if (!this.processingFiles.has(filePath)) {
+        if (filePath.match(/\.tiff?$/i) && !this.processingFiles.has(filePath)) {
           console.log(colors.blue(`[TIFF CONVERTER] TIFF changed: ${path.basename(filePath)}`));
           await this.convertTiff(filePath, targetFormat, deleteOriginal);
         }

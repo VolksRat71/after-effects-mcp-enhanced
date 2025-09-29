@@ -10,13 +10,16 @@ import {
 } from "./base/index.js";
 
 import {
-  registerCreateCompositionTool
+  registerCreateCompositionTool,
+  registerListCompositionsTool,
+  registerGetProjectInfoTool
 } from "./composition/index.js";
 
 import {
   registerSetLayerKeyframeTool,
   registerSetLayerExpressionTool,
-  registerGetLayerPropertiesTool
+  registerGetLayerPropertiesTool,
+  registerGetLayerInfoTool
 } from "./layer/index.js";
 
 import {
@@ -69,12 +72,15 @@ export function registerAllTools(server: McpServer, context: ToolContext): void 
   // Register composition tools
   console.log(colors.yellow('[MCP TOOLS] Registering composition tools...'));
   registerCreateCompositionTool(server, context);
+  registerListCompositionsTool(server, context);
+  registerGetProjectInfoTool(server, context);
 
   // Register layer tools
   console.log(colors.yellow('[MCP TOOLS] Registering layer tools...'));
   registerSetLayerKeyframeTool(server, context);
   registerSetLayerExpressionTool(server, context);
   registerGetLayerPropertiesTool(server, context);
+  registerGetLayerInfoTool(server, context);
 
   // Register animation tools
   console.log(colors.yellow('[MCP TOOLS] Registering animation tools...'));

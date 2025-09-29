@@ -13,10 +13,7 @@ export const registerGetLayerInfoTool: ToolRegistrar = (server: McpServer, conte
     async () => {
       try {
         // Queue the command for After Effects
-        await context.fileManager.writeCommandFile({
-          command: "getLayerInfo",
-          args: {}
-        });
+        context.fileManager.writeCommandFile("getLayerInfo", {});
 
         console.log(colors.green(`[MCP LAYER] Tool success: get-layer-info | Command queued`));
 

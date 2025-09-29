@@ -13,10 +13,7 @@ export const registerListCompositionsTool: ToolRegistrar = (server: McpServer, c
     async () => {
       try {
         // Queue the command for After Effects
-        await context.fileManager.writeCommandFile({
-          command: "listCompositions",
-          args: {}
-        });
+        context.fileManager.writeCommandFile("listCompositions", {});
 
         console.log(colors.green(`[MCP COMPOSITION] Tool success: list-compositions | Command queued`));
 

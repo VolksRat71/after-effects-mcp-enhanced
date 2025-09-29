@@ -13,10 +13,7 @@ export const registerGetProjectInfoTool: ToolRegistrar = (server: McpServer, con
     async () => {
       try {
         // Queue the command for After Effects
-        await context.fileManager.writeCommandFile({
-          command: "getProjectInfo",
-          args: {}
-        });
+        context.fileManager.writeCommandFile("getProjectInfo", {});
 
         console.log(colors.green(`[MCP COMPOSITION] Tool success: get-project-info | Command queued`));
 
