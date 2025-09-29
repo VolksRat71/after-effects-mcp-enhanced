@@ -11,8 +11,6 @@
 
 > 🎯 **Key Innovation:** Your AI can now SEE what it's creating - rendering frames to understand compositions, debug animations, and verify changes visually.
 >
-> 📖 **[See it in action: Real AI Visual Debugging Session](doc/TEST_SESSION_VISUAL_DEBUGGING.md)** - Watch how an AI assistant uses visual feedback to identify and fix animation issues.
->
 > 🔗 **Originally forked from:** [after-effects-mcp](https://github.com/Dakkshin/after-effects-mcp) by Dakkshin - now enhanced with visual understanding, modular architecture, and 30+ tools.
 
 ## 👁️ Why Visual Understanding Matters
@@ -38,6 +36,24 @@ Traditional After Effects automation is blind - scripts run without knowing what
 - **Cross-Platform** - Windows and macOS support
 - **Real-time Communication** - Bidirectional MCP bridge
 - **Custom Script Execution** - Run any ExtendScript code
+
+<details>
+<summary><strong>🎥 Watch Visual Debugging in Action (Video Demo)</strong></summary>
+
+<br>
+
+https://github.com/user-attachments/assets/6b73504c-d441-4b72-a79d-9c5a9730dacd
+
+**This demonstration shows:**
+- AI rendering frames to understand compositions visually
+- Real-time visual verification of text and animations
+- Frame-by-frame animation analysis and debugging
+- Automatic TIFF to PNG conversion in action
+- The complete visual feedback loop between AI and After Effects
+
+</details>
+
+📖 **[See it in action: Real AI Visual Debugging Session](doc/TEST_SESSION_VISUAL_DEBUGGING.md)**
 
 ## 🎯 Key Features
 
