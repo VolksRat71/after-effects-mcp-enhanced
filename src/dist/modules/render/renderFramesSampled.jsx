@@ -100,15 +100,25 @@ function renderFramesSampled(args) {
         }
 
         var frames = [];
+        var frameNumbersSeen = {};
+        var duplicatesSkipped = 0;
 
         for (var i = 0; i < times.length; i++) {
             var renderTime = times[i];
             var frameNumber = Math.floor(renderTime * comp.frameRate);
-            var outputFile = outputPrefix + "_" + frameNumber + ".tif";
+
+            // Skip duplicate frame numbers
+            if (frameNumbersSeen[frameNumber]) {
+                duplicatesSkipped++;
+                continue;
+            }
+            frameNumbersSeen[frameNumber] = true;
+
+            // Use frame number in the output name to ensure uniqueness
+            var outputFile = outputPrefix + "_" + frameNumber + "_[#####].tif";
             var outputPath = sessionDir + "/" + outputFile;
 
             var rqItem = app.project.renderQueue.items.add(comp);
-            rqItem.comment = "[MCP] Frame " + frameNumber;
 
             try {
                 rqItem.applyTemplate("Best Settings");
@@ -123,15 +133,18 @@ function renderFramesSampled(args) {
                 outputModule.applyTemplate("TIFF Sequence with Alpha");
             } catch (e) {}
 
-            var fileNameWithoutExt = outputPath.substring(0, outputPath.lastIndexOf("."));
-            var sequencePath = fileNameWithoutExt + "[#####].tif";
-            outputModule.file = new File(sequencePath);
+            // Set the file with sequence pattern
+            outputModule.file = new File(outputPath);
 
+            // Set comment after all settings are applied
+            rqItem.comment = "[MCP] Frame " + frameNumber;
+
+            // Calculate the actual output path with padded frame number
             var paddedFrame = ("00000" + frameNumber).slice(-5);
-            var actualOutputPath = fileNameWithoutExt + paddedFrame + ".tif";
+            var actualOutputPath = outputPath.replace("[#####]", paddedFrame);
 
             frames.push({
-                index: i,
+                index: frames.length,
                 time: renderTime,
                 frameNumber: frameNumber,
                 outputPath: actualOutputPath
@@ -140,6 +153,7 @@ function renderFramesSampled(args) {
 
         app.project.renderQueue.render();
 
+        // Check that all frames were rendered
         for (var i = 0; i < frames.length; i++) {
             var file = new File(frames[i].outputPath);
             if (!file.exists) {
@@ -163,6 +177,15 @@ function renderFramesSampled(args) {
 
         if (warning) {
             result.warning = warning;
+        }
+
+        if (duplicatesSkipped > 0) {
+            var dupWarning = "Skipped " + duplicatesSkipped + " duplicate frame(s)";
+            if (result.warning) {
+                result.warning = result.warning + ". " + dupWarning;
+            } else {
+                result.warning = dupWarning;
+            }
         }
 
         return JSON.stringify(result);

@@ -38,6 +38,7 @@ function renderFrame(args) {
         }
 
         var frameNumber = Math.floor(renderTime * comp.frameRate);
+        // Use sequence pattern for TIFF rendering
         var basePath = outputPath.replace(/\.[^.]+$/, "");
         var sequencePath = basePath + "_[#####].tif";
 
@@ -49,7 +50,6 @@ function renderFrame(args) {
         }
 
         var rqItem = app.project.renderQueue.items.add(comp);
-        rqItem.comment = "[MCP] Render Frame";
 
         try {
             rqItem.applyTemplate("Best Settings");
@@ -71,25 +71,21 @@ function renderFrame(args) {
 
         outputModule.file = new File(sequencePath);
 
+        // Set comment after all settings are applied
+        rqItem.comment = "[MCP] Render Frame";
+
         app.project.renderQueue.render();
 
+        // Calculate the actual output path with padded frame number
         var paddedFrame = ("00000" + frameNumber).slice(-5);
         var actualOutputPath = basePath + "_" + paddedFrame + ".tif";
 
         var tiffFile = new File(actualOutputPath);
         if (!tiffFile.exists) {
-            var folder = new Folder(tiffFile.parent.fsName);
-            var baseNameOnly = tiffFile.name.replace(/_\d{5}\.tif$/, "");
-            var files = folder.getFiles(baseNameOnly + "*.tif");
-
-            if (files && files.length > 0) {
-                actualOutputPath = files[0].fsName;
-            } else {
-                return JSON.stringify({
-                    success: false,
-                    error: "Render completed but TIFF file not found. Expected: " + actualOutputPath
-                });
-            }
+            return JSON.stringify({
+                success: false,
+                error: "Render completed but TIFF file not found. Expected: " + actualOutputPath
+            });
         }
 
         var result = {

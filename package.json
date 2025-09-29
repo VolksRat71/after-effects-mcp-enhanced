@@ -22,8 +22,7 @@
     "build": "tsc && npm run build-jsx",
     "build-jsx": "node scripts/build-jsx.js",
     "start": "node build/server/index.js",
-    "bridge-install": "node scripts/bridge-install.js",
-    "postinstall": "npm run build && echo '\n✓ Build complete! Run \"npm run bridge-install\" to install the bridge script in After Effects.\n'"
+    "bridge-install": "node scripts/bridge-install.js"
   },
   "dependencies": {
     "@modelcontextprotocol/sdk": "^1.0.0",
