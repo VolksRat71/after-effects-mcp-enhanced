@@ -48,8 +48,10 @@ import {
 } from "./history/index.js";
 
 import {
-  registerRenderFrameTool,
-  registerRenderFramesSampledTool
+  registerRenderFrameDebugTool,
+  registerRenderFramesSampledDebugTool,
+  registerRenderFrameExportTool,
+  registerRenderFramesSampledExportTool
 } from "./render/index.js";
 
 /**
@@ -104,8 +106,12 @@ export function registerAllTools(server: McpServer, context: ToolContext): void 
 
   // Register render tools
   console.log(colors.yellow('[MCP TOOLS] Registering render tools...'));
-  registerRenderFrameTool(server, context);
-  registerRenderFramesSampledTool(server, context);
+  // Debug tools for AI/LLM visual understanding
+  registerRenderFrameDebugTool(server, context);
+  registerRenderFramesSampledDebugTool(server, context);
+  // Export tools for user deliverables
+  registerRenderFrameExportTool(server, context);
+  registerRenderFramesSampledExportTool(server, context);
 
   console.log(colors.green('[MCP TOOLS] All tools registered successfully!'));
 }

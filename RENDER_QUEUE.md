@@ -10,7 +10,7 @@ Goal: Add two MCP tools that render frames from an open After Effects project vi
 1. render_frame – render a single frame from a named comp at a given time or frame index.  
 2. render_frames_sampled – render a sampled set of frames between startTime and endTime using one of: sampleCount, sampleFps, or frameStep.  
 
-Both tools should write outputs into build/temp (single frame) or build/temp/<sessionId> (multi-frame). They must return metadata and optionally inline base64.
+Both tools should write outputs into build/temp (single frame) or build/temp/<sessionId> (multi-frame). They must return metadata including file paths and composition information.
 
 --------------------------------------------------
 REPOSITORY CONTEXT (ASSUMED)
@@ -37,7 +37,7 @@ TASKS (DO THESE IN ORDER)
    - Uses getScriptExecutor().executeCustomScript() directly
    - Generates unique filenames via sanitize utility
    - ExtendScript handles comp lookup, render queue, and returns JSON
-   - Base64 inline support implemented
+   - Automatic cleanup after 1 hour via fileManager.scheduleFileCleanup()
    - See TEST_PLAN.txt for testing instructions
 
 3. ✅ COMPLETED - Implement sampled frames tool:
@@ -47,7 +47,7 @@ TASKS (DO THESE IN ORDER)
    - Session directory creation (build/temp/<sessionId>/)
    - ExtendScript computes times, deduplicates, and handles maxFrames truncation
    - Single render() call for all frames
-   - Node-side inlines first inlineMax frames only
+   - Automatic cleanup of session directories after 1 hour
    - See TEST_PLAN.txt for testing instructions
 
 4. ✅ COMPLETED - Update tools index:
@@ -63,21 +63,23 @@ TASKS (DO THESE IN ORDER)
    - File: src/server/utils/sanitize.ts
    - Implemented: sanitizeFilename(), generateUniqueFilename(), generateSessionId()
    - Uses crypto.randomUUID() for safety
+   - Session directories: session_<timestamp>_<uuid>
+   - Frame files: frame_<timestamp>_<uuid>
 
-7. Add documentation section to README:
+7. ✅ COMPLETED - Automatic Cleanup:
+   - File: src/services/fileManager.ts
+   - Enhanced cleanupOldJSXFiles() to clean: JSX files, .tif/.png/.jpg images, session directories
+   - Items older than 1 hour are automatically removed
+   - scheduleFileCleanup() method handles both files and directories
+   - Render tools schedule cleanup immediately upon file/directory creation
+   - Default cleanup delay: 1 hour (3600000ms)
+
+8. Add documentation section to README:
    - Title: Frame Rendering Tools (MCP)
    - Include usage examples (JSON-RPC style) for both tools.
    - Warn about performance & maxFrames.
    - Clarify difference between sampleCount vs sampleFps vs frameStep.
-
-8. Add basic test harness (non-AE environment):
-   - Because we cannot run AE in CI, create a mock:
-     File: src/dev/mockExtendScriptBridge.ts
-     Expose MOCK_MODE=1 environment toggle.
-     When active, runExtendScript intercepts certain patterns:
-       * Recognize single frame payload and return plausible JSON with a dummy file path (also create an empty placeholder file).
-       * Recognize sampled variant and simulate frames/time logic (mirror logic used in script).
-     Provide a pnpm/npm script: "dev:mock" to launch server with MOCK_MODE=1.
+   - Note automatic cleanup after 1 hour
 
 9. Type safety & error handling:
    - All tool execute functions must return structured result objects with success field.
@@ -91,14 +93,14 @@ TASKS (DO THESE IN ORDER)
 ACCEPTANCE CRITERIA
 --------------------------------------------------
 - render_frame tool:
-  - Returns success with correct frame/time conversions and base64 when inline=true.
+  - Returns success with correct frame/time conversions and file paths.
   - Gracefully fails when comp missing, with error field.
   - No uncontrolled exceptions leaving the execute function.
 
 - render_frames_sampled tool:
   - Respects exactly one sampling strategy.
   - Truncates and returns warning when > maxFrames.
-  - Inline only first inlineMax frames; others have no inlineData property.
+  - Deduplicates frames with same frame number.
   - Returns consistent ordering by index.
 
 - ExtendScript generation:
@@ -107,7 +109,7 @@ ACCEPTANCE CRITERIA
 
 - No ESLint/TypeScript errors (if linting configured).
 - README updated with clear examples.
-- Mock mode allows running both tools without AE and returns plausible structures.
+- Automatic cleanup of rendered files after 1 hour.
 
 --------------------------------------------------
 CODING STANDARDS
@@ -128,16 +130,15 @@ RUNTIME / SECURITY
 --------------------------------------------------
 DELIVERABLES
 --------------------------------------------------
-Produce the following new or modified files using file blocks:
+Produce the following new or modified files:
 
-1. src/server/bridge/extendScriptBridge.ts
-2. src/server/tools/renderFrame.ts
-3. src/server/tools/renderFramesSampled.ts
-4. src/server/tools/index.ts (modified)
-5. src/server/utils/sanitize.ts (optional utility)
-6. src/dev/mockExtendScriptBridge.ts (mock)
-7. README.md (append new section; keep existing content intact)
-8. (Optional) .env.example entry for AE_DEFAULT_OUTPUT_TEMPLATE
+1. src/tools/render/renderFrame.ts
+2. src/tools/render/renderFramesSampled.ts
+3. src/tools/index.ts (modified)
+4. src/server/utils/sanitize.ts (utility functions)
+5. src/services/fileManager.ts (cleanup functionality)
+6. README.md (append new section; keep existing content intact)
+7. (Optional) .env.example entry for AE_DEFAULT_OUTPUT_TEMPLATE
 
 For Markdown files, remember quadruple backtick fence style so nested code remains intact.
 
@@ -154,10 +155,7 @@ rqItem.timeSpanDuration = 1 / frameRate;
 
 Sampled frames dedup:
 Use toFixed(5) rounding key to deduplicate times.
-
-Inline base64:
-const buf = await fs.readFile(filePath);
-const data = 'data:image/'+format+';base64,'+buf.toString('base64');
+Skip duplicate frame numbers to prevent render queue conflicts.
 
 --------------------------------------------------
 REQUESTED OUTPUT FORMAT
@@ -169,10 +167,10 @@ If something is ambiguous, make a reasonable assumption and note it in a comment
 BEGIN IMPLEMENTATION NOW.
 ---
 
-### SHORTER “LITE” VERSION (Optional Alternative)
+### SHORTER "LITE" VERSION (Optional Alternative)
 
-If I only had 1 minute:  
-"Add two MCP tools render_frame and render_frames_sampled using ExtendScript + After Effects render queue. Single frame: one queue item spanning 1/frameRate. Sampled: compute times via sampleCount | sampleFps | frameStep (exclusive) or default=5 frames; enqueue one item per frame; single render() call; store under build/temp/<sessionId>. Implement runExtendScript bridge stub + mock mode. Return JSON with metadata; support inline base64 (first N frames only). Use zod for validation. Update README with usage examples. Provide files: extendScriptBridge.ts, renderFrame.ts, renderFramesSampled.ts, tools index, mockExtendScriptBridge.ts, sanitize util, README section."
+If I only had 1 minute:
+"Add two MCP tools render_frame and render_frames_sampled using ExtendScript + After Effects render queue. Single frame: one queue item spanning 1/frameRate. Sampled: compute times via sampleCount | sampleFps | frameStep (exclusive) or default=5 frames; deduplicate frame numbers; enqueue one item per frame; single render() call; store under build/temp/<sessionId>. Return JSON with metadata and file paths. Use zod for validation. Implement automatic cleanup after 1 hour. Update README with usage examples. Provide files: renderFrame.ts, renderFramesSampled.ts, tools index, sanitize util, fileManager cleanup, README section."
 
 ---
 
