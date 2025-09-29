@@ -31,7 +31,7 @@ export class HistoryManager {
     // Use provided path or default to build/temp directory
     const __filename = fileURLToPath(import.meta.url);
     const __dirname = path.dirname(__filename);
-    const tempDir = path.join(__dirname, '..', '..', 'temp');
+    const tempDir = path.join(__dirname, '..', '..', 'build', 'temp');
 
     // Ensure build/temp directory exists
     if (!fs.existsSync(tempDir)) {
