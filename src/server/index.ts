@@ -26,6 +26,28 @@ async function main() {
   // Clean up old JSX files on startup
   context.fileManager.cleanupOldJSXFiles();
 
+  // Start TIFF converter watchers
+  const buildTempDir = path.join(path.dirname(PATHS.TEMP_DIR), 'temp');
+  const buildDistDir = path.join(path.dirname(PATHS.TEMP_DIR), 'dist');
+
+  // Watch build/temp with auto-delete of originals
+  context.tiffConverter.watchDirectory(buildTempDir, {
+    deleteOriginal: true,
+    targetFormat: 'png'
+  });
+  console.log(colors.cyan(`[MCP SERVER] TIFF converter watching: ${buildTempDir} (auto-delete TIFFs enabled)`));
+
+  // Watch build/dist with auto-delete of originals (keep PNGs only)
+  context.tiffConverter.watchDirectory(buildDistDir, {
+    deleteOriginal: true,
+    targetFormat: 'png'
+  });
+  console.log(colors.cyan(`[MCP SERVER] TIFF converter watching: ${buildDistDir} (auto-delete TIFFs enabled)`));
+
+  // Convert any existing TIFF files on startup (delete TIFFs in both directories)
+  context.tiffConverter.convertExistingTiffs(buildTempDir, 'png', true);
+  context.tiffConverter.convertExistingTiffs(buildDistDir, 'png', true);
+
   // Register all tools with the server
   registerAllTools(server, context);
 

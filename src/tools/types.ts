@@ -23,6 +23,7 @@ export interface ToolContext {
   fileManager: any; // Will be properly typed when we import
   scriptExecutor: any;
   historyManager: any;
+  tiffConverter: any;
   tempDir: string;
   scriptsDir: string;
 }

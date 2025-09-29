@@ -1,6 +1,7 @@
 import { HistoryManager } from '../utils/historyManager.js';
 import { initFileManager } from '../services/fileManager.js';
 import { initScriptExecutor } from '../services/scriptExecutor.js';
+import { getTiffConverter } from '../services/tiffConverter.js';
 import { ToolContext } from '../tools/types.js';
 
 interface PathConfig {
@@ -18,12 +19,14 @@ export function initializeServices(paths: PathConfig): ToolContext {
   const historyManager = new HistoryManager(historyPath);
   const fileManager = initFileManager(paths.TEMP_DIR);
   const scriptExecutor = initScriptExecutor(paths.TEMP_DIR, paths.SCRIPTS_DIR);
+  const tiffConverter = getTiffConverter();
 
   // Create and return tool context
   return {
     fileManager,
     scriptExecutor,
     historyManager,
+    tiffConverter,
     tempDir: paths.TEMP_DIR,
     scriptsDir: paths.SCRIPTS_DIR
   };
