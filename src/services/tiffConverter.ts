@@ -54,13 +54,9 @@ export class TiffConverterService {
     });
 
     watcher
-      .on('ready', () => {
-        console.log(colors.green(`[TIFF CONVERTER] Watcher ready for: ${dirPath}`));
-      })
       .on('add', async (filePath) => {
-        // Only log TIFF files to reduce noise
+        // Only process TIFF files
         if (filePath.match(/\.tiff?$/i)) {
-          console.log(colors.blue(`[TIFF CONVERTER] TIFF detected: ${path.basename(filePath)}`));
           const pngPath = filePath.replace(/\.tiff?$/i, '.png');
           if (!fs.existsSync(pngPath) && !this.processingFiles.has(filePath)) {
             // awaitWriteFinish handles the stability check now
@@ -71,7 +67,6 @@ export class TiffConverterService {
       .on('change', async (filePath) => {
         // Handle case where file is rewritten
         if (filePath.match(/\.tiff?$/i) && !this.processingFiles.has(filePath)) {
-          console.log(colors.blue(`[TIFF CONVERTER] TIFF changed: ${path.basename(filePath)}`));
           await this.convertTiff(filePath, targetFormat, deleteOriginal);
         }
       })
