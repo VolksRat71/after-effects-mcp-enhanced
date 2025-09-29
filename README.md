@@ -1,37 +1,59 @@
-# 🎬 After Effects MCP Server - Modular Edition
+# 👁️ After Effects MCP Vision - AI Visual Understanding for After Effects
 
 ![Node.js](https://img.shields.io/badge/node-%3E=16.x-brightgreen.svg)
 ![License](https://img.shields.io/badge/license-MIT-blue)
 ![Platform](https://img.shields.io/badge/platform-Windows%20%7C%20macOS-blue)
-![Version](https://img.shields.io/badge/version-1.0.0-blue)
+![Version](https://img.shields.io/badge/version-2.0.0-blue)
 ![After Effects](https://img.shields.io/badge/After%20Effects-2020%2B-purple)
+![Vision](https://img.shields.io/badge/AI-Visual%20Understanding-green)
 
-✨ A fully modularized Model Context Protocol (MCP) server for Adobe After Effects with improved maintainability, cross-platform support, asset management, animation tools, and real-time logging.
+**Give your AI assistant eyes into After Effects.** This MCP server enables LLMs to visually understand and debug your compositions by rendering frames on-demand, analyzing animations frame-by-frame, and providing visual feedback for every change.
 
-> 🔗 **Based on:** [after-effects-mcp](https://github.com/Dakkshin/after-effects-mcp) by Dakkshin
-> This project extends the original with complete modularization, improved architecture, and comprehensive testing.
+> 🎯 **Key Innovation:** Your AI can now SEE what it's creating - rendering frames to understand compositions, debug animations, and verify changes visually.
+>
+> 📖 **[See it in action: Real AI Visual Debugging Session](doc/TEST_SESSION_VISUAL_DEBUGGING.md)** - Watch how an AI assistant uses visual feedback to identify and fix animation issues.
+>
+> 🔗 **Originally forked from:** [after-effects-mcp](https://github.com/Dakkshin/after-effects-mcp) by Dakkshin - now enhanced with visual understanding, modular architecture, and 30+ tools.
 
-## 🚀 What's New in This Modular Edition
+## 👁️ Why Visual Understanding Matters
 
-### Improvements Over Original
-- **🧩 Full Modularization** - TypeScript and ExtendScript code organized into logical modules
-- **🔧 Maintainable Architecture** - Native `#include` directives with build-time processing
-- **🖥️ True Cross-Platform Support** - Dynamic path resolution for Windows and macOS
-- **📦 Asset Management Suite** - Import, replace, and manage footage with 4 new tools
-- **🎬 Animation Templates** - 12 pre-built animations (bounce, slide, fade, zoom, etc.)
-- **📊 Real-time Logging** - Chokidar file watcher with colorized command/result tracking
-- **🧪 All 20 Tools Verified** - Manually tested and confirmed working in After Effects
-- **📝 Comprehensive Documentation** - Detailed guides and modularization plan
+Traditional After Effects automation is blind - scripts run without knowing what they create. **After Effects MCP Vision changes everything:**
+
+### 🎯 Visual Debugging for AI
+- **See Compositions in Real-Time** - AI renders frames to understand what's happening visually
+- **Analyze Animations Frame-by-Frame** - Sample multiple frames to understand motion and timing
+- **Identify Visual Issues** - AI can spot rotation reversals, timing problems, and visual glitches
+- **Verify Changes Instantly** - Every modification can be visually confirmed before proceeding
+
+### 📸 Visual Capabilities
+- **render-frame-debug** - Let AI see a single frame instantly
+- **render-frames-sampled-debug** - AI analyzes animation sequences
+- **Automatic TIFF→PNG conversion** - Seamless image processing
+- **Smart cleanup** - Debug frames auto-delete after 1 hour
+- **Separate export tools** - Permanent renders for user deliverables
+
+### 🏗️ Enhanced Architecture
+- **30+ Tools** - Complete After Effects automation suite
+- **Modular Design** - TypeScript and ExtendScript modules
+- **Cross-Platform** - Windows and macOS support
+- **Real-time Communication** - Bidirectional MCP bridge
+- **Custom Script Execution** - Run any ExtendScript code
 
 ## 🎯 Key Features
 
-- **🧩 Modular Architecture** - Organized TypeScript tools and ExtendScript modules
-- **🎨 Full Creative Control** - Create compositions, layers, and animations programmatically
-- **🔄 Real-time Communication** - Bidirectional communication between MCP and After Effects
-- **📊 Command Visibility** - File watcher logs all commands and results in real-time
-- **🎬 Animation Tools** - Keyframes, expressions, and 12 pre-built animation templates
-- **📦 Asset Management** - Import and replace footage dynamically
-- **🖥️ Cross-platform** - Works on both Windows and macOS
+### 👁️ Visual Understanding (The Game Changer)
+- **AI Can See** - Render any frame for AI visual analysis
+- **Animation Debugging** - Sample frames to understand motion
+- **Visual Verification** - Confirm every change visually
+- **Problem Detection** - AI identifies timing and animation issues
+
+### 🎨 Complete Creative Control
+- **Composition Management** - Create and manage compositions
+- **Layer Operations** - Text, shapes, solids, and more
+- **Animation System** - Keyframes, expressions, and templates
+- **Asset Import** - Bring in images and videos dynamically
+- **Effect Library** - Apply and configure effects
+- **Custom Scripting** - Execute any ExtendScript code
 
 ### Detailed Capabilities
 
@@ -121,7 +143,7 @@ npm run bridge-install
 ```json
 {
   "mcpServers": {
-    "after-effects-mcp": {
+    "after-effects-vision": {
       "command": "node",
       "args": ["/absolute/path/to/after-effects-mcp-enhanced/build/server/index.js"]
     }
@@ -198,7 +220,7 @@ Add to your MCP client configuration (e.g., Claude Desktop, Cursor):
 ```json
 {
   "mcpServers": {
-    "after-effects-mcp": {
+    "after-effects-vision": {
       "command": "node",
       "args": ["C:\\path\\to\\after-effects-mcp-enhanced\\build\\server\\index.js"]
     }
@@ -210,7 +232,7 @@ Add to your MCP client configuration (e.g., Claude Desktop, Cursor):
 ```json
 {
   "mcpServers": {
-    "after-effects-mcp": {
+    "after-effects-vision": {
       "command": "node",
       "args": ["/path/to/after-effects-mcp-enhanced/build/server/index.js"]
     }

@@ -71,7 +71,7 @@ This document captures a real test session demonstrating the complete visual deb
 3. Read the PNG file at `build/temp/debug_frame_*.png`
 4. Described the visual content: "orange square rotated at an angle on a blue background"
 
-![Frame 30 - Orange square rotated](debug_frame_1759178153411_936ac06a_00030.png)
+<img src="debug_frame_1759178153411_936ac06a_00030.png" alt="Frame 30 - Orange square rotated" width="300">
 
 **Key Points**:
 - File was automatically converted from TIFF to PNG
@@ -101,12 +101,12 @@ This document captures a real test session demonstrating the complete visual deb
 
 | Time | Frame | Description |
 |------|-------|-------------|
-| 0.0s | ![Frame 0](debug_session_1759178190217_ed49f644/debug_frame_0_00000.png) | Square in upper-left, flat |
-| 0.6s | ![Frame 18](debug_session_1759178190217_ed49f644/debug_frame_18_00018.png) | Rotating counterclockwise |
-| 1.2s | ![Frame 36](debug_session_1759178190217_ed49f644/debug_frame_36_00036.png) | Approaching center |
-| 1.8s | ![Frame 54](debug_session_1759178190217_ed49f644/debug_frame_54_00054.png) | Centered and upright |
-| 2.4s | ![Frame 72](debug_session_1759178190217_ed49f644/debug_frame_72_00072.png) | Continuing rotation |
-| 3.0s | ![Frame 90](debug_session_1759178190217_ed49f644/debug_frame_90_00090.png) | Final position |
+| 0.0s | <img src="debug_session_1759178190217_ed49f644/debug_frame_0_00000.png" alt="Frame 0" width="150"> | Square in upper-left, flat |
+| 0.6s | <img src="debug_session_1759178190217_ed49f644/debug_frame_18_00018.png" alt="Frame 18" width="150"> | Rotating counterclockwise |
+| 1.2s | <img src="debug_session_1759178190217_ed49f644/debug_frame_36_00036.png" alt="Frame 36" width="150"> | Approaching center |
+| 1.8s | <img src="debug_session_1759178190217_ed49f644/debug_frame_54_00054.png" alt="Frame 54" width="150"> | Centered and upright |
+| 2.4s | <img src="debug_session_1759178190217_ed49f644/debug_frame_72_00072.png" alt="Frame 72" width="150"> | Continuing rotation |
+| 3.0s | <img src="debug_session_1759178190217_ed49f644/debug_frame_90_00090.png" alt="Frame 90" width="150"> | Final position |
 
 ✅ **Pass**: Complex animation analysis successful
 
@@ -121,7 +121,7 @@ This document captures a real test session demonstrating the complete visual deb
 2. Used `render-frame-debug` to verify
 3. Read the PNG and confirmed: "white text centered at position (960, 540) on the blue background"
 
-![Hello World text layer](debug_frame_1759178254432_2b4dd2fa_00000.png)
+<img src="debug_frame_1759178254432_2b4dd2fa_00000.png" alt="Hello World text layer" width="300">
 
 ✅ **Pass**: Create-verify workflow demonstrates visual feedback loop
 
@@ -145,11 +145,11 @@ This document captures a real test session demonstrating the complete visual deb
 
 | Time | Frame | Opacity |
 |------|-------|---------|
-| 0.00s | ![Frame 0](debug_session_1759178298938_70d102e5/debug_frame_0_00000.png) | 0% - Invisible |
-| 0.25s | ![Frame 7](debug_session_1759178298938_70d102e5/debug_frame_7_00007.png) | ~25% - Very faint |
-| 0.50s | ![Frame 15](debug_session_1759178298938_70d102e5/debug_frame_15_00015.png) | ~50% - Partially visible |
-| 0.75s | ![Frame 22](debug_session_1759178298938_70d102e5/debug_frame_22_00022.png) | ~75% - Mostly visible |
-| 1.00s | ![Frame 30](debug_session_1759178298938_70d102e5/debug_frame_30_00030.png) | 100% - Fully visible |
+| 0.00s | <img src="debug_session_1759178298938_70d102e5/debug_frame_0_00000.png" alt="Frame 0" width="150"> | 0% - Invisible |
+| 0.25s | <img src="debug_session_1759178298938_70d102e5/debug_frame_7_00007.png" alt="Frame 7" width="150"> | ~25% - Very faint |
+| 0.50s | <img src="debug_session_1759178298938_70d102e5/debug_frame_15_00015.png" alt="Frame 15" width="150"> | ~50% - Partially visible |
+| 0.75s | <img src="debug_session_1759178298938_70d102e5/debug_frame_22_00022.png" alt="Frame 22" width="150"> | ~75% - Mostly visible |
+| 1.00s | <img src="debug_session_1759178298938_70d102e5/debug_frame_30_00030.png" alt="Frame 30" width="150"> | 100% - Fully visible |
 
 ✅ **Pass**: Animation template verification with visual analysis
 
@@ -163,6 +163,8 @@ This document captures a real test session demonstrating the complete visual deb
 1. Used `render-frame-export` (not debug tool)
 2. Specified outputFile: "thumbnail.png"
 3. Confirmed permanent storage at `build/dist/thumbnail.png`
+
+<img src="thumbnail_00060.png" alt="Thumbnail Export" width="300">
 
 ✅ **Pass**: Correct tool selection for user deliverable
 
@@ -179,6 +181,16 @@ This document captures a real test session demonstrating the complete visual deb
    - sampleCount: 10
 2. Verified files in `build/dist/client-sequence/`
 3. Listed all frame files with timing
+
+**Client Export Sequence (Sample Frames):**
+
+| Time | Frame | File |
+|------|-------|------|
+| 0.00s | <img src="client-sequence/frame_0_00000.png" alt="Frame 0" width="150"> | frame_0_00000.png |
+| 0.44s | <img src="client-sequence/frame_13_00013.png" alt="Frame 13" width="150"> | frame_13_00013.png |
+| 0.67s | <img src="client-sequence/frame_20_00020.png" alt="Frame 20" width="150"> | frame_20_00020.png |
+| 0.89s | <img src="client-sequence/frame_26_00026.png" alt="Frame 26" width="150"> | frame_26_00026.png |
+| 1.11s | <img src="client-sequence/frame_33_00033.png" alt="Frame 33" width="150"> | frame_33_00033.png |
 
 ✅ **Pass**: Batch export for client deliverable
 
@@ -197,6 +209,17 @@ This document captures a real test session demonstrating the complete visual deb
    - Identified the exact moment of reversal
    - Suggested potential causes (conflicting keyframes, incorrect easing)
    - Recommended specific fixes
+
+**Debugging Analysis Frames (1.0-2.0 seconds):**
+
+| Time | Frame | Analysis |
+|------|-------|----------|
+| 1.00s | <img src="debug_session_1759178438591_49d5a4e3/debug_frame_30_00030.png" alt="Frame 30" width="150"> | Normal rotation |
+| 1.20s | <img src="debug_session_1759178438591_49d5a4e3/debug_frame_36_00036.png" alt="Frame 36" width="150"> | Continuing rotation |
+| 1.40s | <img src="debug_session_1759178438591_49d5a4e3/debug_frame_42_00042.png" alt="Frame 42" width="150"> | Last correct frame |
+| 1.60s | <img src="debug_session_1759178438591_49d5a4e3/debug_frame_48_00048.png" alt="Frame 48" width="150"> | **Rotation reversal detected** |
+| 1.80s | <img src="debug_session_1759178438591_49d5a4e3/debug_frame_54_00054.png" alt="Frame 54" width="150"> | Incorrect direction continues |
+| 2.00s | <img src="debug_session_1759178438591_49d5a4e3/debug_frame_60_00060.png" alt="Frame 60" width="150"> | End of analyzed range |
 
 ✅ **Pass**: Advanced visual debugging with actionable insights
 
