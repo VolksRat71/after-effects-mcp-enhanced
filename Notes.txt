@@ -1,11 +1,11 @@
-Make sure to note allowing network perms in AE
+✓ Make sure to note allowing network perms in AE
 
-Improve the loggin in the AE panel
+✓ Improve the loggin in the AE panel
 
-We need to make 2 versions of this, 1 for LLMS to use as a visual qa type
+✓ We need to make 2 versions of this, 1 for LLMS to use as a visual qa type
 
 Can we add documentation for useage for the llms?
 
 Why do they keep attempting `list-compostions` rather than `listCompostion`
 
-Let make it look for any render queue item with `[MCP]` in the comment, and remove it
+✓ Let make it look for any render queue item with `[MCP]` in the comment, and remove it

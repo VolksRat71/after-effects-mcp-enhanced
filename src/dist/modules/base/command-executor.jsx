@@ -26,12 +26,11 @@ function updateCommandStatus(status) {
 function executeCommand(command, args) {
     var result = "";
 
-    logToPanel("Executing command: " + command);
+    logToPanel("▶ Executing: " + command);
     globalStatusText.text = "Running: " + command;
     globalPanel.update();
 
     try {
-        logToPanel("Attempting to execute: " + command);
         switch (command) {
             case "getProjectInfo":
                 result = getProjectInfo();
@@ -43,71 +42,45 @@ function executeCommand(command, args) {
                 result = getLayerInfo();
                 break;
             case "createComposition":
-                logToPanel("Calling createComposition function...");
                 result = createComposition(args);
-                logToPanel("Returned from createComposition.");
                 break;
             case "createTextLayer":
-                logToPanel("Calling createTextLayer function...");
                 result = createTextLayer(args);
-                logToPanel("Returned from createTextLayer.");
                 break;
             case "createShapeLayer":
-                logToPanel("Calling createShapeLayer function...");
                 result = createShapeLayer(args);
-                logToPanel("Returned from createShapeLayer. Result type: " + typeof result);
                 break;
             case "createSolidLayer":
-                logToPanel("Calling createSolidLayer function...");
                 result = createSolidLayer(args);
-                logToPanel("Returned from createSolidLayer.");
                 break;
             case "setLayerProperties":
-                logToPanel("Calling setLayerProperties function...");
                 result = setLayerProperties(args);
-                logToPanel("Returned from setLayerProperties.");
                 break;
             case "set-layer-keyframe":
-                logToPanel("Calling set-layer-keyframe function...");
                 result = setLayerKeyframe(args.compIndex, args.layerIndex, args.propertyName, args.timeInSeconds, args.value);
-                logToPanel("Returned from set-layer-keyframe.");
                 break;
             case "set-layer-expression":
-                logToPanel("Calling set-layer-expression function...");
                 result = setLayerExpression(args.compIndex, args.layerIndex, args.propertyName, args.expressionString);
-                logToPanel("Returned from set-layer-expression.");
                 break;
             case "applyEffect":
-                logToPanel("Calling applyEffect function...");
                 result = applyEffect(args);
-                logToPanel("Returned from applyEffect.");
                 break;
             case "applyEffectTemplate":
-                logToPanel("Calling applyEffectTemplate function...");
                 result = applyEffectTemplate(args);
-                logToPanel("Returned from applyEffectTemplate.");
                 break;
             case "customScript":
-                logToPanel("Executing custom script from: " + (args.scriptPath || "unknown"));
                 result = executeCustomScript(args);
-                logToPanel("Custom script execution complete.");
                 break;
             case "renderFrame":
-                logToPanel("Calling renderFrame function...");
                 result = renderFrame(args);
-                logToPanel("Returned from renderFrame.");
                 break;
             case "renderFramesSampled":
-                logToPanel("Calling renderFramesSampled function...");
                 result = renderFramesSampled(args);
-                logToPanel("Returned from renderFramesSampled.");
                 break;
             default:
                 result = JSON.stringify({ error: "Unknown command: " + command });
         }
-        logToPanel("Execution finished for: " + command);
 
-        logToPanel("Preparing to write result file...");
         var resultString = (typeof result === 'string') ? result : JSON.stringify(result);
 
         try {
@@ -115,45 +88,32 @@ function executeCommand(command, args) {
             resultObj._responseTimestamp = new Date().toString();
             resultObj._commandExecuted = command;
             resultString = JSON.stringify(resultObj, null, 2);
-            logToPanel("Added timestamp to result JSON for tracking freshness.");
         } catch (parseError) {
-            logToPanel("Could not parse result as JSON to add timestamp: " + parseError.toString());
+            // Silently continue if we can't add timestamp
         }
 
         var resultFile = new File(getResultFilePath());
         resultFile.encoding = "UTF-8";
-        logToPanel("Opening result file for writing...");
         var opened = resultFile.open("w");
         if (!opened) {
-            logToPanel("ERROR: Failed to open result file for writing: " + resultFile.fsName);
             throw new Error("Failed to open result file for writing.");
         }
-        logToPanel("Writing to result file...");
         var written = resultFile.write(resultString);
         if (!written) {
-             logToPanel("ERROR: Failed to write to result file (write returned false): " + resultFile.fsName);
+             logToPanel("ERROR: Failed to write to result file");
         }
-        logToPanel("Closing result file...");
-        var closed = resultFile.close();
-         if (!closed) {
-             logToPanel("ERROR: Failed to close result file: " + resultFile.fsName);
-        }
-        logToPanel("Result file write process complete.");
+        resultFile.close();
 
-        logToPanel("Command completed successfully: " + command);
-        globalStatusText.text = "Command completed: " + command;
+        logToPanel("✓ Completed: " + command);
+        globalStatusText.text = "Ready";
 
-        logToPanel("Updating command status to completed...");
         updateCommandStatus("completed");
-        logToPanel("Command status updated.");
 
     } catch (error) {
-        var errorMsg = "ERROR in executeCommand for '" + command + "': " + error.toString() + (error.line ? " (line: " + error.line + ")" : "");
-        logToPanel(errorMsg);
-        globalStatusText.text = "Error: " + error.toString();
+        logToPanel("✗ Error: " + command + " - " + error.toString());
+        globalStatusText.text = "Error";
 
         try {
-            logToPanel("Attempting to write ERROR to result file...");
             var errorResult = JSON.stringify({
                 status: "error",
                 command: command,
@@ -166,17 +126,12 @@ function executeCommand(command, args) {
             if (errorFile.open("w")) {
                 errorFile.write(errorResult);
                 errorFile.close();
-                logToPanel("Successfully wrote ERROR to result file.");
-            } else {
-                 logToPanel("CRITICAL ERROR: Failed to open result file to write error!");
             }
         } catch (writeError) {
-             logToPanel("CRITICAL ERROR: Failed to write error to result file: " + writeError.toString());
+             logToPanel("Failed to write error: " + writeError.toString());
         }
 
-        logToPanel("Updating command status to error...");
         updateCommandStatus("error");
-        logToPanel("Command status updated to error.");
     }
 }
 
@@ -189,35 +144,30 @@ function checkForCommands() {
 
     try {
         var commandPath = getCommandFilePath();
-        logToPanel("Checking for commands at: " + commandPath);
 
         var commandFile = new File(commandPath);
         if (commandFile.exists) {
-            logToPanel("Command file found!");
             commandFile.open("r");
             var content = commandFile.read();
             commandFile.close();
 
             if (content) {
-                logToPanel("Command content: " + content.substring(0, 100) + "...");
                 try {
                     var commandData = JSON.parse(content);
 
                     if (commandData.status === "pending") {
-                        logToPanel("Executing command: " + commandData.command);
+                        logToPanel("◆ Command detected: " + commandData.command);
                         updateCommandStatus("running");
 
                         executeCommand(commandData.command, commandData.args || {});
-                    } else {
-                        logToPanel("Command status is: " + commandData.status + " (skipping)");
                     }
                 } catch (parseError) {
-                    logToPanel("Error parsing command file: " + parseError.toString());
+                    logToPanel("Error parsing command: " + parseError.toString());
                 }
             }
         }
     } catch (e) {
-        logToPanel("Error checking for commands: " + e.toString());
+        logToPanel("Error: " + e.toString());
     }
 
     isChecking = false;

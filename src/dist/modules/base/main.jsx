@@ -15,7 +15,7 @@ function main() {
 
     var checkButton = globalPanel.add("button", undefined, "Check for Commands Now");
     checkButton.onClick = function() {
-        logToPanel("Manually checking for commands at: " + getCommandFilePath());
+        logToPanel("Manual check triggered");
         checkForCommands();
     };
 
