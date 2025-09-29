@@ -3,9 +3,14 @@ import colors from 'colors';
 import chokidar from 'chokidar';
 import * as fs from 'fs';
 import * as path from 'path';
+import { fileURLToPath } from 'url';
 import { createServer, PATHS } from './config.js';
 import { initializeServices } from './services.js';
 import { registerAllTools } from '../tools/index.js';
+
+// ES modules replacement for __dirname
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 
 /**
  * Main entry point for the After Effects MCP Server
@@ -50,6 +55,51 @@ async function main() {
 
   // Register all tools with the server
   registerAllTools(server, context);
+
+  // Register documentation resources for LLMs
+  const projectRoot = path.dirname(path.dirname(__dirname));
+
+  // Register Quick Start Guide
+  server.registerResource(
+    "quickstart",
+    "docs://quickstart",
+    {
+      title: "After Effects MCP Quick Start",
+      description: "Essential information for using After Effects MCP tools - start here!",
+      mimeType: "text/markdown"
+    },
+    async (uri) => ({
+      contents: [{
+        uri: uri.href,
+        text: await fs.promises.readFile(
+          path.join(projectRoot, 'MCP_QUICK_START.md'),
+          'utf-8'
+        )
+      }]
+    })
+  );
+
+  // Register Comprehensive Tools Guide
+  server.registerResource(
+    "tools-guide",
+    "docs://tools/guide",
+    {
+      title: "Complete After Effects MCP Tools Guide",
+      description: "Comprehensive documentation of all 30+ tools with parameters and examples",
+      mimeType: "text/markdown"
+    },
+    async (uri) => ({
+      contents: [{
+        uri: uri.href,
+        text: await fs.promises.readFile(
+          path.join(projectRoot, 'MCP_TOOLS_GUIDE.md'),
+          'utf-8'
+        )
+      }]
+    })
+  );
+
+  console.log(colors.green("[MCP SERVER] Documentation resources registered"));
 
   // Set up file watcher for command and result files
   const commandFilePath = path.join(PATHS.TEMP_DIR, 'ae_command.json');

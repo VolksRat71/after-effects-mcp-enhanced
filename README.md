@@ -274,6 +274,16 @@ Add to your MCP client configuration (e.g., Claude Desktop, Cursor):
 | `apply-effect` | Apply an effect to a layer |
 | `apply-effect-template` | Apply pre-configured effect templates |
 
+### Render Tools (Visual Debugging & Export)
+| Tool | Description |
+|------|-------------|
+| `render-frame-debug` | Render single frame for AI visual understanding (auto-cleanup) |
+| `render-frame-export` | Render single frame for permanent user export |
+| `render-frames-sampled-debug` | Render multiple frames for AI animation analysis (auto-cleanup) |
+| `render-frames-sampled-export` | Render frame sequence for permanent user export |
+
+**Note:** After Effects renders to TIFF format initially, which are automatically converted to PNG by the built-in TIFF converter service. Debug renders (`build/temp/`) are cleaned up after 1 hour. Export renders (`build/dist/`) are permanent.
+
 ### Utility
 | Tool | Description |
 |------|-------------|
@@ -346,6 +356,53 @@ mcp__after-effects-mcp__set-layer-keyframe({
 - `zoom-in` / `zoom-out` - Scale animations
 - `shake` - Random position shake
 - `slide-and-fall` - Slide in and fall with rotation
+
+### Rendering Frames for Visual Debugging (AI/LLM)
+```javascript
+// Render a single frame for AI to "see" what's happening
+mcp__after-effects-mcp__render-frame-debug({
+  comp: "Main Comp",
+  time: 2.5,  // Render at 2.5 seconds
+  format: "png"
+})
+// Returns: { outputPath: "build/temp/debug_frame_*.png", ... }
+// Auto-cleanup after 1 hour
+
+// Sample multiple frames to understand animation
+mcp__after-effects-mcp__render-frames-sampled-debug({
+  comp: "Main Comp",
+  startTime: 0,
+  endTime: 3,
+  sampleCount: 5,  // Get 5 evenly-spaced frames
+  sessionName: "bounce_analysis"
+})
+// Returns: { sessionPath: "build/temp/bounce_analysis/", frames: [...] }
+// Auto-cleanup after 1 hour
+```
+
+### Rendering Frames for User Export
+```javascript
+// Export a single frame for user
+mcp__after-effects-mcp__render-frame-export({
+  comp: "Main Comp",
+  frame: 60,  // Frame 60
+  outputFile: "hero_shot.png"
+})
+// Returns: { outputPath: "build/dist/hero_shot.png", ... }
+// Permanent file - no auto-cleanup
+
+// Export animation sequence for user
+mcp__after-effects-mcp__render-frames-sampled-export({
+  comp: "Main Comp",
+  startTime: 0,
+  endTime: 2,
+  sampleFps: 15,  // Sample at 15 FPS
+  sessionName: "animation_v1",
+  outputPrefix: "frame"
+})
+// Returns: { sessionPath: "build/dist/animation_v1/", frames: [...] }
+// Permanent files - no auto-cleanup
+```
 
 ## 🔍 Troubleshooting
 
@@ -474,6 +531,17 @@ Chokidar file watcher monitors command/result files:
 - **Yellow**: Running status
 - **Red**: Errors
 - **Magenta**: Dispatched commands
+
+### Automatic TIFF to PNG Conversion
+
+The server includes a built-in TIFF converter service that:
+- **Watches render directories** - Monitors `build/temp/` and `build/dist/` for new TIFF files
+- **File stability checks** - Waits for After Effects to finish writing before converting (prevents corruption)
+- **Auto-conversion** - Converts TIFF to PNG format transparently, deleting original TIFFs
+- **Startup conversion** - Processes any existing TIFF files when server starts
+- **Recursive support** - Handles files in subdirectories (e.g., session folders)
+
+This is necessary because After Effects renders to TIFF format by default when using the render queue with certain templates. The converter ensures all output is in web-friendly PNG format.
 
 ## 👨‍💻 For Developers
 

@@ -17,11 +17,15 @@ export const registerGetHelpTool: ToolRegistrar = (server: McpServer, context: T
             type: "text",
             text: `# After Effects MCP Integration Help
 
-To use this integration with After Effects, follow these steps:
+## Quick Links
+- **Quick Start Guide**: Access via MCP resource \`docs://quickstart\`
+- **Complete Tools Guide**: Access via MCP resource \`docs://tools/guide\`
+
+## Setup Instructions
 
 1. **Install the scripts in After Effects**
-   - Run \`node install-script.js\` with administrator privileges
-   - This copies the necessary scripts to your After Effects installation
+   - Run \`npm run bridge-install\` with administrator privileges
+   - This copies the MCP Bridge panel to your After Effects installation
 
 2. **Open After Effects**
    - Launch Adobe After Effects
@@ -31,16 +35,28 @@ To use this integration with After Effects, follow these steps:
    - In After Effects, go to Window > mcp-bridge-auto.jsx
    - The panel will automatically check for commands every few seconds
 
-4. **Run scripts through MCP**
-   - Use the \`run-script\` tool to queue a command
-   - The Auto panel will detect and run the command automatically
-   - Results will be saved to a temp file
+4. **Enable Auto-run in the panel**
+   - Make sure "Auto-run commands" is checked in the panel
+   - The panel will poll for commands every 2 seconds
 
-5. **Get results through MCP**
-   - After a command is executed, use the \`get-results\` tool
-   - This will retrieve the results from After Effects
+5. **Use MCP tools from your AI assistant**
+   - All tools queue commands for the panel to execute
+   - Always use \`get-results\` after running any tool to see the output
 
-Available scripts:
+## Visual Debugging (NEW!)
+
+**You can now SEE what you're working with:**
+- \`render-frame-debug\`: Render a single frame to see the current state
+- \`render-frames-sampled-debug\`: Render multiple frames to analyze animation
+- Files are saved as PNG in \`build/temp/\` and auto-cleaned after 1 hour
+- Read the image files to visually understand the composition
+
+**For user exports:**
+- \`render-frame-export\`: Export a single frame permanently
+- \`render-frames-sampled-export\`: Export an animation sequence
+- Files are saved in \`build/dist/\` and are permanent
+
+## Core Tools Available:
 - getProjectInfo: Information about the current project
 - listCompositions: List all compositions in the project
 - getLayerInfo: Information about layers in the active composition
@@ -54,16 +70,18 @@ Available scripts:
 - applyEffect: Apply an effect to a layer
 - applyEffectTemplate: Apply a predefined effect template to a layer
 
-Effect Templates:
-- gaussian-blur: Simple Gaussian blur effect
-- directional-blur: Motion blur in a specific direction
-- color-balance: Adjust hue, lightness, and saturation
-- brightness-contrast: Basic brightness and contrast adjustment
-- curves: Advanced color adjustment using curves
-- glow: Add a glow effect to elements
-- drop-shadow: Add a customizable drop shadow
-- cinematic-look: Combination of effects for a cinematic appearance
-- text-pop: Effects to make text stand out (glow and shadow)
+## Important Notes
+
+- **TIFF to PNG Conversion**: After Effects renders to TIFF format, which is automatically converted to PNG
+- **Auto-cleanup**: Debug renders in \`build/temp/\` are deleted after 1 hour
+- **1-based indexing**: Compositions and layers use index 1, not 0
+- **Always use get-results**: Every command needs \`get-results\` to retrieve output
+
+## Need More Help?
+
+Access the full documentation:
+- **Quick Start**: \`docs://quickstart\` (via MCP resources)
+- **Complete Guide**: \`docs://tools/guide\` (via MCP resources)
 
 Note: The auto-running panel can be left open in After Effects to continuously listen for commands from external applications.`
           }

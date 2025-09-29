@@ -3,7 +3,7 @@ import { ToolContext } from '../types.js';
 
 export function registerGetEffectsHelpTool(server: McpServer, context: ToolContext): void {
   server.tool(
-    "mcp_aftereffects_get_effects_help",
+    "get-effects-help",
     "Get help on using After Effects effects",
     {},
     async () => {
