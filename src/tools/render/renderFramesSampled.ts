@@ -20,8 +20,6 @@ export function registerRenderFramesSampledTool(server: McpServer, context: Tool
       frameStep: z.number().int().positive().optional().describe("Sample every N frames (mutually exclusive)"),
       format: z.enum(['png', 'jpg']).optional().default('png').describe("Output format"),
       outputPrefix: z.string().optional().describe("Output filename prefix (optional)"),
-      inline: z.boolean().optional().default(false).describe("Return base64 inline image data for frames"),
-      inlineMax: z.number().int().positive().optional().default(3).describe("Maximum number of frames to inline (default: 3)"),
       maxFrames: z.number().int().positive().optional().default(100).describe("Maximum frames to render (default: 100)")
     },
     async (params) => {
@@ -59,10 +57,11 @@ export function registerRenderFramesSampledTool(server: McpServer, context: Tool
           sessionDir: sessionDir.replace(/\\/g, '/'),
           outputPrefix,
           format: params.format || 'png',
-          maxFrames: params.maxFrames || 100,
-          inline: params.inline,
-          inlineMax: params.inlineMax
+          maxFrames: params.maxFrames || 100
         });
+
+        // Schedule cleanup of the session directory after 1 hour
+        fileManager.scheduleFileCleanup(sessionDir);
 
         historyManager.completeCommand(commandId, 'success', { queued: true });
 

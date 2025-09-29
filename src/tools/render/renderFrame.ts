@@ -16,7 +16,6 @@ export function registerRenderFrameTool(server: McpServer, context: ToolContext)
       time: z.number().optional().describe("Time in seconds to render (optional)"),
       frame: z.number().int().optional().describe("Frame number to render (optional, alternative to time)"),
       outputFile: z.string().optional().describe("Output filename (optional, will be auto-generated if not provided)"),
-      inline: z.boolean().optional().default(false).describe("Return base64 inline image data"),
       format: z.enum(['png', 'jpg']).optional().default('png').describe("Output format (png or jpg)")
     },
     async (params) => {
@@ -40,9 +39,11 @@ export function registerRenderFrameTool(server: McpServer, context: ToolContext)
           time: params.time,
           frame: params.frame,
           outputPath: outputPath.replace(/\\/g, '/'),
-          format: params.format || 'png',
-          inline: params.inline
+          format: params.format || 'png'
         });
+
+        // Schedule cleanup of the rendered frame after 1 hour
+        fileManager.scheduleFileCleanup(outputPath);
 
         historyManager.completeCommand(commandId, 'success', { queued: true });
 

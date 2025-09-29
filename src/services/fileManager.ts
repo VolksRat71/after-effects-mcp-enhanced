@@ -15,35 +15,64 @@ export class FileManager {
   }
 
   /**
-   * Cleanup old JSX files from previous sessions
+   * Cleanup old files and directories from previous sessions
    */
   cleanupOldJSXFiles(): void {
     try {
       if (!fs.existsSync(this.tempDir)) return;
 
-      const files = fs.readdirSync(this.tempDir);
-      const oneHourAgo = Date.now() - 3600000; // 1 hour in milliseconds
-      let cleanedCount = 0;
+      // Also check build/temp directory for rendered files
+      const buildTempDir = path.join(process.cwd(), 'build', 'temp');
+      const dirsToClean = [this.tempDir];
 
-      files.forEach(file => {
-        if (file.endsWith('.jsx')) {
-          const filePath = path.join(this.tempDir, file);
-          try {
-            const stats = fs.statSync(filePath);
-            if (stats.mtimeMs < oneHourAgo) {
-              fs.unlinkSync(filePath);
-              cleanedCount++;
-              console.log(colors.green(`[MCP FILEMANAGER] Cleaned old JSX file: ${file}`));
+      if (fs.existsSync(buildTempDir)) {
+        dirsToClean.push(buildTempDir);
+      }
+
+      const oneHourAgo = Date.now() - 3600000; // 1 hour in milliseconds
+      let cleanedFiles = 0;
+      let cleanedDirs = 0;
+
+      dirsToClean.forEach(dir => {
+        const items = fs.readdirSync(dir);
+
+        items.forEach(item => {
+          const itemPath = path.join(dir, item);
+
+          // Clean old JSX files, images, and session directories
+          const shouldClean = item.endsWith('.jsx') ||
+                             item.endsWith('.tif') ||
+                             item.endsWith('.png') ||
+                             item.endsWith('.jpg') ||
+                             item.startsWith('session_') ||
+                             item.startsWith('frame_');
+
+          if (shouldClean) {
+            try {
+              const stats = fs.statSync(itemPath);
+
+              if (stats.mtimeMs < oneHourAgo) {
+                if (stats.isDirectory()) {
+                  // Recursively remove old session directories
+                  fs.rmSync(itemPath, { recursive: true, force: true });
+                  cleanedDirs++;
+                  console.log(colors.green(`[MCP FILEMANAGER] Cleaned old session directory: ${item}`));
+                } else {
+                  fs.unlinkSync(itemPath);
+                  cleanedFiles++;
+                  console.log(colors.green(`[MCP FILEMANAGER] Cleaned old file: ${item}`));
+                }
+              }
+            } catch (e) {
+              // File might be locked or already deleted
+              console.error(colors.yellow(`[MCP FILEMANAGER] Could not clean ${item}:`), e);
             }
-          } catch (e) {
-            // File might be locked or already deleted
-            console.error(colors.yellow(`[MCP FILEMANAGER] Could not clean ${file}:`), e);
           }
-        }
+        });
       });
 
-      if (cleanedCount > 0) {
-        console.log(colors.green(`[MCP FILEMANAGER] Cleaned ${cleanedCount} old JSX files from previous sessions`));
+      if (cleanedFiles > 0 || cleanedDirs > 0) {
+        console.log(colors.green(`[MCP FILEMANAGER] Cleaned ${cleanedFiles} files and ${cleanedDirs} directories from previous sessions`));
       }
     } catch (error) {
       console.error(colors.red('[MCP FILEMANAGER] Error during cleanup:'), error);
@@ -51,15 +80,21 @@ export class FileManager {
   }
 
   /**
-   * Schedule a file for cleanup after a delay
+   * Schedule a file or directory for cleanup after a delay
    */
-  scheduleFileCleanup(filePath: string, delayMs: number = 300000): void {
-    // Schedule cleanup after 5 minutes (default)
+  scheduleFileCleanup(filePath: string, delayMs: number = 3600000): void {
+    // Schedule cleanup after 1 hour (default)
     setTimeout(() => {
       try {
         if (fs.existsSync(filePath)) {
-          fs.unlinkSync(filePath);
-          console.log(colors.green(`[MCP FILEMANAGER] Cleaned up temp file: ${path.basename(filePath)}`));
+          const stats = fs.statSync(filePath);
+          if (stats.isDirectory()) {
+            fs.rmSync(filePath, { recursive: true, force: true });
+            console.log(colors.green(`[MCP FILEMANAGER] Cleaned up temp directory: ${path.basename(filePath)}`));
+          } else {
+            fs.unlinkSync(filePath);
+            console.log(colors.green(`[MCP FILEMANAGER] Cleaned up temp file: ${path.basename(filePath)}`));
+          }
         }
       } catch (e) {
         // File might be in use or already deleted
