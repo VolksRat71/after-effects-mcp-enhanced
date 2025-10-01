@@ -22,8 +22,6 @@
 
 ## 👁️ Why Visual Understanding Matters
 
-Traditional After Effects automation is blind - scripts run without knowing what they create. **After Effects MCP Vision changes everything:**
-
 ### 🎯 Visual Debugging for AI
 - **See Compositions in Real-Time** - AI renders frames to understand what's happening visually
 - **Analyze Animations Frame-by-Frame** - Sample multiple frames to understand motion and timing
@@ -34,7 +32,7 @@ Traditional After Effects automation is blind - scripts run without knowing what
 - **render-frame-debug** - Let AI see a single frame instantly
 - **render-frames-sampled-debug** - AI analyzes animation sequences
 - **Automatic TIFF→PNG conversion** - Seamless image processing
-- **Smart cleanup** - Debug frames auto-delete after 1 hour
+- **Smart cleanup** - Debug frames auto-delete after 10 minutes
 - **Separate export tools** - Permanent renders for user deliverables
 
 ### 🏗️ Enhanced Architecture
@@ -65,7 +63,7 @@ https://github.com/user-attachments/assets/6b73504c-d441-4b72-a79d-9c5a9730dacd
 
 ## 🎯 Key Features
 
-### 👁️ Visual Understanding (The Game Changer)
+### 👁️ Visual Understanding
 - **AI Can See** - Render any frame for AI visual analysis
 - **Animation Debugging** - Sample frames to understand motion
 - **Visual Verification** - Confirm every change visually
@@ -276,7 +274,7 @@ Add to your MCP client configuration (e.g., Claude Desktop, Cursor):
 2. **Open the MCP Bridge Panel**
    - In After Effects: Window > mcp-bridge-auto.jsx
    - Ensure "Auto-run commands" is checked
-   - The panel will poll for commands every 2 seconds
+   - The panel will poll for commands every 500ms
 
 3. **Start using MCP commands**
    - The server is now ready to receive commands from your MCP client
@@ -328,7 +326,7 @@ Add to your MCP client configuration (e.g., Claude Desktop, Cursor):
 | `render-frames-sampled-debug` | Render multiple frames for AI animation analysis (auto-cleanup) |
 | `render-frames-sampled-export` | Render frame sequence for permanent user export |
 
-**Note:** After Effects renders to TIFF format initially, which are automatically converted to PNG by the built-in TIFF converter service. Debug renders (`build/temp/`) are cleaned up after 1 hour. Export renders (`build/dist/`) are permanent.
+**Note:** After Effects renders to TIFF format initially, which are automatically converted to PNG by the built-in TIFF converter service. Debug renders (`build/temp/`) are cleaned up after 10 minutes. Export renders (`build/dist/`) are permanent.
 
 ### Utility
 | Tool | Description |
@@ -454,16 +452,13 @@ mcp__after-effects-mcp__render-frames-sampled-export({
 
 ### Common Issues
 
-**"Composition not found at index X"**
-- The composition index fix has been implemented. Use 1-based indexing.
-
 **"File does not exist" when importing**
 - Ensure the file path is absolute, not relative
 - Check file extensions match exactly (`.jpg` vs `.jpeg`)
 
 **Permission denied errors**
 - **Windows**: Run installation as administrator
-- **macOS**: Grant After Effects full disk access in System Settings (see [Security & Permissions](#security--permissions) below)
+- **macOS**: Grant After Effects full disk access in System Settings (see [Security & Permissions](#-security--permissions) below)
 
 **Scripts not appearing in Window menu**
 - Restart After Effects after installation
@@ -662,22 +657,6 @@ Contributions are welcome! This project follows a feature-branch workflow:
 4. Push to the branch (`git push origin feature/amazing-feature`)
 5. Open a Pull Request
 
-## 📈 Recent Improvements
-
-### Version 1.0.0 (2025-09-26) - Modular Edition
-- ✅ **Complete modularization** - TypeScript and ExtendScript fully organized
-- ✅ **Native `#include` system** - Build-time processing of JSX modules
-- ✅ **100% test coverage** - All 20 tools verified working
-- ✅ **Real-time logging** - Chokidar file watcher with colorized output
-- ✅ **Fixed layer creation** - Added `compIndex` parameter support
-- ✅ **Fixed animation templates** - Resolved `startTime` initialization bug
-- ✅ **Improved watcher** - Added file creation event handling
-- ✅ **Cross-platform support** - Dynamic path resolution for Windows/macOS
-- ✅ **Asset import/replace** - Full asset management capabilities
-- ✅ **Animation templates** - 12 pre-built animations
-- ✅ **Bulk operations** - Set multiple keyframes, copy animations
-- ✅ **Command history** - Track and replay operations
-
 ### Tested With
 
 **Operating Systems:**
@@ -701,7 +680,7 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 
 - Original project by [Dakkshin](https://github.com/Dakkshin/after-effects-mcp)
 - Built for the [Model Context Protocol](https://www.anthropic.com/news/model-context-protocol) ecosystem
-- Tested with Claude Desktop and Cursor
+- Tested with Claude Code and Cursor
 - Thanks to the After Effects scripting community
 
 ## 📬 Contact & Support
@@ -712,8 +691,9 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 
 **Want to contribute?**
 - Fork the repository and submit a pull request
-- See [Contributing](#contributing) for guidelines
+- See [Contributing](#-contributing) for guidelines
 
 ---
 
 **Ready to animate?** Start creating with AI-powered After Effects automation! 🎬✨
+F(#
