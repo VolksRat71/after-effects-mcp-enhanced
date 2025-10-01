@@ -1,1 +1,0 @@
-npx @claude/mcp add file://C:/Users/natha/Desktop/testing/after-effects-mcp-vision

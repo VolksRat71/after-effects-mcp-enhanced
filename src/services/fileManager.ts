@@ -9,6 +9,9 @@ import { getTempFilePath } from '../utils/resolvePaths.js';
  */
 export class FileManager {
   private tempDir: string;
+  private commandQueue: Array<{commandId: string, tool: string, args: Record<string, any>}> = [];
+  private queueTimer: NodeJS.Timeout | null = null;
+  private readonly BATCH_DELAY_MS = 500; // Wait 500ms for more commands before processing
 
   constructor(tempDir: string) {
     this.tempDir = tempDir;
@@ -39,34 +42,32 @@ export class FileManager {
         items.forEach(item => {
           const itemPath = path.join(dir, item);
 
-          // Clean old JSX files, images, and session directories
-          const shouldClean = item.endsWith('.jsx') ||
-                             item.endsWith('.tif') ||
-                             item.endsWith('.png') ||
-                             item.endsWith('.jpg') ||
-                             item.startsWith('session_') ||
-                             item.startsWith('frame_');
+          // Skip command and result files
+          const shouldSkip = item === 'ae_command.json' ||
+                            item === 'ae_mcp_result.json' ||
+                            item === 'ae_command_history.json';
 
-          if (shouldClean) {
-            try {
-              const stats = fs.statSync(itemPath);
+          if (shouldSkip) return;
 
-              if (stats.mtimeMs < tenMinutesAgo) {
-                if (stats.isDirectory()) {
-                  // Recursively remove old session directories
-                  fs.rmSync(itemPath, { recursive: true, force: true });
-                  cleanedDirs++;
-                  console.log(colors.green(`[MCP FILEMANAGER] Cleaned old session directory: ${item}`));
-                } else {
-                  fs.unlinkSync(itemPath);
-                  cleanedFiles++;
-                  console.log(colors.green(`[MCP FILEMANAGER] Cleaned old file: ${item}`));
-                }
+          // Clean everything else that's older than 10 minutes
+          try {
+            const stats = fs.statSync(itemPath);
+
+            if (stats.mtimeMs < tenMinutesAgo) {
+              if (stats.isDirectory()) {
+                // Recursively remove old directories
+                fs.rmSync(itemPath, { recursive: true, force: true });
+                cleanedDirs++;
+                console.log(colors.green(`[MCP FILEMANAGER] Cleaned old directory: ${item}`));
+              } else {
+                fs.unlinkSync(itemPath);
+                cleanedFiles++;
+                console.log(colors.green(`[MCP FILEMANAGER] Cleaned old file: ${item}`));
               }
-            } catch (e) {
-              // File might be locked or already deleted
-              console.error(colors.yellow(`[MCP FILEMANAGER] Could not clean ${item}:`), e);
             }
+          } catch (e) {
+            // File might be locked or already deleted
+            console.error(colors.yellow(`[MCP FILEMANAGER] Could not clean ${item}:`), e);
           }
         });
       });
@@ -166,23 +167,105 @@ export class FileManager {
   }
 
   /**
+   * Flush the command queue to the command file
+   */
+  private flushQueue(): void {
+    if (this.commandQueue.length === 0) return;
+
+    try {
+      const commandFile = getTempFilePath('ae_command.json');
+
+      if (this.commandQueue.length === 1) {
+        // Single command - write in legacy format for backward compatibility
+        const cmd = this.commandQueue[0];
+        const commandData = {
+          command: cmd.tool,
+          args: cmd.args,
+          timestamp: new Date().toISOString(),
+          status: "pending"
+        };
+        fs.writeFileSync(commandFile, JSON.stringify(commandData, null, 2));
+        console.log(colors.cyan(`[MCP FILEMANAGER] Command written: ${cmd.tool}`));
+      } else {
+        // Multiple commands - write as batch
+        const batchData = {
+          batchId: `batch_${Date.now()}`,
+          timestamp: new Date().toISOString(),
+          status: "pending",
+          commands: this.commandQueue
+        };
+        fs.writeFileSync(commandFile, JSON.stringify(batchData, null, 2));
+        console.log(colors.cyan(`[MCP FILEMANAGER] Auto-batched ${this.commandQueue.length} commands`));
+        this.commandQueue.forEach((cmd, idx) => {
+          console.log(colors.gray(`  [${idx + 1}] ${cmd.tool} (${cmd.commandId})`));
+        });
+      }
+
+      // Clear the queue
+      this.commandQueue = [];
+      this.queueTimer = null;
+    } catch (error) {
+      console.error(colors.red('[MCP FILEMANAGER] Error flushing command queue:'), error);
+      this.commandQueue = [];
+      this.queueTimer = null;
+      throw error;
+    }
+  }
+
+  /**
    * Write command to file for After Effects to pick up
+   * Automatically batches commands that arrive in rapid succession
    */
   writeCommandFile(command: string, args: Record<string, any> = {}): void {
     try {
-      const commandFile = getTempFilePath('ae_command.json');
-      const commandData = {
-        command,
-        args,
-        timestamp: new Date().toISOString(),
-        status: "pending"  // pending, running, completed, error
-      };
-      fs.writeFileSync(commandFile, JSON.stringify(commandData, null, 2));
-      console.log(colors.cyan(`[MCP FILEMANAGER] Command file written: ${command}`));
-      console.log(colors.cyan(`[MCP FILEMANAGER] Command args: ${JSON.stringify(args).substring(0, 200)}${JSON.stringify(args).length > 200 ? '...' : ''}`));
+      const commandId = `cmd_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+
+      // Add command to queue
+      this.commandQueue.push({
+        commandId,
+        tool: command,
+        args
+      });
+
+      console.log(colors.gray(`[MCP FILEMANAGER] Queued ${command} (queue size: ${this.commandQueue.length})`));
+
+      // Clear existing timer if any
+      if (this.queueTimer) {
+        clearTimeout(this.queueTimer);
+      }
+
+      // Set timer to flush queue after delay
+      // This timer resets with each new command, allowing rapid commands to batch together
+      this.queueTimer = setTimeout(() => {
+        this.flushQueue();
+      }, this.BATCH_DELAY_MS);
+
     } catch (error) {
       console.error(colors.red('[MCP FILEMANAGER] Error writing command file:'), error);
-      throw error; // Re-throw to let caller handle
+      throw error;
+    }
+  }
+
+  /**
+   * Write a batch of commands to file for After Effects to pick up
+   */
+  writeCommandBatch(commands: Array<{commandId: string, tool: string, args: Record<string, any>}>): void {
+    try {
+      const commandFile = getTempFilePath('ae_command.json');
+      const batchData = {
+        batchId: `batch_${Date.now()}`,
+        timestamp: new Date().toISOString(),
+        status: "pending",
+        commands
+      };
+      fs.writeFileSync(commandFile, JSON.stringify(batchData, null, 2));
+      console.log(colors.cyan(`[MCP FILEMANAGER] Batch command file written with ${commands.length} command(s)`));
+      commands.forEach((cmd, idx) => {
+        console.log(colors.gray(`  [${idx + 1}] ${cmd.tool} (${cmd.commandId})`));
+      });
+    } catch (error) {
+      console.error(colors.red('[MCP FILEMANAGER] Error writing batch command file:'), error);
+      throw error;
     }
   }
 
