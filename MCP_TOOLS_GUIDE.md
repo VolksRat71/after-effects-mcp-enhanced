@@ -6,9 +6,10 @@ You have access to Adobe After Effects through the Model Context Protocol (MCP).
 ## Important Context
 - **After Effects must be running** with a project open
 - **MCP Bridge Auto panel** must be open (Window > mcp-bridge-auto.jsx) with "Auto-run" enabled
-- **Commands are queued** and executed by the panel every 2 seconds
+- **Commands are processed automatically** - rapid commands (within 500ms) batch together for efficient execution
 - **Results are retrieved** using the `get-results` tool after execution
 - **Files are rendered as TIFF** initially but automatically converted to PNG
+- **Batch processing** - Multiple commands execute sequentially with progress tracking and ETA
 
 ## Tool Categories
 

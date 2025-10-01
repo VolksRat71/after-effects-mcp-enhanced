@@ -39,6 +39,7 @@ Traditional After Effects automation is blind - scripts run without knowing what
 
 ### 🏗️ Enhanced Architecture
 - **30+ Tools** - Complete After Effects automation suite
+- **Automatic Batch Processing** - Rapid commands batch together automatically (500ms window)
 - **Modular Design** - TypeScript and ExtendScript modules
 - **Cross-Platform** - Windows and macOS support
 - **Real-time Communication** - Bidirectional MCP bridge

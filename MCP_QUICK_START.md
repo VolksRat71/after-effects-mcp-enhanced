@@ -67,6 +67,7 @@ get-results
 - **1-based indexing** - First comp/layer is 1, not 0
 - **Auto-cleanup** - Debug renders delete after 1 hour
 - **TIFF→PNG** - Automatic conversion happens in background
+- **Automatic Batching** - Multiple commands in rapid succession (within 500ms) batch together for efficiency
 
 ## Need More?
 See MCP_TOOLS_GUIDE.md for complete documentation of all 30+ tools.
