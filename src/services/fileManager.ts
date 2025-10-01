@@ -29,7 +29,7 @@ export class FileManager {
         dirsToClean.push(buildTempDir);
       }
 
-      const oneHourAgo = Date.now() - 3600000; // 1 hour in milliseconds
+      const tenMinutesAgo = Date.now() - 600000; // 10 minutes in milliseconds
       let cleanedFiles = 0;
       let cleanedDirs = 0;
 
@@ -51,7 +51,7 @@ export class FileManager {
             try {
               const stats = fs.statSync(itemPath);
 
-              if (stats.mtimeMs < oneHourAgo) {
+              if (stats.mtimeMs < tenMinutesAgo) {
                 if (stats.isDirectory()) {
                   // Recursively remove old session directories
                   fs.rmSync(itemPath, { recursive: true, force: true });
@@ -82,8 +82,8 @@ export class FileManager {
   /**
    * Schedule a file or directory for cleanup after a delay
    */
-  scheduleFileCleanup(filePath: string, delayMs: number = 3600000): void {
-    // Schedule cleanup after 1 hour (default)
+  scheduleFileCleanup(filePath: string, delayMs: number = 600000): void {
+    // Schedule cleanup after 10 minutes (default)
     setTimeout(() => {
       try {
         if (fs.existsSync(filePath)) {

@@ -10,7 +10,7 @@ export function registerRenderFramesSampledDebugTool(server: McpServer, context:
 
   server.tool(
     "render-frames-sampled-debug",
-    "VISUAL DEBUGGING TOOL FOR AI/LLM: Renders multiple sampled frames to help AI assistants understand animations, transitions, and visual changes over time. Perfect for debugging animations, checking motion paths, or understanding visual progression. Output goes to temp session directory with auto-cleanup after 1 hour. The AI can read these images sequentially to understand the animation flow.",
+    "VISUAL DEBUGGING TOOL FOR AI/LLM: Renders multiple sampled frames to help AI assistants understand animations, transitions, and visual changes over time. Perfect for debugging animations, checking motion paths, or understanding visual progression. Output goes to temp session directory with auto-cleanup after 10 minutes. The AI can read these images sequentially to understand the animation flow.",
     {
       comp: z.string().describe("Name of the composition to visually analyze"),
       startTime: z.number().min(0).describe("Start time in seconds for visual sampling"),
@@ -57,7 +57,7 @@ export function registerRenderFramesSampledDebugTool(server: McpServer, context:
           maxFrames: params.maxFrames || 10
         });
 
-        // Schedule cleanup of the debug session directory after 1 hour
+        // Schedule cleanup of the debug session directory after 10 minutes
         fileManager.scheduleFileCleanup(sessionDir);
 
         historyManager.completeCommand(commandId, 'success', { queued: true });
