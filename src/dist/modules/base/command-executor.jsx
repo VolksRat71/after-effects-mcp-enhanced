@@ -77,6 +77,12 @@ function executeCommand(command, args) {
             case "replaceFootage":
                 result = replaceFootage(args);
                 break;
+            case "setMultipleKeyframes":
+                result = setMultipleKeyframes(args);
+                break;
+            case "copyAnimation":
+                result = copyAnimation(args);
+                break;
             case "customScript":
                 result = executeCustomScript(args);
                 break;

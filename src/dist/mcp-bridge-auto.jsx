@@ -27,6 +27,10 @@
 #include "./modules/media/importAssets.jsx"
 #include "./modules/media/replaceFootage.jsx"
 
+// Animation operations
+#include "./modules/animation/setMultipleKeyframes.jsx"
+#include "./modules/animation/copyAnimation.jsx"
+
 // Utilities
 #include "./modules/utility/customScript.jsx"
 

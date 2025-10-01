@@ -31,12 +31,6 @@ async function main() {
   // Clean up old JSX files on startup
   context.fileManager.cleanupOldFiles();
 
-  // Schedule periodic cleanup every 10 minutes
-  setInterval(() => {
-    console.log(colors.cyan("[MCP SERVER] Running periodic cleanup..."));
-    context.fileManager.cleanupOldFiles();
-  }, 600000); // 10 minutes in milliseconds
-
   // Clear any pending commands from previous sessions
   const commandFilePath = path.join(PATHS.TEMP_DIR, 'ae_command.json');
   try {

@@ -25,87 +25,12 @@ export function registerSetMultipleKeyframesTool(server: McpServer, context: Too
       });
 
       try {
-        // Build script to set multiple keyframes
-        const keyframeData = JSON.stringify(keyframes);
-        const scriptContent = `
-(function() {
-  try {
-    var comp = getCompositionByIndex(${compIndex});
-    if (!comp) {
-      return JSON.stringify({error: "Composition not found at index ${compIndex}"});
-    }
-
-    var layer = comp.layer(${layerIndex});
-    if (!layer) {
-      return JSON.stringify({error: "Layer not found at index ${layerIndex}"});
-    }
-
-    var keyframes = ${keyframeData};
-    var results = [];
-
-    for (var i = 0; i < keyframes.length; i++) {
-      var kf = keyframes[i];
-      try {
-        var prop = layer.property("Transform").property(kf.property);
-        if (!prop) {
-          // Try other property groups
-          if (layer.property("Effects") && layer.property("Effects").property(kf.property)) {
-            prop = layer.property("Effects").property(kf.property);
-          } else if (layer.property("Text") && layer.property("Text").property(kf.property)) {
-            prop = layer.property("Text").property(kf.property);
-          }
-        }
-
-        if (prop && prop.canVaryOverTime) {
-          prop.setValueAtTime(kf.time, kf.value);
-          results.push({
-            property: kf.property,
-            time: kf.time,
-            success: true
-          });
-        } else {
-          results.push({
-            property: kf.property,
-            time: kf.time,
-            success: false,
-            error: "Property not found or cannot be keyframed"
-          });
-        }
-      } catch (e) {
-        results.push({
-          property: kf.property,
-          time: kf.time,
-          success: false,
-          error: e.toString()
-        });
-      }
-    }
-
-    return JSON.stringify({
-      success: true,
-      layer: layer.name,
-      results: results
-    });
-
-  } catch (error) {
-    return JSON.stringify({
-      error: error.toString(),
-      line: error.line
-    });
-  }
-})();`;
-
-        // Save and execute
-        const tempScriptName = `multi_keyframes_${Date.now()}.jsx`;
-        const tempScriptPath = path.join(tempDir, tempScriptName);
-
-        fs.writeFileSync(tempScriptPath, scriptContent, 'utf-8');
-
-        // Schedule cleanup of temp file
-        fileManager.scheduleFileCleanup(tempScriptPath);
-
         fileManager.clearResultsFile();
-        fileManager.writeCommandFile("customScript", { scriptPath: tempScriptPath });
+        fileManager.writeCommandFile("setMultipleKeyframes", {
+          compIndex,
+          layerIndex,
+          keyframes
+        });
 
         historyManager.completeCommand(commandId, 'success');
 
