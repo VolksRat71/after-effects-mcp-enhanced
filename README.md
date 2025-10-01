@@ -1,5 +1,5 @@
 <p align="center">
-  <img src="doc/readme-img/after-effects-mcp-vision-transparent.png" alt="After Effects MCP Vision" width="400">
+  <img src="doc/readme-img/after-effects-mcp-vision-transparent.png" alt="After Effects MCP Vision" width="200">
 </p>
 
 <h1 align="center">After Effects MCP Vision</h1>
