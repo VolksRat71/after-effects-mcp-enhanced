@@ -1,4 +1,9 @@
-# 👁️ After Effects MCP Vision - AI Visual Understanding for After Effects
+<p align="center">
+  <img src="doc/readme-img/after-effects-mcp-vision-transparent.png" alt="After Effects MCP Vision" width="400">
+</p>
+
+<h1 align="center">After Effects MCP Vision</h1>
+<p align="center">AI Visual Understanding for Adobe After Effects</p>
 
 ![Node.js](https://img.shields.io/badge/node-%3E=16.x-brightgreen.svg)
 ![License](https://img.shields.io/badge/license-MIT-blue)
