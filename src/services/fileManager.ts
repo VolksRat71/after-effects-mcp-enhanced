@@ -20,7 +20,7 @@ export class FileManager {
   /**
    * Cleanup old files and directories from previous sessions
    */
-  cleanupOldJSXFiles(): void {
+  cleanupOldFiles(): void {
     try {
       if (!fs.existsSync(this.tempDir)) return;
 

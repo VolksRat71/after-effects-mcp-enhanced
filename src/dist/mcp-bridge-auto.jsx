@@ -17,10 +17,15 @@
 #include "./modules/layer/createLayers.jsx"
 #include "./modules/layer/setLayerProperties.jsx"
 #include "./modules/layer/keyframeAndExpression.jsx"
+#include "./modules/layer/getLayerProperties.jsx"
 
 // Effects
 #include "./modules/effects/applyEffect.jsx"
 #include "./modules/effects/applyEffectTemplate.jsx"
+
+// Media operations
+#include "./modules/media/importAssets.jsx"
+#include "./modules/media/replaceFootage.jsx"
 
 // Utilities
 #include "./modules/utility/customScript.jsx"

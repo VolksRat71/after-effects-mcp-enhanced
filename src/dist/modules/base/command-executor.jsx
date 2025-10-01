@@ -71,6 +71,12 @@ function executeCommand(command, args) {
             case "applyEffectTemplate":
                 result = applyEffectTemplate(args);
                 break;
+            case "importAssets":
+                result = importAssets(args);
+                break;
+            case "replaceFootage":
+                result = replaceFootage(args);
+                break;
             case "customScript":
                 result = executeCustomScript(args);
                 break;

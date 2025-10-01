@@ -20,105 +20,13 @@ export function registerReplaceFootageTool(server: McpServer, context: ToolConte
       const commandId = historyManager.startCommand('replace-footage', { compIndex, layerIndex, layerName, newFootagePath });
 
       try {
-        const scriptContent = `(function() {
-  try {
-    var compIndex = ${compIndex};
-    var layerIndex = ${layerIndex || 'null'};
-    var layerName = ${layerName ? JSON.stringify(layerName) : 'null'};
-    var newFootagePath = ${JSON.stringify(newFootagePath)};
-
-    // Find the composition
-    var comp = null;
-    var compCount = 0;
-    for (var i = 1; i <= app.project.numItems; i++) {
-      if (app.project.item(i) instanceof CompItem) {
-        compCount++;
-        if (compCount === compIndex) {
-          comp = app.project.item(i);
-          break;
-        }
-      }
-    }
-
-    if (!comp) {
-      return JSON.stringify({
-        success: false,
-        error: "Composition not found at index " + compIndex
-      });
-    }
-
-    // Find the layer
-    var layer = null;
-    if (layerIndex) {
-      layer = comp.layer(layerIndex);
-    } else if (layerName) {
-      for (var j = 1; j <= comp.numLayers; j++) {
-        if (comp.layer(j).name === layerName) {
-          layer = comp.layer(j);
-          break;
-        }
-      }
-    }
-
-    if (!layer) {
-      return JSON.stringify({
-        success: false,
-        error: "Layer not found"
-      });
-    }
-
-    if (!(layer instanceof AVLayer) || !layer.source) {
-      return JSON.stringify({
-        success: false,
-        error: "Layer does not have replaceable source footage"
-      });
-    }
-
-    // Import the new footage
-    var file = new File(newFootagePath);
-    if (!file.exists) {
-      return JSON.stringify({
-        success: false,
-        error: "New footage file does not exist: " + newFootagePath
-      });
-    }
-
-    var importOptions = new ImportOptions(file);
-    var newFootage = app.project.importFile(importOptions);
-
-    // Store old source info
-    var oldSource = layer.source;
-    var oldSourceName = oldSource.name;
-
-    // Replace the source
-    layer.replaceSource(newFootage, false);
-
-    return JSON.stringify({
-      success: true,
-      message: "Footage replaced successfully",
-      layer: layer.name,
-      oldSource: oldSourceName,
-      newSource: newFootage.name
-    });
-
-  } catch (error) {
-    return JSON.stringify({
-      success: false,
-      error: error.toString()
-    });
-  }
-})();`;
-
-        const tempScriptName = `replace_footage_${Date.now()}.jsx`;
-        const tempScriptPath = path.join(tempDir, tempScriptName);
-
-        fs.writeFileSync(tempScriptPath, scriptContent, 'utf-8');
-
-        // Schedule cleanup of temp file
-        fileManager.scheduleFileCleanup(tempScriptPath);
-
         fileManager.clearResultsFile();
-        fileManager.writeCommandFile("customScript", { scriptPath: tempScriptPath });
+        fileManager.writeCommandFile("replaceFootage", {
+          compIndex,
+          layerIndex,
+          layerName,
+          newFootagePath
+        });
 
         historyManager.completeCommand(commandId, 'success');
 

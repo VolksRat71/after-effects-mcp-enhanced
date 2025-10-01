@@ -29,12 +29,12 @@ async function main() {
   const context = initializeServices(PATHS);
 
   // Clean up old JSX files on startup
-  context.fileManager.cleanupOldJSXFiles();
+  context.fileManager.cleanupOldFiles();
 
   // Schedule periodic cleanup every 10 minutes
   setInterval(() => {
     console.log(colors.cyan("[MCP SERVER] Running periodic cleanup..."));
-    context.fileManager.cleanupOldJSXFiles();
+    context.fileManager.cleanupOldFiles();
   }, 600000); // 10 minutes in milliseconds
 
   // Clear any pending commands from previous sessions

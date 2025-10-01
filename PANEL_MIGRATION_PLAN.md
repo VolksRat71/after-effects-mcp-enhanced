@@ -30,9 +30,9 @@ These functions currently generate temporary JSX files and should be migrated to
 - [ ] Fix the polling location issue (moved to command-executor.jsx)
 
 ### Phase 2: High Priority Migrations (Week 1)
-- [ ] Migrate `getLayerProperties`
-- [ ] Migrate `importAssets`
-- [ ] Migrate `replaceFootage`
+- [x] Migrate `getLayerProperties` - ✅ COMPLETED
+- [x] Migrate `importAssets` - ✅ COMPLETED
+- [x] Migrate `replaceFootage` - ✅ COMPLETED
 
 ### Phase 3: Animation Functions (Week 2)
 - [ ] Migrate `setMultipleKeyframes`
