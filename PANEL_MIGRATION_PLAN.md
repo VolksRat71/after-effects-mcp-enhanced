@@ -8,9 +8,7 @@ This document outlines the plan to migrate all custom script-based functions to 
 ### 1. Polling Configuration
 - **Current**: 2000ms (2 seconds) polling interval
 - **Recommendation**:
-  - For development/testing: 500ms (faster response)
-  - For production: 1000ms (balanced performance)
-  - Make it configurable via environment variable or config file
+  - 500ms (faster response)
 
 ### 2. Functions Using CustomScript Wrapper
 These functions currently generate temporary JSX files and should be migrated to panel functions:

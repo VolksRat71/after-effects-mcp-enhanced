@@ -62,6 +62,9 @@ function executeCommand(command, args) {
             case "set-layer-expression":
                 result = setLayerExpression(args.compIndex, args.layerIndex, args.propertyName, args.expressionString);
                 break;
+            case "getLayerProperties":
+                result = getLayerProperties(args);
+                break;
             case "applyEffect":
                 result = applyEffect(args);
                 break;
