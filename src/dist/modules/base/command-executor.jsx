@@ -112,6 +112,8 @@ function executeCommand(command, args) {
 
         updateCommandStatus("completed");
 
+        return result; // Return the result for batch processing
+
     } catch (error) {
         logToPanel("✗ Error: " + command + " - " + error.toString());
         globalStatusText.text = "Error";
@@ -135,6 +137,131 @@ function executeCommand(command, args) {
         }
 
         updateCommandStatus("error");
+
+        // Return error result for batch processing
+        return JSON.stringify({
+            status: "error",
+            command: command,
+            message: error.toString(),
+            line: error.line,
+            fileName: error.fileName
+        });
+    }
+}
+
+// Execute batch of commands
+function executeBatch(batchData) {
+    var batchId = batchData.batchId || "batch_" + (new Date().getTime());
+    var commands = batchData.commands || [];
+
+    // Handle backward compatibility - single command
+    if (batchData.command && !commands.length) {
+        commands = [{
+            commandId: "cmd_1",
+            tool: batchData.command,
+            args: batchData.args || {}
+        }];
+    }
+
+    var totalCommands = commands.length;
+    var results = [];
+    var startTime = new Date().getTime();
+    var commandTimes = [];
+
+    logToPanel("◆ Batch detected: " + totalCommands + " command(s)");
+
+    for (var i = 0; i < commands.length; i++) {
+        var cmd = commands[i];
+        var cmdStartTime = new Date().getTime();
+
+        // Update progress
+        var progress = {
+            completed: i,
+            total: totalCommands,
+            percentage: Math.round((i / totalCommands) * 100),
+            currentCommand: cmd.tool
+        };
+
+        // Calculate ETA
+        if (commandTimes.length > 0) {
+            var avgTime = 0;
+            for (var t = 0; t < commandTimes.length; t++) {
+                avgTime += commandTimes[t];
+            }
+            avgTime = avgTime / commandTimes.length;
+            var remaining = totalCommands - i;
+            var secondsRemaining = Math.ceil((remaining * avgTime) / 1000);
+            progress.estimatedTimeRemaining = secondsRemaining > 60
+                ? Math.ceil(secondsRemaining / 60) + "m"
+                : secondsRemaining + "s";
+        }
+
+        // Write progress to result file
+        writeBatchProgress(batchId, "processing", progress, results);
+
+        logToPanel("  [" + (i + 1) + "/" + totalCommands + "] Executing: " + cmd.tool);
+        globalStatusText.text = "Batch " + (i + 1) + "/" + totalCommands + ": " + cmd.tool;
+        globalPanel.update();
+
+        // Execute command
+        var result = executeCommand(cmd.tool, cmd.args || {});
+        var resultString = (typeof result === 'string') ? result : JSON.stringify(result);
+
+        try {
+            var resultObj = JSON.parse(resultString);
+            var isSuccess = !resultObj.error && resultObj.status !== "error";
+            results.push({
+                commandId: cmd.commandId,
+                success: isSuccess,
+                data: resultObj
+            });
+        } catch (e) {
+            results.push({
+                commandId: cmd.commandId,
+                success: false,
+                error: "Failed to parse result: " + e.toString()
+            });
+        }
+
+        // Track command time
+        var cmdEndTime = new Date().getTime();
+        commandTimes.push(cmdEndTime - cmdStartTime);
+
+        logToPanel("  ✓ Completed: " + cmd.tool);
+    }
+
+    // Write final results
+    var finalProgress = {
+        completed: totalCommands,
+        total: totalCommands,
+        percentage: 100
+    };
+    writeBatchProgress(batchId, "completed", finalProgress, results);
+
+    logToPanel("✓ Batch completed: " + totalCommands + " command(s)");
+    globalStatusText.text = "Ready";
+    updateCommandStatus("completed");
+}
+
+// Write batch progress to result file
+function writeBatchProgress(batchId, status, progress, results) {
+    try {
+        var batchResult = {
+            batchId: batchId,
+            status: status,
+            progress: progress,
+            results: results,
+            _responseTimestamp: new Date().toString()
+        };
+
+        var resultFile = new File(getResultFilePath());
+        resultFile.encoding = "UTF-8";
+        if (resultFile.open("w")) {
+            resultFile.write(JSON.stringify(batchResult, null, 2));
+            resultFile.close();
+        }
+    } catch (e) {
+        logToPanel("Error writing batch progress: " + e.toString());
     }
 }
 
@@ -159,10 +286,8 @@ function checkForCommands() {
                     var commandData = JSON.parse(content);
 
                     if (commandData.status === "pending") {
-                        logToPanel("◆ Command detected: " + commandData.command);
                         updateCommandStatus("running");
-
-                        executeCommand(commandData.command, commandData.args || {});
+                        executeBatch(commandData);
                     }
                 } catch (parseError) {
                     logToPanel("Error parsing command: " + parseError.toString());
