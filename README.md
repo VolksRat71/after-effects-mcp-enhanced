@@ -6,13 +6,13 @@
 <p align="center">AI Visual Understanding for Adobe After Effects</p>
 
 <p align="center">
-  ![Node.js](https://img.shields.io/badge/node-%3E=16.x-brightgreen.svg)
-  ![License](https://img.shields.io/badge/license-MIT-blue)
-  ![Platform](https://img.shields.io/badge/platform-Windows%20%7C%20macOS-blue)
-  ![Version](https://img.shields.io/badge/version-2.0.0-blue)
-  ![After Effects](https://img.shields.io/badge/After%20Effects-2020%2B-purple)
-  ![Vision](https://img.shields.io/badge/AI-Visual%20Understanding-green)
-<p>
+  <img src="https://img.shields.io/badge/node-%3E=16.x-brightgreen.svg" alt="Node.js">
+  <img src="https://img.shields.io/badge/license-MIT-blue" alt="License">
+  <img src="https://img.shields.io/badge/platform-Windows%20%7C%20macOS-blue" alt="Platform">
+  <img src="https://img.shields.io/badge/version-2.0.0-blue" alt="Version">
+  <img src="https://img.shields.io/badge/After%20Effects-2020%2B-purple" alt="After Effects">
+  <img src="https://img.shields.io/badge/AI-Visual%20Understanding-green" alt="Vision">
+</p>
 
 **Give your AI assistant eyes into After Effects.** This MCP server enables LLMs to visually understand and debug your compositions by rendering frames on-demand, analyzing animations frame-by-frame, and providing visual feedback for every change.
 
