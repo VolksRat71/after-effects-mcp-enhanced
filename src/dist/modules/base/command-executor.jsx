@@ -172,3 +172,8 @@ function checkForCommands() {
 
     isChecking = false;
 }
+
+// Polling interval - can be adjusted for different environments
+// 500ms for development (responsive), 1000-2000ms for production (less CPU usage)
+var checkInterval = 500; // Reduced from 2000ms for better responsiveness
+app.scheduleTask("checkForCommands()", checkInterval, true);

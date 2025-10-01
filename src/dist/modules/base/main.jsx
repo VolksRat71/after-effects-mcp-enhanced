@@ -28,7 +28,3 @@ function main() {
 
 // Start the bridge
 main();
-
-// Start the command checker - must be in global scope after main()
-var checkInterval = 2000;
-app.scheduleTask("checkForCommands()", checkInterval, true);
