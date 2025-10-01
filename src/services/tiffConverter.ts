@@ -116,9 +116,7 @@ export class TiffConverterService {
     this.processingFiles.add(tiffPath);
 
     try {
-      // Wait a bit more to ensure file is completely written
-      await this.waitForFileStability(tiffPath);
-
+      // chokidar's awaitWriteFinish already handles stability, skip extra wait
       const dir = path.dirname(tiffPath);
       const baseName = path.basename(tiffPath, '.tif');
       const outputPath = path.join(dir, `${baseName}.${targetFormat}`);
@@ -132,10 +130,10 @@ export class TiffConverterService {
 
       console.log(colors.cyan(`[TIFF CONVERTER] Converting: ${path.basename(tiffPath)} -> ${path.basename(outputPath)}`));
 
-      // Perform conversion
+      // Perform conversion with optimized settings for speed
       if (targetFormat === 'png') {
         await sharp(tiffPath)
-          .png({ quality: 95, compressionLevel: 9 })
+          .png({ compressionLevel: 6 }) // Balanced speed/size (6 is default, 9 is slowest)
           .toFile(outputPath);
       } else {
         await sharp(tiffPath)
@@ -246,8 +244,11 @@ export class TiffConverterService {
 
     console.log(colors.cyan(`[TIFF CONVERTER] Converting ${tiffFiles.length} existing TIFF files in: ${dirPath}`));
 
-    for (const filePath of tiffFiles) {
-      await this.convertTiff(filePath, targetFormat, deleteOriginal);
+    // Convert in parallel with concurrency limit to avoid overwhelming the system
+    const concurrency = 4; // Process 4 files at a time
+    for (let i = 0; i < tiffFiles.length; i += concurrency) {
+      const batch = tiffFiles.slice(i, i + concurrency);
+      await Promise.all(batch.map(filePath => this.convertTiff(filePath, targetFormat, deleteOriginal)));
     }
   }
 }

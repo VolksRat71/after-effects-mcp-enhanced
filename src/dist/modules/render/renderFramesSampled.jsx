@@ -124,8 +124,9 @@ function renderFramesSampled(args) {
                 rqItem.applyTemplate("Best Settings");
             } catch (e) {}
 
+            var frameDuration = comp.frameDuration;
             rqItem.timeSpanStart = renderTime;
-            rqItem.timeSpanDuration = 1 / comp.frameRate;
+            rqItem.timeSpanDuration = frameDuration;
 
             var outputModule = rqItem.outputModule(1);
 
@@ -172,7 +173,8 @@ function renderFramesSampled(args) {
             sessionDir: sessionDir,
             frames: frames,
             needsConversion: true,
-            targetFormat: format
+            targetFormat: format,
+            conversionNote: "TIFF frames will be automatically converted to " + format.toUpperCase() + " by the server"
         };
 
         if (warning) {

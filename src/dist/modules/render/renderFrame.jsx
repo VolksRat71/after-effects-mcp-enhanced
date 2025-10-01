@@ -56,7 +56,7 @@ function renderFrame(args) {
         } catch (e) {}
 
         rqItem.timeSpanStart = renderTime;
-        rqItem.timeSpanDuration = 1 / comp.frameRate;
+        rqItem.timeSpanDuration = comp.frameDuration;
 
         var outputModule = rqItem.outputModule(1);
 
@@ -97,7 +97,8 @@ function renderFrame(args) {
             height: comp.height,
             outputPath: actualOutputPath,
             needsConversion: true,
-            targetFormat: format
+            targetFormat: format,
+            conversionNote: "TIFF will be automatically converted to " + format.toUpperCase() + " by the server"
         };
 
         return JSON.stringify(result);
