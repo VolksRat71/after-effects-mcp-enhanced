@@ -339,54 +339,56 @@ PENGUIN_CHARACTER_COMP
 
 **📖 Reference**: All PDFs - verify guidelines at each step!
 
-### Phase 1: Body Foundation ⭐
+### Phase 1: Body Foundation ✅ COMPLETED
 **Comp Name**: `Penguin_Character`
-1. Create new composition: "Penguin_Character" (1920x1080, white background)
-2. Create BODY_GROUP null object
-3. Build body shape (rounded rectangle - Eel #4B4B4B)
-4. Build belly overlay (rounded rectangle - Polar #F7F7F7)
-5. Parent body shapes to BODY_GROUP
-6. Set BODY_GROUP anchor to center-bottom
-7. **🎬 RENDER FRAME**: Check rounded shapes and proportions
-8. **SAMPLE TIMELINE**: Verify parenting by moving BODY_GROUP
-9. **💾 DUPLICATE COMP**: Save as `Penguin_v01_Body`
+1. ✅ Create new composition: "Penguin_Character" (1920x1080, white background)
+2. ✅ Create BODY_GROUP null object
+3. ✅ Build body shape (rounded rectangle - Eel #4B4B4B)
+4. ✅ Build belly overlay (rounded rectangle - Polar #F7F7F7)
+5. ✅ Parent body shapes to BODY_GROUP
+6. ✅ Set BODY_GROUP anchor to center-bottom
+7. ✅ **🎬 RENDER FRAME**: Check rounded shapes and proportions
+8. ✅ **SAMPLE TIMELINE**: Verify parenting by moving BODY_GROUP
+9. ✅ **💾 DUPLICATE COMP**: Save as `Penguin_v01_Body`
 
-### Phase 2: Head & Face ⭐
+### Phase 2: Head & Face ✅ COMPLETED
 **Reference**: Characters PDF p.4-10
-10. Create HEAD_GROUP null, parent to BODY_GROUP
-11. Build head shape, parent to HEAD_GROUP
-12. Create FACE_GROUP null, parent to HEAD_GROUP
-13. Create EYES_GROUP null, parent to FACE_GROUP
-14. Build eye shapes (4 total), parent to EYES_GROUP
-15. Build beak shape, parent to FACE_GROUP
-16. Set all anchor points correctly
-17. **🎬 RENDER FRAME**: Verify pupils NOT centered vertically
-18. **SAMPLE TIMELINE**: Test HEAD_GROUP rotation
-19. **💾 DUPLICATE COMP**: Save as `Penguin_v02_Head`
+10. ✅ Create HEAD_GROUP null, parent to BODY_GROUP
+11. ✅ Build head shape, parent to HEAD_GROUP
+12. ✅ Create FACE_GROUP null, parent to HEAD_GROUP
+13. ✅ Create EYES_GROUP null, parent to FACE_GROUP
+14. ✅ Build eye shapes (4 total), parent to EYES_GROUP
+15. ✅ Build beak shape, parent to FACE_GROUP
+16. ✅ Set all anchor points correctly
+17. ✅ **🎬 RENDER FRAME**: Verify pupils NOT centered vertically
+18. ✅ **SAMPLE TIMELINE**: Test HEAD_GROUP rotation
+19. ✅ **💾 DUPLICATE COMP**: Save as `Penguin_v02_Head`
+20. ✅ Added highlights to eyes and beak for dimension
 
-### Phase 3: Scarf ⭐
+### Phase 3: Scarf ✅ COMPLETED
 **Reference**: Shape Language PDF p.12-13
-20. Create SCARF_GROUP null, parent to BODY_GROUP
-21. Build scarf wrap shapes (2-3 rounded rectangles - Cardinal #FF4B4B)
-22. Build scarf tail shapes (2 rounded rectangles)
-23. Add optional pattern details
-24. Parent all scarf elements to SCARF_GROUP
-25. Position scarf layer order between head and body
-26. **🎬 RENDER FRAME**: Check scarf color vibrancy and floating tails
-27. **SAMPLE TIMELINE**: Test scarf sway animation
-28. **💾 DUPLICATE COMP**: Save as `Penguin_v03_Scarf`
+20. ✅ Create SCARF_GROUP null, parent to BODY_GROUP
+21. ✅ Build curved scarf wrap (follows head contour - Cardinal #FF4B4B)
+22. ✅ Build scarf tail (1 tail hanging left, Falstaff style)
+23. ✅ Added highlight to curved scarf wrap
+24. ✅ Parent all scarf elements to SCARF_GROUP
+25. ✅ Position scarf layer order at neck area
+26. ✅ **🎬 RENDER FRAME**: Check scarf curve and highlights
+27. ✅ **SAMPLE TIMELINE**: Test scarf positioning
+28. ✅ **💾 DUPLICATE COMP**: Save as `Penguin_v03_Scarf`
 
-### Phase 4: Wings ⭐
-**Reference**: Characters PDF p.3-4, 16-19
-29. Create WINGS_GROUP null, parent to BODY_GROUP
-30. Create LEFT_WING null, parent to WINGS_GROUP
-31. Create RIGHT_WING null, parent to WINGS_GROUP
-32. Build wing shapes, parent to respective wing nulls
-33. Set wing anchor points at shoulder sockets
-34. Ensure shoulder sockets hidden behind body
-35. **🎬 RENDER FRAME**: Verify shoulders concealed behind torso
-36. **SAMPLE TIMELINE**: Test wing flapping
-37. **💾 DUPLICATE COMP**: Save as `Penguin_v04_Wings`
+### Phase 4: Wings 🔄 IN PROGRESS
+**Reference**: Characters PDF p.3-4, 16-19, Duo PDF (wing shape)
+29. ✅ Create WINGS_GROUP null, parent to BODY_GROUP
+30. ✅ Build LEFT_WING with Duo-style rounded/leaf shape (highly rounded rectangle)
+31. ⏳ **TODO**: Duplicate LEFT_WING and mirror to create RIGHT_WING
+32. ⏳ Set wing anchor points at shoulder sockets
+33. ✅ Ensure shoulder sockets hidden behind body (wings behind body layer)
+34. ⏳ **🎬 RENDER FRAME**: Verify both wings visible and shoulders concealed
+35. ⏳ **SAMPLE TIMELINE**: Test wing positioning
+36. ⏳ **💾 DUPLICATE COMP**: Save as `Penguin_v04_Wings`
+
+**Notes**: Left wing created with rounded rectangle (roundness 200) for Duo-style leaf/wedge shape. Right wing needs to be duplicated and mirrored from left.
 
 ### Phase 5: Feet ⭐
 **Reference**: Shape Language PDF p.12-13
