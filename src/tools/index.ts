@@ -12,7 +12,8 @@ import {
 import {
   registerCreateCompositionTool,
   registerListCompositionsTool,
-  registerGetProjectInfoTool
+  registerGetProjectInfoTool,
+  registerGetProjectInfoCLITool
 } from "./composition/index.js";
 
 import {
@@ -75,6 +76,7 @@ export function registerAllTools(server: McpServer, context: ToolContext): void 
   registerCreateCompositionTool(server, context);
   registerListCompositionsTool(server, context);
   registerGetProjectInfoTool(server, context);
+  registerGetProjectInfoCLITool(server, context);
 
   // Register layer tools
   console.log(colors.yellow('[MCP TOOLS] Registering layer tools...'));
