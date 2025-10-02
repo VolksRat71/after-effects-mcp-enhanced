@@ -18,11 +18,15 @@
   "license": "MIT",
   "main": "build/server/index.js",
   "type": "module",
+  "bin": {
+    "afterfx-launch": "./build/cli/launch.js"
+  },
   "scripts": {
     "build": "tsc && npm run build-jsx",
     "build-jsx": "node scripts/build-jsx.js",
     "start": "node build/server/index.js",
-    "bridge-install": "node scripts/bridge-install.js"
+    "bridge-install": "node scripts/bridge-install.js",
+    "launch": "node build/cli/launch.js"
   },
   "dependencies": {
     "@modelcontextprotocol/sdk": "^1.0.0",

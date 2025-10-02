@@ -42,7 +42,8 @@ import {
 import {
   registerTestAnimationTool,
   registerRunCustomScriptTool,
-  registerRunBridgeTestTool
+  registerRunBridgeTestTool,
+  registerLaunchAfterEffectsTool
 } from "./utility/index.js";
 
 import {
@@ -104,6 +105,7 @@ export function registerAllTools(server: McpServer, context: ToolContext): void 
   registerTestAnimationTool(server, context);
   registerRunCustomScriptTool(server, context);
   registerRunBridgeTestTool(server, context);
+  registerLaunchAfterEffectsTool(server, context);
 
   // Register history tools
   console.log(colors.yellow('[MCP TOOLS] Registering history tools...'));
