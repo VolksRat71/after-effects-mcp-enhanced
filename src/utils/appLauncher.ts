@@ -241,6 +241,72 @@ export class AfterEffectsLauncher {
   }
 
   /**
+   * Get count of running After Effects instances
+   */
+  static getRunningInstanceCount(): number {
+    const platform = process.platform;
+
+    try {
+      if (platform === 'darwin') {
+        const result = execSync('pgrep -x "After Effects"', { encoding: 'utf-8' });
+        const pids = result.trim().split('\n').filter(pid => pid.length > 0);
+        return pids.length;
+      } else if (platform === 'win32') {
+        const result = execSync('tasklist /FI "IMAGENAME eq AfterFX.exe" /NH', { encoding: 'utf-8' });
+        const lines = result.split('\n').filter(line => line.toLowerCase().includes('afterfx.exe'));
+        return lines.length;
+      }
+    } catch {
+      return 0;
+    }
+
+    return 0;
+  }
+
+  /**
+   * Get open project names from running After Effects instances
+   */
+  static getOpenProjects(): string[] {
+    const platform = process.platform;
+    const projects: string[] = [];
+
+    try {
+      if (platform === 'darwin') {
+        // Use lsof to get open .aep files
+        const result = execSync('lsof -c "After Effects" | grep -i "\\.aep"', { encoding: 'utf-8' });
+        const lines = result.trim().split('\n');
+
+        for (const line of lines) {
+          const parts = line.split(/\s+/);
+          const filePath = parts[parts.length - 1];
+          if (filePath && filePath.endsWith('.aep')) {
+            projects.push(path.basename(filePath));
+          }
+        }
+      } else if (platform === 'win32') {
+        // Use handle.exe or fallback approach for Windows
+        // This is a simplified approach - may need handle.exe from Sysinternals
+        try {
+          const result = execSync('handle.exe .aep AfterFX', { encoding: 'utf-8' });
+          const lines = result.split('\n');
+          for (const line of lines) {
+            const match = line.match(/([^\\]+\.aep)/i);
+            if (match) {
+              projects.push(match[1]);
+            }
+          }
+        } catch {
+          // handle.exe not available, return empty
+        }
+      }
+    } catch {
+      // If command fails, return empty array
+    }
+
+    return [...new Set(projects)]; // Remove duplicates
+  }
+
+  /**
    * Prints usage information
    */
   static printUsage(): void {

@@ -7,11 +7,9 @@ export function registerLaunchAfterEffectsTool(
   server: McpServer,
   context: ToolContext
 ): void {
-  const { fileManager } = context;
-
   server.tool(
     "launch-after-effects",
-    "Launch Adobe After Effects or check if running. Automatically checks for open projects if already running.",
+    "Launch Adobe After Effects or check if running.",
     {
       projectPath: z.string().optional().describe("Path to a project file (.aep or .aet) to open"),
     },
@@ -19,12 +17,10 @@ export function registerLaunchAfterEffectsTool(
       try {
         // Check if After Effects is running
         const isRunning = AfterEffectsLauncher.isRunning();
+        const instanceCount = AfterEffectsLauncher.getRunningInstanceCount();
+        const openProjects = AfterEffectsLauncher.getOpenProjects();
 
         if (isRunning) {
-          // Get open project info
-          fileManager.clearResultsFile();
-          fileManager.writeCommandFile("getProjectInfo", {});
-
           return {
             content: [
               {
@@ -33,7 +29,9 @@ export function registerLaunchAfterEffectsTool(
                   {
                     success: true,
                     alreadyRunning: true,
-                    message: "After Effects is already running. Use get-results to see open project info.",
+                    instanceCount: instanceCount,
+                    openProjects: openProjects,
+                    message: `After Effects is already running (${instanceCount} instance${instanceCount > 1 ? 's' : ''})${openProjects.length > 0 ? ` with projects: ${openProjects.join(', ')}` : ''}`,
                   },
                   null,
                   2
